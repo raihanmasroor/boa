@@ -45,6 +45,7 @@ import {
   isQueuedPromptLong,
   queuedStripLayout,
 } from "./queuedPromptsLayout";
+import { StartupErrorScreen } from "./StartupErrorScreen";
 import { SubagentCard, ToolCard, ToolGroupCard } from "./ToolCards";
 import { DiffCommentsUserCard } from "../diff/comments/DiffCommentsUserCard";
 import { parseDiffCommentsSentinel } from "../diff/comments/buildPrompt";
@@ -233,6 +234,19 @@ function CockpitChrome({
       vp.removeEventListener("scroll", sampleAtBottom);
     };
   }, []);
+  // Short-circuit: when the per-adapter compatibility check rejected
+  // the adapter, replace the chat layout with a dedicated screen that
+  // renders the exact remediation command. We never reach Running, so
+  // dropping the chat/composer prevents the user from typing into a
+  // session that has no live agent. Cleared on AcpSessionAssigned once
+  // the user reinstalls and a fresh worker spawns. See agent_compat.rs.
+  if (state.incompatibleAgent) {
+    return (
+      <div className="flex h-full flex-col bg-surface-900 text-text-primary">
+        <StartupErrorScreen detail={state.incompatibleAgent} />
+      </div>
+    );
+  }
   return (
     <div className="flex h-full flex-col bg-surface-900 text-text-primary">
       <PlanStrip plan={state.plan} />
@@ -1542,7 +1556,7 @@ function StartupErrorBanner({
             Run <code className="rounded bg-rose-900/60 px-1">aoe cockpit doctor --fix</code>{" "}
             from a terminal, or install the adapter manually:
             <pre className="mt-1 whitespace-pre-wrap rounded bg-rose-900/40 p-2 text-xs">
-              npm install -g @agentclientprotocol/claude-agent-acp
+              npm install -g @agentclientprotocol/claude-agent-acp@0.37.0
             </pre>
           </>
         )}

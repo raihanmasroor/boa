@@ -23,9 +23,9 @@ use agent_client_protocol::schema::{
     PromptRequest, ProtocolVersion, ReadTextFileRequest, ReadTextFileResponse,
     ReleaseTerminalRequest, ReleaseTerminalResponse, RequestPermissionOutcome,
     RequestPermissionRequest, RequestPermissionResponse, SelectedPermissionOutcome, SessionId,
-    SessionNotification, SessionUpdate, SetSessionModeRequest, TerminalId, TerminalOutputRequest,
-    TerminalOutputResponse, TextContent, WaitForTerminalExitRequest, WaitForTerminalExitResponse,
-    WriteTextFileRequest, WriteTextFileResponse,
+    SessionNotification, SessionUpdate, SetSessionModeRequest, StopReason, TerminalId,
+    TerminalOutputRequest, TerminalOutputResponse, TextContent, WaitForTerminalExitRequest,
+    WaitForTerminalExitResponse, WriteTextFileRequest, WriteTextFileResponse,
 };
 use agent_client_protocol::{Agent, ByteStreams, Client, ConnectionTo, Responder};
 use thiserror::Error;
@@ -33,14 +33,16 @@ use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 use tracing::{debug, error, info, trace, warn};
 
+use super::agent_compat::{self, ExpectedAgent};
 use super::agent_profiles;
 use super::agent_registry::AgentSpec;
 use super::approvals::{is_destructive, ApprovalDecision, Nonce};
 use super::fs_handler::{self, FsPolicy, SandboxPathMap};
 use super::permissions::build_approval;
 use super::state::{
-    AvailableCommand, CockpitSessionId, DiffPreview, Event, ModeInfo, Plan, PlanStep,
-    PlanStepStatus, RateLimitInfo, SessionMode, SessionUsage, ToolCall, UsageCost,
+    AvailableCommand, CockpitSessionId, DiffPreview, Event, MemoryRecall, ModeInfo, Plan, PlanStep,
+    PlanStepStatus, RateLimitInfo, SessionMode, SessionUsage, StartupErrorDetail, ToolCall,
+    UsageCost,
 };
 use super::terminal_handler::TerminalManager;
 use crate::session::SandboxInfo;
@@ -57,6 +59,17 @@ pub enum AcpError {
     /// adapter" copy. See issue #1089.
     #[error("project path no longer exists: {path}")]
     ProjectPathMissing { path: PathBuf },
+    /// The ACP `initialize` handshake completed but the adapter failed
+    /// the per-adapter compatibility policy (see
+    /// `src/cockpit/agent_compat.rs`). Carries the structured detail so
+    /// the supervisor can publish a matching `Event::IncompatibleAgent`
+    /// through the broadcast sink (the in-process event_tx the failed
+    /// `AcpClient::spawn` opened is never delivered, so the structured
+    /// payload has to ride out of band on the typed error). The payload
+    /// is boxed to keep `AcpError` small on the Ok hot path (clippy's
+    /// `result_large_err`).
+    #[error("incompatible agent: {0}")]
+    IncompatibleAgent(Box<IncompatibleAgentError>),
     #[error("transport error: {0}")]
     Transport(String),
     #[error("protocol violation: {0}")]
@@ -69,6 +82,23 @@ pub enum AcpError {
     UnknownNonce,
     #[error("agent did not offer a {0:?} option")]
     NoMatchingOption(ApprovalDecision),
+}
+
+/// Boxed payload for `AcpError::IncompatibleAgent`. Carries the
+/// structured `StartupErrorDetail` plus a pre-formatted free-form
+/// summary the supervisor mirrors into the legacy
+/// `Event::AgentStartupError { message }` channel for status-derivation
+/// callers that don't yet read the structured detail.
+#[derive(Debug)]
+pub struct IncompatibleAgentError {
+    pub detail: super::state::StartupErrorDetail,
+    pub message: String,
+}
+
+impl std::fmt::Display for IncompatibleAgentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
 }
 
 impl AcpError {
@@ -247,7 +277,17 @@ const RESUME_IDLE_GRACE_DEFAULT: std::time::Duration = std::time::Duration::from
 /// long enough for claude-agent-acp to resolve a real cancel through
 /// the SDK message boundary but short enough that a user who clicked
 /// "Force end turn" isn't watching a frozen UI for 30s while the
-/// daemon waits. See #1196.
+/// daemon waits.
+///
+/// claude-agent-acp >=0.37.0 (upstream #694) now resolves cancel by
+/// returning `PromptResponse { stop_reason: StopReason::Cancelled }`
+/// promptly; in that path the watchdog never fires and the terminal
+/// Stopped reason is `cancelled` (set by `prompt_cancelled` in the
+/// prompt loop) instead of `agent_unresponsive`. The 10s watchdog
+/// stays as a transport-wedge defense: native cancel only protects
+/// against the adapter ignoring the signal, not against socket /
+/// stdout / process-level wedges that prevent the PromptResponse from
+/// reaching the daemon at all. See #1196.
 const CANCEL_ESCALATION_GRACE: std::time::Duration = std::time::Duration::from_secs(10);
 
 /// Vendor-agnostic silent-orphan grace fallback used when no config
@@ -1108,6 +1148,7 @@ impl AcpClient {
         let session_label = session_id.0.clone();
         let child_for_task = child.clone();
         let pending_for_task = pending_responders.clone();
+        let expected_agent = ExpectedAgent::from_command(&install_binary);
 
         // Allowed fs roots: cwd + any explicit additional directories.
         let mut roots = vec![cwd.clone()];
@@ -1142,6 +1183,7 @@ impl AcpClient {
             mode,
             Some(ready_tx),
             profile,
+            expected_agent,
             source_profile,
         ));
 
@@ -1206,6 +1248,7 @@ impl AcpClient {
 
         let session_label = session_id.0.clone();
         let pending_for_task = pending_responders.clone();
+        let expected_agent = ExpectedAgent::from_command(&install_binary);
 
         let (ready_tx, ready_rx) = oneshot::channel::<Result<(), AcpError>>();
 
@@ -1222,6 +1265,7 @@ impl AcpClient {
             mode,
             Some(ready_tx),
             profile,
+            expected_agent,
             source_profile,
         ));
 
@@ -1277,10 +1321,19 @@ impl AcpClient {
             in_flight_turn,
         };
         let profile = agent_profiles::resolve(&agent_key);
-        // Resume path has no install hint to surface: the agent is
-        // already running. Pass an empty string; the install hint is
-        // only consulted on handshake-failure timeouts, which the resume
-        // path treats as a different fault.
+        // Resolve the binary name from the registry so the resume path
+        // still routes through the per-adapter compatibility gate
+        // (`agent_compat::ExpectedAgent::from_command`). Reattaching to
+        // a stale claude-agent-acp@0.32.0 worker that survived an aoe
+        // serve restart should re-trigger the >=0.37.0 check, not
+        // silently skip it just because the resume path has no install
+        // hint to surface. Empty fallback only when the agent key is
+        // not in the registry (an unknown user-configured agent);
+        // policy maps that to Other anyway.
+        let install_binary = super::AgentRegistry::with_defaults()
+            .get(&agent_key)
+            .map(|spec| spec.command.clone())
+            .unwrap_or_default();
         Self::connect_via_socket(
             socket_path,
             cwd,
@@ -1294,7 +1347,7 @@ impl AcpClient {
             event_rx,
             sandbox,
             profile,
-            String::new(),
+            install_binary,
             source_profile,
         )
         .await
@@ -2404,6 +2457,11 @@ fn map_update_to_events(
                     "subagent child tool_call linked to parent via _meta.claudeCode.parentToolUseId"
                 );
             }
+            let memory_recall = if profile.supports_memory_recall_tool() {
+                extract_memory_recall(&tc.meta, &tc.locations, &tc.content)
+            } else {
+                None
+            };
             let tool_call = ToolCall {
                 id: tc.tool_call_id.0.to_string(),
                 name: tc.title.clone(),
@@ -2411,6 +2469,7 @@ fn map_update_to_events(
                 args_preview: args_preview.clone(),
                 started_at: chrono::Utc::now(),
                 parent_tool_call_id,
+                memory_recall,
             };
             let mut events = vec![Event::ToolCallStarted { tool_call }];
             if is_destructive(&tc.title, &args_preview) {
@@ -2579,6 +2638,7 @@ fn map_update_to_events(
                         args_preview,
                         started_at: now,
                         parent_tool_call_id: None,
+                        memory_recall: None,
                     },
                 },
                 Event::PlanUpdated {
@@ -2739,6 +2799,53 @@ fn extract_tool_content_text(blocks: &[agent_client_protocol::schema::ToolCallCo
     out
 }
 
+/// Inspect a `tool_call` payload for the `memory_recall` shape
+/// claude-agent-acp v0.37.0 routes through the tool channel (upstream
+/// #703). The adapter sends `_meta.claudeCode.toolName == "memory_recall"`
+/// plus either `locations` (recall mode, one entry per loaded memory
+/// file) or `content` (synthesize mode, one text block with the
+/// synthesised reply). Returns `None` when the meta marker is absent.
+/// Caller gates this on `AgentProfile::supports_memory_recall_tool`
+/// so unrelated agents that happen to share field shapes don't trip
+/// the classifier.
+fn extract_memory_recall(
+    meta: &Option<serde_json::Map<String, serde_json::Value>>,
+    locations: &[agent_client_protocol::schema::ToolCallLocation],
+    content: &[agent_client_protocol::schema::ToolCallContent],
+) -> Option<MemoryRecall> {
+    let map = meta.as_ref()?;
+    let claude_code = map.get("claudeCode")?;
+    let tool_name = claude_code.get("toolName").and_then(|v| v.as_str())?;
+    if tool_name != "memory_recall" {
+        return None;
+    }
+    let mode = claude_code
+        .get("toolResponse")
+        .and_then(|tr| tr.get("mode"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("recall")
+        .to_string();
+    let paths: Vec<String> = locations
+        .iter()
+        .map(|loc| loc.path.to_string_lossy().to_string())
+        .collect();
+    let synthesized_text = if mode == "synthesize" {
+        let text = extract_tool_content_text(content);
+        if text.is_empty() {
+            None
+        } else {
+            Some(text)
+        }
+    } else {
+        None
+    };
+    Some(MemoryRecall {
+        mode,
+        paths,
+        synthesized_text,
+    })
+}
+
 fn extract_diff_from_locations(
     _locations: &[agent_client_protocol::schema::ToolCallLocation],
 ) -> Option<DiffPreview> {
@@ -2762,6 +2869,7 @@ async fn run_connection_task<W, R>(
     mode: ConnectMode,
     ready_tx: Option<oneshot::Sender<Result<(), AcpError>>>,
     profile: &'static agent_profiles::AgentProfile,
+    expected_agent: ExpectedAgent,
     source_profile: Option<String>,
 ) where
     W: futures_util::AsyncWrite + Send + 'static,
@@ -3046,6 +3154,41 @@ async fn run_connection_task<W, R>(
                 )
                 .block_task()
                 .await?;
+
+            // Per-adapter compatibility check (see src/cockpit/agent_compat.rs).
+            // Currently only gates claude-agent-acp at >=0.37.0; other
+            // adapters pass through. On rejection: route the structured
+            // detail through the typed `AcpError::IncompatibleAgent`
+            // variant on ready_tx so the supervisor sees it on the
+            // spawn-failure path. The supervisor mirrors the detail into
+            // `Event::IncompatibleAgent` + `Event::AgentStartupError`
+            // through the broadcast sink (the in-process `event_tx`
+            // here is dropped on the floor when spawn() returns Err, so
+            // any events emitted from this closure would never reach the
+            // reducer). The supervisor also terminates the detached
+            // runner; we close the connection cleanly via `return Ok(())`
+            // so the outer cleanup at line ~3500 doesn't double-emit an
+            // AgentStartupError on top of the structured one.
+            if let Err(err) = agent_compat::validate(expected_agent, &init) {
+                let user_message = err.user_message();
+                warn!(
+                    target: "cockpit.acp",
+                    session = %session_label,
+                    kind = err.kind(),
+                    message = %user_message,
+                    "agent compatibility check failed; refusing to enter session"
+                );
+                let detail = StartupErrorDetail::from(&err);
+                if let Some(tx) = ready_for_block.lock().await.take() {
+                    let _ = tx.send(Err(AcpError::IncompatibleAgent(Box::new(
+                        IncompatibleAgentError {
+                            detail,
+                            message: user_message,
+                        },
+                    ))));
+                }
+                return Ok(());
+            }
 
             let load_session_capable = init.agent_capabilities.load_session;
             // Snapshot the watchdog-arming flag before `mode` is moved
@@ -3417,6 +3560,19 @@ async fn run_connection_task<W, R>(
                         // follow-up prompt is silently dropped. See #1196.
                         let mut agent_unresponsive = false;
                         let mut rate_limited = false;
+                        // True when the adapter resolves the in-flight
+                        // session/prompt with `StopReason::Cancelled`,
+                        // i.e. the user cancelled and the adapter
+                        // acknowledged cleanly. claude-agent-acp >=0.37.0
+                        // emits this natively per upstream #694; older
+                        // adapters surfaced cancellation as `EndTurn` so
+                        // the cancel-escalation watchdog was aoe's only
+                        // signal. The 10s watchdog still runs as a
+                        // transport-wedge defense; this flag only
+                        // affects the terminal Stopped reason string so
+                        // the reducer can distinguish a user-driven
+                        // stop from a clean turn completion.
+                        let mut prompt_cancelled = false;
                         let mut cancelling = false;
                         let cancel_grace = tokio::time::sleep(CANCEL_ESCALATION_GRACE);
                         tokio::pin!(cancel_grace);
@@ -3425,7 +3581,23 @@ async fn run_connection_task<W, R>(
                             tokio::select! {
                                 res = &mut prompt_fut, if !simulate_orphan => {
                                     match res {
-                                        Ok(_) => {}
+                                        Ok(resp) => {
+                                            // Capture the native stop reason so
+                                            // the terminal emission downstream
+                                            // can distinguish a cancelled turn
+                                            // (StopReason::Cancelled, claude-agent-acp
+                                            // >=0.37.0 per upstream #694) from a
+                                            // clean turn completion. EndTurn /
+                                            // MaxTokens / MaxTurnRequests / Refusal
+                                            // all collapse to `prompt_complete`
+                                            // for compatibility with the existing
+                                            // reducer; we only surface
+                                            // `cancelled` because it has a
+                                            // distinct UI implication.
+                                            if matches!(resp.stop_reason, StopReason::Cancelled) {
+                                                prompt_cancelled = true;
+                                            }
+                                        }
                                         Err(e) => {
                                             // Rate-limit on session/prompt is not
                                             // a worker crash. Emit a typed
@@ -3705,6 +3877,14 @@ async fn run_connection_task<W, R>(
                             "agent_unresponsive"
                         } else if shutdown {
                             "shutdown"
+                        } else if prompt_cancelled {
+                            // The adapter resolved cancel cleanly with
+                            // StopReason::Cancelled (upstream #694). The
+                            // 10s cancel-escalation watchdog never
+                            // promoted this to `agent_unresponsive`, so
+                            // surface the cleanly-cancelled signal
+                            // distinctly from `prompt_complete`.
+                            "cancelled"
                         } else {
                             "prompt_complete"
                         };
@@ -4275,6 +4455,7 @@ async fn handle_permission_request(
         args_preview,
         started_at: chrono::Utc::now(),
         parent_tool_call_id: profile.parent_tool_use_id_from_meta(&request.tool_call.meta),
+        memory_recall: None,
     };
     let approval = build_approval(tool_call);
     let nonce = approval.nonce.clone();
