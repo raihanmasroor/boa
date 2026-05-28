@@ -1930,6 +1930,7 @@ impl HomeView {
                                 .or_else(|| inst.workspace_info.as_ref().map(|w| w.branch.clone())),
                             has_sandbox: inst.sandbox_info.as_ref().is_some_and(|s| s.enabled),
                             project_path: Some(inst.project_path.clone()),
+                            is_scratch: inst.scratch,
                         };
 
                         let profile = self.config_profile();
@@ -2019,6 +2020,7 @@ impl HomeView {
                                 .or_else(|| inst.workspace_info.as_ref().map(|w| w.branch.clone())),
                             has_sandbox: inst.sandbox_info.as_ref().is_some_and(|s| s.enabled),
                             project_path: Some(inst.project_path.clone()),
+                            is_scratch: inst.scratch,
                         };
 
                         let profile = self.config_profile();

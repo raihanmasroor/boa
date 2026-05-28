@@ -14,6 +14,7 @@ pub mod profile_config;
 pub mod projects;
 pub(crate) mod recovery;
 pub mod repo_config;
+pub mod scratch;
 pub(crate) mod serde_helpers;
 mod storage;
 

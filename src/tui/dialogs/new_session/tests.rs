@@ -1228,3 +1228,93 @@ fn test_sandbox_config_mode_enter_on_image_returns_to_main() {
     assert!(matches!(result, DialogResult::Continue));
     assert!(!dialog.sandbox_config_mode);
 }
+
+#[test]
+fn test_scratch_toggle_with_ctrl_t() {
+    let mut dialog = single_tool_dialog();
+    assert!(!dialog.scratch);
+
+    dialog.handle_key(ctrl_key(KeyCode::Char('t')));
+    assert!(dialog.scratch, "Ctrl+T must turn scratch on");
+
+    dialog.handle_key(ctrl_key(KeyCode::Char('t')));
+    assert!(!dialog.scratch, "Ctrl+T again must turn it off");
+}
+
+#[test]
+fn test_scratch_toggle_clears_worktree() {
+    let mut dialog = single_tool_dialog();
+    dialog.worktree_enabled = true;
+
+    dialog.handle_key(ctrl_key(KeyCode::Char('t')));
+    assert!(dialog.scratch);
+    assert!(
+        !dialog.worktree_enabled,
+        "enabling scratch must clear the worktree toggle"
+    );
+}
+
+#[test]
+fn test_scratch_submit_sends_empty_path_and_no_worktree() {
+    let mut dialog = single_tool_dialog();
+    dialog.worktree_enabled = true;
+    dialog.handle_key(ctrl_key(KeyCode::Char('t')));
+    let result = dialog.handle_key(key(KeyCode::Enter));
+    match result {
+        DialogResult::Submit(data) => {
+            assert!(data.scratch, "data.scratch must be true");
+            assert_eq!(data.path, "", "scratch submit must send an empty path");
+            assert!(
+                !data.worktree_enabled,
+                "scratch submit must force worktree_enabled off"
+            );
+            assert!(
+                data.worktree_branch.is_none(),
+                "scratch submit must not carry a worktree branch"
+            );
+        }
+        other => panic!("Expected Submit, got {:?}", std::mem::discriminant(&other)),
+    }
+}
+
+#[test]
+fn test_scratch_skips_path_existence_confirmation() {
+    let mut dialog = single_tool_dialog();
+    // Use a nonexistent path; without scratch, Enter would open the
+    // "Create dir?" confirmation.
+    dialog.path = Input::new("/does/not/exist/scratch-test".to_string());
+    dialog.handle_key(ctrl_key(KeyCode::Char('t')));
+    let result = dialog.handle_key(key(KeyCode::Enter));
+    assert!(
+        matches!(result, DialogResult::Submit(_)),
+        "scratch must skip the path-exists check on Enter"
+    );
+    assert!(
+        dialog.confirm_create_dir.is_none(),
+        "create-dir confirmation must not activate for scratch sessions"
+    );
+}
+
+#[test]
+fn test_worktree_toggle_blocked_when_scratch_on() {
+    // Defense against the UI path that would otherwise let the user submit
+    // scratch + worktree_branch and trip the server-side 400. With scratch
+    // on, Space on the worktree row must be a no-op (with a user-facing
+    // error_message) rather than silently re-enabling worktree.
+    let mut dialog = single_tool_dialog();
+    dialog.handle_key(ctrl_key(KeyCode::Char('t')));
+    assert!(dialog.scratch);
+    assert!(!dialog.worktree_enabled);
+
+    // Single-tool, no-profile layout: path=0, title=1, yolo=2, worktree=3.
+    dialog.focused_field = 3;
+    dialog.handle_key(key(KeyCode::Char(' ')));
+    assert!(
+        !dialog.worktree_enabled,
+        "worktree toggle must be blocked while scratch is on"
+    );
+    assert!(
+        dialog.error_message.is_some(),
+        "user must see an explanation, not a silent no-op"
+    );
+}

@@ -441,7 +441,11 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
     // deletes go through the startup sweep instead.
     clearDraft(sessionId);
 
-    toastBus.handler?.info("Session deleted");
+    // Server returns `messages` from `perform_deletion` when there's something
+    // user-facing to report (e.g. "Scratch directory kept at: <path>" when
+    // `keep_scratch` is set). Surface the first one so the kept-path is visible.
+    const toast = result.messages?.[0] ?? "Session deleted";
+    toastBus.handler?.info(toast);
   }, [deletingSession, activeSessionId, setSessionStatus, navigate]);
 
   const handleCreateSession = useCallback((repoPath: string) => {
@@ -594,6 +598,16 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
           // not open the wizard or the user gets a dead-end form that
           // 403s on submit. Caught by the live read-only-mode spec.
           if (serverAbout?.read_only) return;
+          setWizardPrefill(undefined);
+          setShowSessionWizard(true);
+        },
+        onNewScratch: () => {
+          // Same read-only guard as `onNew`: the wizard cannot land a
+          // POST /api/sessions when the server returns 403 on every
+          // mutation, and a scratch fast-create that 403s on submit is
+          // a worse footgun than a no-op.
+          if (serverAbout?.read_only) return;
+          setWizardPrefill({ scratch: true, skipToReview: true });
           setShowSessionWizard(true);
         },
         onDiff: () => toggleDiff(),
@@ -923,6 +937,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
           branchName={deletingSession.branch}
           hasManagedWorktree={deletingSession.has_managed_worktree}
           isSandboxed={deletingSession.is_sandboxed}
+          isScratch={deletingSession.scratch}
           cleanupDefaults={deletingSession.cleanup_defaults}
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeletingWorkspaceId(null)}

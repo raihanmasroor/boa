@@ -282,6 +282,76 @@
       ]
     },
     {
+      "id": "wizard.scratch-toggle-visible",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": ["tests/live/wizard-scratch-toggle-visible.spec.ts"],
+      "components": [
+        "web/src/components/session-wizard/steps/ProjectStep.tsx"
+      ]
+    },
+    {
+      "id": "wizard.scratch-enables-next",
+      "kind": "live-playwright",
+      "risk": "high",
+      "specs": ["tests/live/wizard-scratch-enables-next.spec.ts"],
+      "components": [
+        "web/src/components/session-wizard/SessionWizard.tsx",
+        "web/src/components/session-wizard/steps/ProjectStep.tsx",
+        "web/src/components/session-wizard/wizardReducer.ts"
+      ]
+    },
+    {
+      "id": "wizard.scratch-hides-worktree",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": ["tests/live/wizard-scratch-hides-worktree.spec.ts"],
+      "components": [
+        "web/src/components/session-wizard/steps/SessionStep.tsx"
+      ]
+    },
+    {
+      "id": "wizard.scratch-launch",
+      "kind": "live-playwright",
+      "risk": "high",
+      "specs": ["tests/live/wizard-scratch-launch.spec.ts"],
+      "components": [
+        "web/src/components/session-wizard/SessionWizard.tsx",
+        "web/src/components/session-wizard/steps/ProjectStep.tsx",
+        "web/src/components/session-wizard/steps/ReviewStep.tsx"
+      ]
+    },
+    {
+      "id": "wizard.scratch-delete-cleans-tempdir",
+      "kind": "live-playwright",
+      "risk": "high",
+      "specs": ["tests/live/wizard-scratch-delete-cleans-tempdir.spec.ts"],
+      "components": [
+        "web/src/components/session-wizard/SessionWizard.tsx"
+      ]
+    },
+    {
+      "id": "wizard.scratch-shortcut",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": ["tests/live/wizard-scratch-shortcut.spec.ts"],
+      "components": [
+        "web/src/App.tsx",
+        "web/src/hooks/useKeyboardShortcuts.ts",
+        "web/src/components/session-wizard/SessionWizard.tsx"
+      ]
+    },
+    {
+      "id": "sidebar.scratch-group",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": ["tests/live/wizard-scratch-grouping.spec.ts"],
+      "components": [
+        "web/src/hooks/useRepoGroups.ts",
+        "web/src/components/WorkspaceSidebar.tsx"
+      ]
+    },
+    {
       "id": "directory-browser",
       "kind": "live-playwright",
       "risk": "medium",

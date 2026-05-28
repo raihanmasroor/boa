@@ -888,11 +888,16 @@ export interface DeleteSessionOptions {
   delete_branch?: boolean;
   delete_sandbox?: boolean;
   force_delete?: boolean;
+  /** For scratch sessions, keep the scratch directory on disk instead of
+   *  removing it. The session record is still deleted. No effect on
+   *  non-scratch sessions. */
+  keep_scratch?: boolean;
 }
 
 export interface DeleteSessionResult {
   ok: boolean;
   error?: string;
+  messages?: string[];
 }
 
 export async function deleteSession(
@@ -912,7 +917,8 @@ export async function deleteSession(
         error: data.message || `Server error (${res.status})`,
       };
     }
-    return { ok: true };
+    const data = (await res.json().catch(() => ({}))) as { messages?: string[] };
+    return { ok: true, messages: data.messages };
   } catch (e) {
     return {
       ok: false,

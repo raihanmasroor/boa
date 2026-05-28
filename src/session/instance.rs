@@ -325,6 +325,14 @@ pub struct Instance {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub snoozed_until: Option<DateTime<Utc>>,
 
+    /// Scratch-session marker. When true, `project_path` points at an
+    /// auto-provisioned directory under `<app_dir>/scratch/<id>/` that the
+    /// deletion path removes on `aoe rm` (unless the user opts in to keeping
+    /// the directory). Mutually exclusive with worktree/workspace.
+    /// See `src/session/scratch.rs`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub scratch: bool,
+
     // Git worktree integration
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub worktree_info: Option<WorktreeInfo>,
@@ -651,6 +659,7 @@ impl Instance {
             archived_at: None,
             favorited_at: None,
             snoozed_until: None,
+            scratch: false,
             worktree_info: None,
             workspace_info: None,
             sandbox_info: None,

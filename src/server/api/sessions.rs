@@ -46,6 +46,11 @@ pub struct SessionResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub base_branch_override: Option<String>,
     pub is_sandboxed: bool,
+    /// True when the session was created with `--scratch`; the
+    /// `project_path` points at an auto-provisioned directory under
+    /// `<app_dir>/scratch/<id>/` that the deletion path removes. The web
+    /// wizard filters these out of the Recent-projects list.
+    pub scratch: bool,
     /// True when the session is marked as a user favorite. Mirrors
     /// `Instance::is_favorited()`; surfaced so the web sidebar can pin
     /// favorited rows and render the `*` marker without re-implementing
@@ -191,6 +196,7 @@ impl SessionResponse {
                 .and_then(|w| w.base_branch.clone()),
             base_branch_override: inst.base_branch_override.clone(),
             is_sandboxed: inst.is_sandboxed(),
+            scratch: inst.scratch,
             favorited: inst.is_favorited(),
             has_managed_worktree: inst
                 .worktree_info
@@ -872,6 +878,11 @@ pub struct DeleteSessionBody {
     pub delete_sandbox: bool,
     #[serde(default)]
     pub force_delete: bool,
+    /// For scratch sessions, keep the scratch directory on disk instead of
+    /// removing it. The session record is still deleted. No effect on
+    /// non-scratch sessions.
+    #[serde(default)]
+    pub keep_scratch: bool,
 }
 
 pub async fn delete_session(
@@ -956,12 +967,19 @@ pub async fn delete_session(
             delete_sandbox: body.delete_sandbox,
             force_delete: body.force_delete,
             detach_hooks: true,
+            keep_scratch: body.keep_scratch,
         })
     })
     .await;
 
     match deletion_result {
         Ok(result) if result.success => {
+            // `perform_deletion` may have produced user-facing messages
+            // (e.g. "Scratch directory kept at: <path>" when
+            // `--keep-scratch` is set). Capture them now so the
+            // success branch can echo them back; the result moves into
+            // the spawn_blocking below.
+            let messages = result.messages.clone();
             // Disk first: if persistence fails, the in-memory state is left
             // intact and we return 500. Otherwise the status poll loop
             // would silently re-add the entry from disk on the next tick
@@ -1000,7 +1018,10 @@ pub async fn delete_session(
                     state.instance_locks.write().await.remove(&id);
                     (
                         StatusCode::OK,
-                        Json(serde_json::json!({ "status": "deleted" })),
+                        Json(serde_json::json!({
+                            "status": "deleted",
+                            "messages": messages,
+                        })),
                     )
                 }
                 Ok(Err(e)) => {
@@ -1113,6 +1134,12 @@ pub struct CreateSessionBody {
     #[cfg(feature = "serve")]
     #[serde(default)]
     pub cockpit_model: Option<String>,
+    /// Scratch session: server provisions a fresh directory under
+    /// `<app_dir>/scratch/<id>/` and ignores `path`. Mutually exclusive with
+    /// `worktree_branch` and `extra_repo_paths`; the handler returns 400
+    /// on either combination.
+    #[serde(default)]
+    pub scratch: bool,
 }
 
 fn validate_session_tool_identity(
@@ -1158,13 +1185,57 @@ pub async fn create_session(
         Err(rej) => return rej.into_response(),
     };
 
-    // Validate user inputs for shell injection
-    for (value, name) in [
+    // Scratch sessions are server-provisioned; the worktree path is the
+    // wrong model for them. Reject the combination before reaching the
+    // builder so misbehaving clients get a clear 400 instead of a
+    // less-specific builder bail surfaced as 500.
+    if body.scratch && body.worktree_branch.is_some() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "validation_failed",
+                "message": "Cannot combine scratch with worktree_branch"
+            })),
+        )
+            .into_response();
+    }
+    if body.scratch && !body.extra_repo_paths.is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "validation_failed",
+                "message": "Cannot combine scratch with extra_repo_paths"
+            })),
+        )
+            .into_response();
+    }
+    // The builder ignores `path` in scratch mode (provisions its own
+    // directory), but accepting both silently is a surprising contract
+    // for API callers and can make repo-aware tool validation consult
+    // config from a repo the session will never use. Fail loudly.
+    if body.scratch && !body.path.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "validation_failed",
+                "message": "Cannot combine scratch with path"
+            })),
+        )
+            .into_response();
+    }
+
+    // Validate user inputs for shell injection. For scratch sessions the
+    // `path` field is server-provisioned (and clients typically send an
+    // empty string), so skip the path entry in that case.
+    let mut shell_checks: Vec<(&str, &str)> = vec![
         (body.extra_args.as_str(), "extra_args"),
         (body.tool.as_str(), "tool"),
         (body.group.as_str(), "group"),
-        (body.path.as_str(), "path"),
-    ] {
+    ];
+    if !body.scratch {
+        shell_checks.push((body.path.as_str(), "path"));
+    }
+    for (value, name) in shell_checks {
         if let Err(msg) = validate_no_shell_injection(value, name) {
             return (
                 StatusCode::BAD_REQUEST,
@@ -1326,6 +1397,7 @@ pub async fn create_session(
             extra_args: body.extra_args,
             command_override: body.command_override,
             extra_repo_paths,
+            scratch: body.scratch,
         };
 
         let build_result = builder::build_instance(params, &title_refs, &branch_refs, &profile)?;
@@ -1350,23 +1422,54 @@ pub async fn create_session(
             instance.cockpit_model = body.cockpit_model;
         }
 
-        let storage = Storage::new(&profile)?;
-        let to_persist = instance.clone();
-        storage.update(|all, _groups| {
-            all.push(to_persist);
-            Ok(())
-        })?;
+        // Anything that fails between here and the final `Ok(..)`
+        // would otherwise orphan the scratch directory `build_instance`
+        // already provisioned (Storage::new, storage.update,
+        // instance.start). Wrap the tail in an IIFE-equivalent closure
+        // so we can run cleanup on Err once, regardless of which step
+        // tripped. Matches the CLI cleanup path in
+        // `cleanup_partial_session(... scratch_dir: Some(...))`.
+        let mut persist_and_start = || -> anyhow::Result<()> {
+            let storage = Storage::new(&profile)?;
+            let to_persist = instance.clone();
+            storage.update(|all, _groups| {
+                all.push(to_persist);
+                Ok(())
+            })?;
 
-        // Cockpit-mode sessions are not backed by tmux; the cockpit
-        // supervisor spawns the ACP agent on demand. Skip the tmux
-        // `start()` to avoid creating an empty pane that no one will
-        // attach to.
-        #[cfg(feature = "serve")]
-        let skip_tmux_start = instance.cockpit_mode;
-        #[cfg(not(feature = "serve"))]
-        let skip_tmux_start = false;
-        if !skip_tmux_start {
-            instance.start()?;
+            // Cockpit-mode sessions are not backed by tmux; the cockpit
+            // supervisor spawns the ACP agent on demand. Skip the tmux
+            // `start()` to avoid creating an empty pane that no one will
+            // attach to.
+            #[cfg(feature = "serve")]
+            let skip_tmux_start = instance.cockpit_mode;
+            #[cfg(not(feature = "serve"))]
+            let skip_tmux_start = false;
+            if !skip_tmux_start {
+                instance.start()?;
+            }
+            Ok(())
+        };
+
+        if let Err(e) = persist_and_start() {
+            // Guarded the same way as the deletion path: only remove a
+            // path that `is_scratch_path` blesses, so a corrupted
+            // `project_path` cannot trick us into wiping unrelated
+            // state.
+            if instance.scratch {
+                let scratch_path = std::path::PathBuf::from(&instance.project_path);
+                if crate::session::scratch::is_scratch_path(&scratch_path) {
+                    if let Err(rm_err) = std::fs::remove_dir_all(&scratch_path) {
+                        tracing::warn!(
+                            target: "http.api.sessions",
+                            "Failed to clean up orphan scratch dir {} after create failure: {}",
+                            scratch_path.display(),
+                            rm_err
+                        );
+                    }
+                }
+            }
+            return Err(e);
         }
 
         Ok::<(Instance, Vec<String>), anyhow::Error>((instance, build_warnings))
@@ -3523,6 +3626,7 @@ mod workspace_ordering_tests {
             base_branch: None,
             base_branch_override: None,
             is_sandboxed: false,
+            scratch: false,
             has_managed_worktree: false,
             has_terminal: false,
             profile: "default".to_string(),

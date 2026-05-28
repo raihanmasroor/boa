@@ -34,6 +34,10 @@ pub(super) const HELP_DIALOG_WIDTH: u16 = 85;
 
 pub(super) const FIELD_HELP: &[FieldHelp] = &[
     FieldHelp {
+        name: "Scratch",
+        description: "Ctrl+T from any field: run in a fresh scratch dir (no project path needed)",
+    },
+    FieldHelp {
         name: "Profile",
         description: "Settings profile for session defaults (Left/Right to cycle)",
     },
@@ -103,6 +107,10 @@ pub struct NewSessionData {
     pub extra_args: String,
     /// Command override for the agent binary (replaces the default binary)
     pub command_override: String,
+    /// Scratch session: provision a fresh directory under
+    /// `<app_dir>/scratch/<id>/` and persist `instance.scratch = true`.
+    /// Mutually exclusive with worktree mode.
+    pub scratch: bool,
 }
 
 pub struct NewSessionDialog {
@@ -203,6 +211,11 @@ pub struct NewSessionDialog {
     /// Inline confirmation for creating a non-existent directory.
     /// None = inactive, Some(true) = Yes selected, Some(false) = No selected.
     pub(super) confirm_create_dir: Option<bool>,
+    /// Scratch-session marker. When true, submission skips the path
+    /// canonicalize/exists checks; the server (or `aoe add` CLI path)
+    /// provisions a fresh scratch directory. Toggled with Ctrl+T from
+    /// anywhere in the form. Mutually exclusive with worktree mode.
+    pub(super) scratch: bool,
 }
 
 /// Shared logic for handling key events in an editable list (env keys or env values).
@@ -455,6 +468,7 @@ impl NewSessionDialog {
             path_ghost: None,
             group_ghost: None,
             confirm_create_dir: None,
+            scratch: false,
         }
     }
 
@@ -721,6 +735,7 @@ impl NewSessionDialog {
             path_ghost: None,
             group_ghost: None,
             confirm_create_dir: None,
+            scratch: false,
         }
     }
 
@@ -785,6 +800,7 @@ impl NewSessionDialog {
             path_ghost: None,
             group_ghost: None,
             confirm_create_dir: None,
+            scratch: false,
         }
     }
 
@@ -873,6 +889,22 @@ impl NewSessionDialog {
                 }
                 DirPickerResult::Continue => {}
             }
+            return DialogResult::Continue;
+        }
+
+        // Ctrl+T toggles the scratch-session mode from anywhere in the
+        // form. Mutually exclusive with worktrees AND with extra-repo
+        // workspaces; turning on scratch clears all three so the
+        // submit payload mirrors the user's intent if they toggle
+        // scratch off again later.
+        if key.code == KeyCode::Char('t') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            self.scratch = !self.scratch;
+            if self.scratch {
+                self.worktree_enabled = false;
+                self.workspace_repos.clear();
+                self.workspace_repos_expanded = false;
+            }
+            self.error_message = None;
             return DialogResult::Continue;
         }
 
@@ -972,11 +1004,16 @@ impl NewSessionDialog {
             }
             KeyCode::Enter => {
                 self.error_message = None;
-                let path_str = self.path.value().trim().to_string();
-                let resolved = path_input::expand_tilde(&path_str);
-                if !std::path::Path::new(&resolved).exists() {
-                    self.confirm_create_dir = Some(false);
-                    return DialogResult::Continue;
+                // Scratch sessions skip the path-existence check: the
+                // server (or `aoe add` CLI) provisions the scratch dir on
+                // submit.
+                if !self.scratch {
+                    let path_str = self.path.value().trim().to_string();
+                    let resolved = path_input::expand_tilde(&path_str);
+                    if !std::path::Path::new(&resolved).exists() {
+                        self.confirm_create_dir = Some(false);
+                        return DialogResult::Continue;
+                    }
                 }
                 self.build_submit_result()
             }
@@ -1062,6 +1099,18 @@ impl NewSessionDialog {
             KeyCode::Left | KeyCode::Right | KeyCode::Char(' ')
                 if self.focused_field == worktree_field =>
             {
+                // Scratch and worktree are mutually exclusive. Without this
+                // guard the user could Ctrl+T (scratch on, worktree forced
+                // off) then Space the worktree row back on, and submit a
+                // payload the server rejects with 400. Surface the conflict
+                // here instead of trusting the server-side mutex to catch
+                // every UI path.
+                if self.scratch {
+                    self.error_message = Some(
+                        "Worktree is disabled in scratch mode. Press Ctrl+T to leave scratch first.".to_string(),
+                    );
+                    return DialogResult::Continue;
+                }
                 self.worktree_enabled = !self.worktree_enabled;
                 if !self.worktree_enabled {
                     self.worktree_config_mode = false;
@@ -1617,14 +1666,20 @@ impl NewSessionDialog {
         DialogResult::Submit(NewSessionData {
             profile: self.selected_profile().to_string(),
             title: final_title,
-            path: self.path.value().trim().to_string(),
+            // Scratch sessions send an empty path; the server / `aoe add`
+            // CLI provisions a fresh scratch directory keyed on the instance id.
+            path: if self.scratch {
+                String::new()
+            } else {
+                self.path.value().trim().to_string()
+            },
             group: self.group.value().trim().to_string(),
             tool: self.available_tools[self.tool_index].clone(),
-            worktree_enabled: self.worktree_enabled,
+            worktree_enabled: !self.scratch && self.worktree_enabled,
             worktree_branch,
             create_new_branch: self.create_new_branch,
             base_branch,
-            extra_repo_paths: if self.worktree_enabled {
+            extra_repo_paths: if !self.scratch && self.worktree_enabled {
                 self.workspace_repos.clone()
             } else {
                 Vec::new()
@@ -1639,6 +1694,7 @@ impl NewSessionDialog {
             },
             extra_args: self.extra_args.value().trim().to_string(),
             command_override: self.command_override.value().trim().to_string(),
+            scratch: self.scratch,
         })
     }
 
