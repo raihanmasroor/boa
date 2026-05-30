@@ -38,6 +38,17 @@
       ]
     },
     {
+      "id": "terminal.mobile-backspace-autorepeat",
+      "kind": "mocked-playwright",
+      "risk": "medium",
+      "specs": [
+        "tests/backspace-autorepeat.spec.ts"
+      ],
+      "components": [
+        "web/src/hooks/useTerminal.ts"
+      ]
+    },
+    {
       "id": "auth.no-auth",
       "kind": "live-playwright",
       "risk": "high",
@@ -566,6 +577,17 @@
       ]
     },
     {
+      "id": "sidebar.ios-callout-suppression",
+      "kind": "mocked-playwright",
+      "risk": "medium",
+      "specs": [
+        "tests/ios-callout-suppression.spec.ts"
+      ],
+      "components": [
+        "web/src/components/WorkspaceSidebar.tsx"
+      ]
+    },
+    {
       "id": "sidebar.favorite-indicator",
       "kind": "deferred",
       "issue": "https://github.com/agent-of-empires/agent-of-empires/issues/986",
@@ -683,6 +705,38 @@
         "web/src/components/diff/comments/CommentsBanner.tsx",
         "web/src/components/diff/comments/DiffCommentsUserCard.tsx",
         "web/src/components/diff/comments/SendCommentsDialog.tsx"
+      ]
+    },
+    {
+      "id": "right-panel.mobile-picker",
+      "kind": "mocked-playwright",
+      "risk": "high",
+      "specs": [
+        "tests/mobile-right-panel-picker.spec.ts"
+      ],
+      "components": [
+        "web/src/components/MobileRightPanelPicker.tsx",
+        "web/src/components/MobileMainPane.tsx",
+        "web/src/components/PairedTerminal.tsx",
+        "web/src/components/ContentSplit.tsx",
+        "web/src/components/RightPanel.tsx"
+      ]
+    },
+    {
+      "id": "right-panel.mobile-picker-units",
+      "kind": "vitest",
+      "risk": "high",
+      "specs": [
+        "src/components/__tests__/MobileMainPane.test.tsx",
+        "src/components/__tests__/MobileRightPanelPicker.test.tsx",
+        "src/components/__tests__/PairedTerminal.test.tsx",
+        "src/hooks/__tests__/useIsWideViewport.test.tsx"
+      ],
+      "components": [
+        "web/src/components/MobileMainPane.tsx",
+        "web/src/components/MobileRightPanelPicker.tsx",
+        "web/src/components/PairedTerminal.tsx",
+        "web/src/hooks/useIsWideViewport.ts"
       ]
     },
     {
@@ -944,9 +998,22 @@
       "kind": "vitest",
       "risk": "high",
       "specs": [
-        "src/components/cockpit/Markdown.test.tsx"
+        "src/components/cockpit/Markdown.test.tsx",
+        "src/components/cockpit/Markdown.breaks.test.tsx"
       ],
       "components": [
+        "web/src/components/cockpit/Markdown.tsx"
+      ]
+    },
+    {
+      "id": "cockpit.story.composer-single-newline",
+      "kind": "live-playwright",
+      "risk": "high",
+      "specs": [
+        "tests/live/cockpit-stories/composer-single-newline-renders.spec.ts"
+      ],
+      "components": [
+        "web/src/components/cockpit/CockpitView.tsx",
         "web/src/components/cockpit/Markdown.tsx"
       ]
     },
@@ -958,6 +1025,20 @@
         "src/components/cockpit/ToolCards.render.test.tsx"
       ],
       "components": [
+        "web/src/components/cockpit/ToolCards.tsx"
+      ]
+    },
+    {
+      "id": "cockpit.todo-group-fold",
+      "kind": "vitest",
+      "risk": "medium",
+      "specs": [
+        "src/components/cockpit/CockpitRuntime.test.ts",
+        "src/components/cockpit/ToolCards.render.test.tsx"
+      ],
+      "components": [
+        "web/src/components/cockpit/CockpitRuntime.tsx",
+        "web/src/components/cockpit/CockpitView.tsx",
         "web/src/components/cockpit/ToolCards.tsx"
       ]
     },
@@ -1298,6 +1379,20 @@
       ],
       "components": [
         "web/src/components/WorkspaceSidebar.tsx"
+      ]
+    },
+    {
+      "id": "story.sidebar-select-focuses-input",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": [
+        "tests/live/cockpit-stories/sidebar-select-focuses-terminal.spec.ts",
+        "tests/live/cockpit-stories/sidebar-select-focuses-composer.spec.ts"
+      ],
+      "components": [
+        "web/src/App.tsx",
+        "web/src/lib/terminalFocus.ts",
+        "web/src/components/cockpit/Composer.tsx"
       ]
     },
     {
@@ -1763,6 +1858,18 @@
       ]
     },
     {
+      "id": "cockpit.story.chat-bubble-overflow",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": [
+        "tests/live/cockpit-stories/chat-bubble-overflow.spec.ts"
+      ],
+      "components": [
+        "web/src/components/cockpit/CockpitView.tsx",
+        "web/src/components/cockpit/Markdown.tsx"
+      ]
+    },
+    {
       "id": "cockpit.story.composer-stop-mid-turn",
       "kind": "live-playwright",
       "risk": "high",
@@ -1884,6 +1991,18 @@
       ],
       "components": [
         "web/src/components/cockpit/Composer.tsx",
+        "web/src/components/cockpit/ToolCards.tsx"
+      ]
+    },
+    {
+      "id": "cockpit.story.fold-failed-tool-card",
+      "kind": "live-playwright",
+      "risk": "medium",
+      "specs": [
+        "tests/live/cockpit-stories/fold-failed-tool-card.spec.ts",
+        "src/components/cockpit/ToolCards.render.test.tsx"
+      ],
+      "components": [
         "web/src/components/cockpit/ToolCards.tsx"
       ]
     },
