@@ -119,6 +119,20 @@ pub struct RateLimitInfo {
     pub kind: String,
 }
 
+/// Detail for a non-retryable provider-auth failure on `session/prompt`
+/// (e.g. Gemini returning `API_KEY_INVALID` / "API key expired"). Unlike
+/// a rate-limit, there is no reset deadline; the user fixes credentials
+/// out of band and the banner clears once a later prompt succeeds. The
+/// backend stays provider-agnostic: `status` is the raw provider
+/// message and `reason` is the structured provider code when present.
+/// Provider-specific remediation copy is mapped in the UI off the active
+/// agent, not here. See #1712.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderAuthInfo {
+    pub status: String,
+    pub reason: Option<String>,
+}
+
 /// Snapshot of the most recent ACP agent handoff. Stored on
 /// `CockpitState` so reload/replay reflects the active backend without
 /// needing to walk the event log. Emitted by the `/cockpit/switch-agent`
@@ -293,6 +307,13 @@ pub struct CockpitState {
     pub recent_diffs: Vec<DiffPreview>,
     pub thinking: Option<ThinkingSignal>,
     pub rate_limit: Option<RateLimitInfo>,
+    /// Set when a `session/prompt` failed with a non-retryable provider
+    /// auth error (e.g. Gemini `API_KEY_INVALID`). Drives the
+    /// provider-aware remediation banner. Cleared once a later prompt
+    /// completes successfully (`Stopped { reason: "prompt_complete" }`),
+    /// proving the new credentials work. See #1712.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider_auth_error: Option<ProviderAuthInfo>,
     /// Last-known context-window usage from the agent's most recent
     /// `UsageUpdate`. None until the agent emits one.
     #[serde(default)]
@@ -352,6 +373,7 @@ impl CockpitState {
             recent_diffs: Vec::new(),
             thinking: None,
             rate_limit: None,
+            provider_auth_error: None,
             usage: None,
             available_commands: Vec::new(),
             last_agent_switch: None,
@@ -531,6 +553,16 @@ pub enum Event {
     ThinkingEnded,
     RateLimit {
         info: RateLimitInfo,
+    },
+    /// Non-retryable provider-auth failure on `session/prompt` (e.g.
+    /// Gemini `API_KEY_INVALID`). Mirrors the rate-limit terminal path:
+    /// the connection task emits this plus `Stopped { reason:
+    /// "provider_auth_invalid" }` so the supervisor drain skips respawn
+    /// and the budget stays whole, instead of treating it as a worker
+    /// crash. The free-form `AgentStartupError` is suppressed on this
+    /// path. See #1712.
+    ProviderAuthInvalid {
+        info: ProviderAuthInfo,
     },
     /// Opt-in auto-resume breadcrumb. Published by the reconciler (not the
     /// agent) when a session parked on `Stopped { reason: "rate_limited" }`
@@ -842,6 +874,11 @@ impl CockpitState {
             }
             Event::ThinkingEnded => self.thinking = None,
             Event::RateLimit { info } => self.rate_limit = Some(info),
+            // Non-retryable provider auth failure. Mirror RateLimit's
+            // snapshot-into-state so a client seeding from the store
+            // renders the remediation banner. The matching clear happens
+            // on the next successful `Stopped { prompt_complete }`.
+            Event::ProviderAuthInvalid { info } => self.provider_auth_error = Some(info),
             // Auto-resume fired: the park is over and a fresh worker is
             // being respawned. Clear the rate-limit snapshot so a client
             // seeding state from the store (or the persistent reducer)
@@ -899,7 +936,16 @@ impl CockpitState {
             // "Stopping..." state from the broadcast/replayed event. Bumps
             // seq so the WS replay surfaces it to live clients. See #1727.
             Event::CancelRequested { .. } => {}
-            Event::Stopped { .. } => {}
+            // A genuinely successful turn is the only proof that a fixed
+            // provider key works (Gemini validates the key at prompt
+            // time, not handshake), so clear a lingering auth banner
+            // here rather than on respawn/handshake which would clear it
+            // before the new key is exercised. See #1712.
+            Event::Stopped { reason } => {
+                if reason == "prompt_complete" {
+                    self.provider_auth_error = None;
+                }
+            }
             Event::AgentStartupError { .. } => {}
             Event::IncompatibleAgent { detail } => {
                 self.startup_error = Some(detail);

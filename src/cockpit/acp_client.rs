@@ -49,8 +49,8 @@ use super::permissions::build_approval;
 use super::state::{
     AvailableCommand, CockpitSessionId, ConfigOptionCategory, ConfigOptionChoice,
     ConfigOptionDescriptor, DiffPreview, Event, MemoryRecall, ModeInfo, Plan, PlanStep,
-    PlanStepStatus, PromptAttachmentKind, RateLimitInfo, SessionMode, SessionUsage,
-    StartupErrorDetail, ToolCall, UsageCost,
+    PlanStepStatus, PromptAttachmentKind, ProviderAuthInfo, RateLimitInfo, SessionMode,
+    SessionUsage, StartupErrorDetail, ToolCall, UsageCost,
 };
 use super::terminal_handler::TerminalManager;
 use crate::session::SandboxInfo;
@@ -188,6 +188,106 @@ pub(crate) fn classify_rate_limit_from_message(message: &str) -> Option<RateLimi
         resets_at: chrono::Utc::now() + chrono::Duration::hours(1),
         kind: "rate_limit".to_string(),
     })
+}
+
+/// Inspect a `session/prompt` ACP error for a non-retryable provider
+/// auth failure (invalid or expired API key, e.g. Gemini returning
+/// `API_KEY_INVALID` / "API key expired. Please renew the API key.").
+///
+/// Checks the structured `data` payload first (mirroring
+/// `classify_rate_limit_error`), then falls back to a tight message
+/// fingerprint. Rate-limit is shadowed: an error that already
+/// classifies as a rate-limit is never treated as an auth failure, so
+/// the rate-limit arm keeps its reset-time semantics.
+///
+/// We deliberately do NOT gate on the JSON-RPC numeric code. The only
+/// `400` in the evidence is the provider's HTTP status echoed inside
+/// the error payload, not the ACP-level error code, so requiring it
+/// would miss the real failure. The fingerprint is kept narrow on
+/// purpose: a false negative degrades to the pre-fix crash/respawn path
+/// (noisy but recoverable), whereas a false positive would silently
+/// park a session a retry could have recovered. See #1712.
+pub(crate) fn classify_provider_auth_invalid_error(
+    err: &agent_client_protocol::Error,
+) -> Option<ProviderAuthInfo> {
+    if classify_rate_limit_error(err).is_some() {
+        return None;
+    }
+    if let Some(data) = err.data.as_ref() {
+        if let Some(reason) = provider_auth_reason_in_data(data) {
+            return Some(ProviderAuthInfo {
+                status: err.message.clone(),
+                reason: Some(reason),
+            });
+        }
+    }
+    if message_is_provider_auth_invalid(&err.message) {
+        return Some(ProviderAuthInfo {
+            status: err.message.clone(),
+            reason: provider_auth_reason_in_message(&err.message),
+        });
+    }
+    None
+}
+
+/// True for the known structured invalid-key status tokens. Narrow by
+/// design; extend only with documented provider codes, never broad
+/// auth/login words.
+fn is_provider_auth_invalid_code(code: &str) -> bool {
+    matches!(code, "API_KEY_INVALID" | "API_KEY_EXPIRED")
+}
+
+/// Walk the locations a provider embeds its structured status token:
+/// top-level `reason`/`status`/`code`, plus one level into a nested
+/// `error` object (the Gemini shape). Returns the matched token.
+fn provider_auth_reason_in_data(data: &serde_json::Value) -> Option<String> {
+    fn token_at(obj: &serde_json::Value, key: &str) -> Option<String> {
+        obj.get(key)
+            .and_then(|v| v.as_str())
+            .filter(|s| is_provider_auth_invalid_code(s))
+            .map(str::to_string)
+    }
+    for key in ["reason", "status", "code"] {
+        if let Some(token) = token_at(data, key) {
+            return Some(token);
+        }
+    }
+    if let Some(inner) = data.get("error") {
+        for key in ["reason", "status", "code"] {
+            if let Some(token) = token_at(inner, key) {
+                return Some(token);
+            }
+        }
+    }
+    None
+}
+
+/// Tight message fingerprint for the auth-invalid failure. Requires the
+/// exact `API_KEY_INVALID` token, the verbatim Gemini renewal phrase, or
+/// "api key" paired with an invalid/expired qualifier. Never matches
+/// bare "authenticate" / "login" (those overlap retryable OAuth flows).
+fn message_is_provider_auth_invalid(message: &str) -> bool {
+    if message.contains("API_KEY_INVALID") || message.contains("API_KEY_EXPIRED") {
+        return true;
+    }
+    let lower = message.to_ascii_lowercase();
+    if lower.contains("renew the api key") {
+        return true;
+    }
+    lower.contains("api key")
+        && (lower.contains("expired") || lower.contains("invalid") || lower.contains("not valid"))
+}
+
+/// Recover the structured token from a message-tier match when present,
+/// so the timeline/log keeps the provider code even without `data`.
+fn provider_auth_reason_in_message(message: &str) -> Option<String> {
+    if message.contains("API_KEY_INVALID") {
+        Some("API_KEY_INVALID".to_string())
+    } else if message.contains("API_KEY_EXPIRED") {
+        Some("API_KEY_EXPIRED".to_string())
+    } else {
+        None
+    }
 }
 
 /// Experimental `session/delete` ACP request. Adapters advertising
@@ -4125,6 +4225,13 @@ async fn run_connection_task<W, R>(
                         // follow-up prompt is silently dropped. See #1196.
                         let mut agent_unresponsive = false;
                         let mut rate_limited = false;
+                        // Set when session/prompt fails with a non-retryable
+                        // provider auth error (invalid/expired API key). Like
+                        // `rate_limited`, this is a typed terminal park, not a
+                        // crash: the drain task short-circuits respawn on
+                        // `Stopped { provider_auth_invalid }` so the budget
+                        // stays whole. See #1712.
+                        let mut auth_invalid = false;
                         // True when the adapter resolves the in-flight
                         // session/prompt with `StopReason::Cancelled`,
                         // i.e. the user cancelled and the adapter
@@ -4192,6 +4299,34 @@ async fn run_connection_task<W, R>(
                                                     .send(Event::RateLimit { info })
                                                     .await;
                                                 rate_limited = true;
+                                                shutdown = true;
+                                                break;
+                                            }
+                                            // Provider auth-invalid is the
+                                            // same class of non-retryable
+                                            // prompt-time failure as
+                                            // rate-limit: respawning would
+                                            // hit the identical bad-key
+                                            // failure and burn restart
+                                            // budget. Emit a typed event so
+                                            // the UI shows provider-aware
+                                            // remediation, then park instead
+                                            // of returning the generic error
+                                            // that ends in AgentStartupError.
+                                            // See #1712.
+                                            if let Some(info) =
+                                                classify_provider_auth_invalid_error(&e)
+                                            {
+                                                info!(
+                                                    target: "cockpit.acp",
+                                                    session = %session_label,
+                                                    reason = ?info.reason,
+                                                    "session/prompt returned provider auth-invalid; parking session"
+                                                );
+                                                let _ = event_tx_for_block
+                                                    .send(Event::ProviderAuthInvalid { info })
+                                                    .await;
+                                                auth_invalid = true;
                                                 shutdown = true;
                                                 break;
                                             }
@@ -4544,6 +4679,13 @@ async fn run_connection_task<W, R>(
                         //     #1240.
                         let reason = if rate_limited {
                             "rate_limited"
+                        } else if auth_invalid {
+                            // Same precedence rationale as rate_limited: a
+                            // typed non-crash signal from prompt_fut Err that
+                            // the drain task short-circuits respawn on. Sits
+                            // above the crash-like reasons so it is never
+                            // masked into a budget-burning respawn. See #1712.
+                            "provider_auth_invalid"
                         } else if force_stopped {
                             // Explicit user "Force stop" wins over the
                             // orphan/unresponsive watchdog reasons: it's the

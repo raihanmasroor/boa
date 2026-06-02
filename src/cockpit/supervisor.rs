@@ -1313,6 +1313,12 @@ impl<S: BroadcastSink> Supervisor<S> {
                     // different ACP backend via `/cockpit/switch-agent`. See
                     // #1281.
                     let mut rate_limited = false;
+                    // Set on a non-retryable provider auth failure
+                    // (`Stopped { reason: "provider_auth_invalid" }`). Same
+                    // no-respawn handling as rate-limit: the bad key would
+                    // fail identically on the next prompt, so respawning only
+                    // burns restart budget. See #1712.
+                    let mut auth_invalid = false;
                     while let Some(event) = inbound.recv().await {
                         if let Event::Stopped { reason } = &event {
                             if reason == "agent_unresponsive"
@@ -1326,6 +1332,8 @@ impl<S: BroadcastSink> Supervisor<S> {
                                 agent_unresponsive = true;
                             } else if reason == "rate_limited" {
                                 rate_limited = true;
+                            } else if reason == "provider_auth_invalid" {
+                                auth_invalid = true;
                             }
                         }
                         // Mirror the agent-assigned id into the cached
@@ -1501,6 +1509,24 @@ impl<S: BroadcastSink> Supervisor<S> {
                             target: "cockpit.supervisor",
                             session = %session_id,
                             "rate-limited; dropping worker handle without respawn"
+                        );
+                        let mut guard = workers.lock().await;
+                        guard.remove(&session_id);
+                        return;
+                    }
+                    // Provider auth-invalid park: same no-respawn handling as
+                    // rate-limit. The connection task emitted
+                    // ProviderAuthInvalid + Stopped{provider_auth_invalid};
+                    // the bad key fails identically on retry, so skip
+                    // restart_decision, keep the budget whole, suppress the
+                    // synthetic AgentStartupError, and drop the handle so a
+                    // follow-up /cockpit/spawn after the user fixes the key
+                    // does not see AlreadyRunning. See #1712.
+                    if auth_invalid {
+                        info!(
+                            target: "cockpit.supervisor",
+                            session = %session_id,
+                            "provider auth-invalid; dropping worker handle without respawn"
                         );
                         let mut guard = workers.lock().await;
                         guard.remove(&session_id);
