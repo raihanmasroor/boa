@@ -50,6 +50,48 @@ toast or a web error banner) can show the right next step:
 - **Network unreachable**: distinguished from auth, so a GitHub outage never
   tells you to re-login.
 
+## Tracking pull requests and CI status
+
+When you run `aoe serve`, the daemon keeps each session's GitHub state fresh so
+the dashboard can show PR and CI status without you wiring anything up.
+
+- **Discovery.** For every session, AoE reads the worktree (or each repo in a
+  multi-repo workspace), parses the `github.com` owner/repo from the `origin`
+  remote, and asks GitHub for the open PRs whose head is your branch. Non-GitHub
+  remotes are skipped. The discovered PR numbers are persisted on the session,
+  so a restart shows the linked PR immediately instead of re-querying on every
+  render.
+- **Status.** For each tracked PR the daemon fetches the PR state
+  (open/closed/draft/merged, mergeability) and aggregates its head commit's
+  check runs into a single verdict: passing, failing, pending, or none. `skipped`
+  and `neutral` checks count as passing; `cancelled`, `timed_out`, and
+  `action_required` count as failing; anything not yet completed is pending. This
+  live status lives only in memory and is rebuilt after a restart.
+
+The poller is the single source of GitHub traffic and the only writer of the
+tracked PR numbers; the REST handlers (`GET /api/github/status` for every
+session in one call, `GET /api/sessions/{id}/github` for one) only ever read the
+cache. None of this runs in the TUI yet.
+
+### Configuring the poller
+
+The `[github]` config section (editable in the TUI settings screen and the web
+dashboard's GitHub tab, or in `config.toml`) controls it:
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `true` | Master switch for all GitHub polling. |
+| `poll_interval_secs` | `30` | Base seconds between refresh cycles; the backoff starts here. |
+| `max_poll_interval_secs` | `300` | Ceiling the backoff climbs to while nothing changes. |
+| `allow_unauthenticated_polling` | `false` | Poll without a token. Off by default because unauthenticated GitHub is capped at 60 requests/hour. |
+
+The interval grows toward the maximum while PR and CI state is unchanged and
+snaps back to the base the moment something changes. A rate-limited response
+parks the loop until the `Retry-After` / `X-RateLimit-Reset` the response
+advertised. With no token and `allow_unauthenticated_polling` off, the poller
+idles rather than burning the public 60/hour budget; resolve a token (see above)
+to turn it on.
+
 ## Deferred to follow-ups
 
 This foundation deliberately stops at token resolution, the typed errors above,
@@ -59,3 +101,6 @@ and the read endpoints the update checker needs. The rest is tracked separately:
 - GraphQL, ETag conditional caching, and rate-limit backoff in the client: #1679.
 - A guided scope-elevation re-auth flow on write failures: #1680.
 - GitHub Enterprise host derivation from the git remote: #1668.
+- Per-row PR status chips on the session list: #676.
+- A dedicated checks tab with per-check detail: #664.
+- Surfacing PR/CI status in the TUI status tier: #676.
