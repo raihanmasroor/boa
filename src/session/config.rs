@@ -576,6 +576,22 @@ impl Default for GitHubConfig {
     }
 }
 
+impl GitHubConfig {
+    /// Return a copy with the documented invariants enforced: a poll interval
+    /// of at least 1 second and a max interval no smaller than the base.
+    /// Applied at the point of use so a hand-edited `config.toml` (which
+    /// deserializes without validation) is corrected rather than trusted.
+    pub fn normalized(&self) -> GitHubConfig {
+        let poll = self.poll_interval_secs.max(1);
+        GitHubConfig {
+            enabled: self.enabled,
+            poll_interval_secs: poll,
+            max_poll_interval_secs: self.max_poll_interval_secs.max(poll),
+            allow_unauthenticated_polling: self.allow_unauthenticated_polling,
+        }
+    }
+}
+
 fn default_github_poll_interval_secs() -> u64 {
     30
 }
@@ -2109,6 +2125,50 @@ pub fn get_telemetry_settings() -> TelemetryConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn github_config_defaults() {
+        let cfg = GitHubConfig::default();
+        assert!(cfg.enabled);
+        assert_eq!(cfg.poll_interval_secs, 30);
+        assert_eq!(cfg.max_poll_interval_secs, 300);
+        assert!(!cfg.allow_unauthenticated_polling);
+    }
+
+    #[test]
+    fn github_config_missing_fields_use_defaults() {
+        // A partial [github] table (e.g. only `enabled`) fills the rest from
+        // the field defaults.
+        let cfg: GitHubConfig = toml::from_str("enabled = false").unwrap();
+        assert!(!cfg.enabled);
+        assert_eq!(cfg.poll_interval_secs, 30);
+        assert_eq!(cfg.max_poll_interval_secs, 300);
+    }
+
+    #[test]
+    fn github_config_normalize_enforces_invariants() {
+        // Hand-edited config with max < base and a zero base is corrected.
+        let raw = GitHubConfig {
+            enabled: true,
+            poll_interval_secs: 0,
+            max_poll_interval_secs: 10,
+            allow_unauthenticated_polling: true,
+        };
+        let n = raw.normalized();
+        assert_eq!(n.poll_interval_secs, 1, "base floored to 1");
+        assert_eq!(
+            n.max_poll_interval_secs, 10,
+            "max kept since >= floored base"
+        );
+
+        let raw2 = GitHubConfig {
+            poll_interval_secs: 120,
+            max_poll_interval_secs: 30,
+            ..GitHubConfig::default()
+        };
+        let n2 = raw2.normalized();
+        assert_eq!(n2.max_poll_interval_secs, 120, "max raised to base");
+    }
 
     #[test]
     fn test_effective_profile_returns_input_when_non_empty() {
