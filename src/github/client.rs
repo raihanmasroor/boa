@@ -207,11 +207,13 @@ impl GitHubClient {
         self.send_json(self.http.get(url)).await
     }
 
-    /// Check runs for a git ref (commit SHA or branch).
+    /// Check runs for a git ref.
     ///
-    /// `GET /repos/{owner}/{repo}/commits/{git_ref}/check-runs`. This covers
-    /// the modern Checks API only; legacy Commit Status contexts are not
-    /// aggregated (documented limitation, tracked for a follow-up).
+    /// `GET /repos/{owner}/{repo}/commits/{git_ref}/check-runs`. Pass a commit
+    /// SHA: `git_ref` is interpolated into the path, so a branch name
+    /// containing `/` would break the URL. This covers the modern Checks API
+    /// only; legacy Commit Status contexts are not aggregated (documented
+    /// limitation, tracked for a follow-up).
     pub async fn list_check_runs(
         &self,
         owner: &str,

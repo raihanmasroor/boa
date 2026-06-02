@@ -634,7 +634,18 @@ export function SettingsView({
                   : 30
               }
               min={1}
-              onChange={(v) => saveSubField("github", "poll_interval_secs", v)}
+              onChange={(v) => {
+                const base = Math.max(1, v);
+                saveSubField("github", "poll_interval_secs", base);
+                // Keep max >= base: raise the ceiling when the base passes it.
+                const currentMax =
+                  typeof github.max_poll_interval_secs === "number"
+                    ? github.max_poll_interval_secs
+                    : 300;
+                if (currentMax < base) {
+                  saveSubField("github", "max_poll_interval_secs", base);
+                }
+              }}
             />
             <NumberField
               label="Max poll interval (s)"
@@ -645,9 +656,18 @@ export function SettingsView({
                   : 300
               }
               min={1}
-              onChange={(v) =>
-                saveSubField("github", "max_poll_interval_secs", v)
-              }
+              onChange={(v) => {
+                const base =
+                  typeof github.poll_interval_secs === "number"
+                    ? github.poll_interval_secs
+                    : 30;
+                // Clamp the ceiling up to the base so max is never below it.
+                saveSubField(
+                  "github",
+                  "max_poll_interval_secs",
+                  Math.max(v, base),
+                );
+              }}
             />
             <ToggleField
               label="Allow unauthenticated polling"
