@@ -51,6 +51,7 @@ pub enum SettingsCategory {
     Web,
     Acp,
     Diff,
+    GitHub,
     Logging,
 }
 
@@ -72,6 +73,7 @@ impl SettingsCategory {
             Self::Web => "Web",
             Self::Acp => "Acp",
             Self::Diff => "Diff",
+            Self::GitHub => "GitHub",
             Self::Logging => "Logging",
         }
     }
@@ -95,6 +97,7 @@ impl SettingsCategory {
             Self::Web => "Web",
             Self::Acp => "Acp",
             Self::Diff => "Diff",
+            Self::GitHub => "GitHub",
             Self::Telemetry => "Telemetry",
             Self::Logging => "Logging",
         }

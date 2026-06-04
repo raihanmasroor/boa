@@ -543,7 +543,12 @@ pub struct GitHubConfig {
     /// Base interval between PR/CI status refresh cycles, in seconds. The
     /// adaptive backoff starts here.
     #[serde(default = "default_github_poll_interval_secs")]
-    #[setting(label = "Poll interval (s)", widget = "number", min = 1, validate = "range:1")]
+    #[setting(
+        label = "Poll interval (s)",
+        widget = "number",
+        min = 1,
+        validate = "range:1"
+    )]
     pub poll_interval_secs: u64,
     /// Ceiling the adaptive backoff climbs to after repeated no-change
     /// cycles, in seconds. Clamped to at least `poll_interval_secs` at use.
