@@ -1769,23 +1769,31 @@ impl HomeView {
                     let idle_age = inst.idle_age();
                     let is_fresh_idle =
                         matches!(idle_age, Some(age) if age < self.idle_decay_window);
-                    let (icon, icon_color) = match inst.status {
-                        Status::Running => (spinner_running(&inst.created_at), theme.running),
-                        Status::Waiting => (spinner_waiting(&inst.created_at), theme.waiting),
-                        Status::Idle if is_fresh_idle => (
-                            spinner_idle_fresh(&inst.created_at, inst.idle_entered_at),
-                            theme.idle_color_at_age(idle_age, self.idle_decay_window),
-                        ),
-                        Status::Idle => (
-                            ICON_IDLE,
-                            theme.idle_color_at_age(idle_age, self.idle_decay_window),
-                        ),
-                        Status::Unknown => (ICON_UNKNOWN, theme.waiting),
-                        Status::Stopped => (ICON_STOPPED, theme.dimmed),
-                        Status::Error => (ICON_ERROR, theme.error),
-                        Status::Starting => (spinner_starting(&inst.created_at), theme.dimmed),
-                        Status::Deleting => (ICON_DELETING, theme.waiting),
-                        Status::Creating => (spinner_starting(&inst.created_at), theme.accent),
+                    // An archived row is parked; its preview body renders the
+                    // "Archived" placeholder. Force the compact title icon to
+                    // the stopped glyph so the hoisted title can't show a live
+                    // spinner from a stale (pre-poll) status and contradict it.
+                    let (icon, icon_color) = if inst.is_archived() {
+                        (ICON_STOPPED, theme.dimmed)
+                    } else {
+                        match inst.status {
+                            Status::Running => (spinner_running(&inst.created_at), theme.running),
+                            Status::Waiting => (spinner_waiting(&inst.created_at), theme.waiting),
+                            Status::Idle if is_fresh_idle => (
+                                spinner_idle_fresh(&inst.created_at, inst.idle_entered_at),
+                                theme.idle_color_at_age(idle_age, self.idle_decay_window),
+                            ),
+                            Status::Idle => (
+                                ICON_IDLE,
+                                theme.idle_color_at_age(idle_age, self.idle_decay_window),
+                            ),
+                            Status::Unknown => (ICON_UNKNOWN, theme.waiting),
+                            Status::Stopped => (ICON_STOPPED, theme.dimmed),
+                            Status::Error => (ICON_ERROR, theme.error),
+                            Status::Starting => (spinner_starting(&inst.created_at), theme.dimmed),
+                            Status::Deleting => (ICON_DELETING, theme.waiting),
+                            Status::Creating => (spinner_starting(&inst.created_at), theme.accent),
+                        }
                     };
                     Line::from(vec![
                         Span::raw(" "),
@@ -1879,12 +1887,59 @@ impl HomeView {
         self.preview_text_view = crate::tui::home::PreviewTextView::default();
         frame.render_widget(block, area);
 
+        // An archived session's pane was killed on archive, so there's nothing
+        // live to capture. Short-circuit every view mode to a calm "Archived"
+        // placeholder instead of forking captures that come back empty and
+        // surface as "No output available".
+        let selected_archived = self
+            .selected_session
+            .as_ref()
+            .and_then(|id| self.get_instance(id))
+            .is_some_and(|inst| inst.is_archived());
+
+        // A session whose pane is simply gone (killed, exited, server reboot)
+        // with no diagnostic detail carries the generic gone-error. Present
+        // that as a calm "Stopped" placeholder rather than the red crash error;
+        // a real crash leaves a specific message and still renders red. Covers
+        // the just-unarchived row, which sits Stopped until restarted.
+        //
+        // Only in Structured view: the gone-error is about the agent pane, but
+        // Tool / Terminal views show a different, independently-live pane (a tool
+        // session can be running while the agent has exited), so the placeholder
+        // must not hide that pane's output there.
+        let selected_stopped = !selected_archived
+            && matches!(self.view_mode, ViewMode::Structured)
+            && self
+                .selected_session
+                .as_ref()
+                .and_then(|id| self.get_instance(id))
+                .is_some_and(|inst| {
+                    inst.last_error.as_deref() == Some(crate::session::TMUX_SESSION_GONE_ERROR)
+                });
+
         // Keep the off-thread capture worker pointed at whatever pane this
         // view shows (and tuned to live-send vs. idle cadence) before any
         // refresh reads from it. Done once here, not per-branch, so the
-        // creating / no-selection paths also retarget or tear it down.
-        let desired = self.displayed_pane_tmux_name();
+        // creating / no-selection / archived / stopped paths also retarget or
+        // tear it down (no live pane feeds `None` so the worker stops capturing).
+        let desired = if selected_archived || selected_stopped {
+            None
+        } else {
+            self.displayed_pane_tmux_name()
+        };
         self.sync_preview_capture_worker(desired);
+
+        if selected_archived {
+            self.render_archived_preview(frame, inner, theme);
+            self.paint_preview_selection(frame, theme);
+            return;
+        }
+
+        if selected_stopped {
+            self.render_stopped_preview(frame, inner, theme);
+            self.paint_preview_selection(frame, theme);
+            return;
+        }
 
         match self.view_mode {
             ViewMode::Structured => {
@@ -2344,6 +2399,69 @@ impl HomeView {
                 .style(Style::default().fg(theme.dimmed));
             frame.render_widget(hint, inner);
         }
+    }
+
+    /// Calm placeholder shown in the preview pane when the selected session is
+    /// archived. Archiving kills the pane, so the normal capture path would
+    /// render an empty body ("No output available"); this explains the state
+    /// instead and points at `z` to bring the row back to the active list.
+    fn render_archived_preview(&self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let title = self
+            .selected_session
+            .as_ref()
+            .and_then(|id| self.get_instance(id))
+            .map(|inst| inst.title.clone())
+            .unwrap_or_default();
+        let key = if self.strict_hotkeys { "Z" } else { "z" };
+        let parked = if title.is_empty() {
+            "This session is parked. Its agent was stopped.".to_string()
+        } else {
+            format!("\"{}\" is parked. Its agent was stopped.", title)
+        };
+        let lines = vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "Archived",
+                Style::default().fg(theme.text).bold(),
+            )),
+            Line::from(""),
+            Line::from(Span::styled(parked, Style::default().fg(theme.dimmed))),
+            Line::from(""),
+            Line::from(vec![
+                Span::styled("Press ", Style::default().fg(theme.dimmed)),
+                Span::styled(key, Style::default().fg(theme.hint).bold()),
+                Span::styled(" to unarchive it.", Style::default().fg(theme.dimmed)),
+            ]),
+        ];
+        let para = Paragraph::new(lines).alignment(Alignment::Center);
+        frame.render_widget(para, area);
+    }
+
+    /// Calm placeholder shown when the selected session's pane is simply gone
+    /// (the generic gone-error, no diagnostic detail). Replaces the red crash
+    /// error with a "Stopped, enter to start" message; the row's real status
+    /// icon still signals the state in the sidebar.
+    fn render_stopped_preview(&self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let lines = vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "Stopped",
+                Style::default().fg(theme.text).bold(),
+            )),
+            Line::from(""),
+            Line::from(Span::styled(
+                "This session isn't running.",
+                Style::default().fg(theme.dimmed),
+            )),
+            Line::from(""),
+            Line::from(vec![
+                Span::styled("Press ", Style::default().fg(theme.dimmed)),
+                Span::styled("Enter", Style::default().fg(theme.hint).bold()),
+                Span::styled(" to start it.", Style::default().fg(theme.dimmed)),
+            ]),
+        ];
+        let para = Paragraph::new(lines).alignment(Alignment::Center);
+        frame.render_widget(para, area);
     }
 
     fn render_status_bar(&self, frame: &mut Frame, area: Rect, theme: &Theme) {
