@@ -30,7 +30,7 @@
 
 ## Build, Test, and Development Commands
 
-- `cargo build` / `cargo build --release`: TUI-only (release binary at `target/release/aoe`).
+- `cargo build` / `cargo build --release`: full build including the web dashboard by default (release binary at `target/release/aoe`); `--no-default-features` is the TUI-only build (see below).
 - `cargo build --profile dev-release`: optimized local builds without LTO; faster compile. Lands on the release namespace (app dir, tmux prefix, serve port), so it shares state with an installed release `aoe`. Use `--release` only when producing a shipping binary.
 - `cargo build` includes the web dashboard by default (needs Node.js + npm); `cargo build --no-default-features` is the TUI-only build with no JS tooling.
 - `cargo test`: unit + integration tests (some skip if `tmux` unavailable).

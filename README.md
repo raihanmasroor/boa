@@ -169,10 +169,12 @@ cargo check                       # Type-check
 cargo test                        # Run tests
 cargo fmt                         # Format
 cargo clippy                      # Lint
-cargo build --release             # Release build (TUI only)
 
 # Release build (includes the web dashboard: axum + the React frontend via build.rs)
 cargo build --release
+
+# TUI-only release build (no Node toolchain needed)
+cargo build --release --no-default-features
 
 # Run from source
 cargo run                         # TUI

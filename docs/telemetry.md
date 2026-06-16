@@ -32,12 +32,15 @@ kinds:
     allow/deny mix, agent switches, plan-mode use, queued prompts),
   - for `aoe serve` only, coarse deployment enums: auth mode (`token` /
     `passphrase` / `none`) and exposure (`tunnel` / `tailscale` / `local`),
-  - plugin adoption: a per-source install count (`builtin` / `github` /
-    `path`) and, for plugins whose identity is already public, whether they
-    are active. Only builtin plugin ids and ids from the curated featured
-    index are ever named; an unfeatured GitHub install (which may be a
-    private repository) or a local-directory plugin is only counted, never
-    identified. No repository slug or filesystem path leaves your machine,
+  - plugin adoption: `plugins_by_source` (a map of `builtin` / `github` /
+    `path` to install count) and `plugins_active` (a map of allowlisted
+    plugin id to an active boolean). The identity allowlist is the closed set
+    of builtin plugin ids compiled into the binary plus the ids in
+    `plugins/featured.toml`; only those are ever named. An unfeatured GitHub
+    install (which may be a private repository) or a local-directory plugin is
+    only counted in `plugins_by_source`, never identified. No repository slug
+    or filesystem path leaves your machine. These fields are part of the
+    `usage_snapshot` schema, now at version 12 (`data_schema_version`),
   - the version-health signals below.
 
 Model names are mapped to a coarse family vocabulary (`claude`, `openai`,
