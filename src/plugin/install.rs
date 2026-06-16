@@ -260,9 +260,19 @@ pub fn install(
     })
 }
 
+/// Whether `update` must re-prompt the user. Beyond a capability-set change,
+/// a featured slug serving a version absent from the index (`UnknownVersion`)
+/// forces the prompt: that is the version-bump hijack vector, and a
+/// capability-only gate would let it through silently (auto-update declines
+/// the forced prompt, so it fail-closes to NeedsApproval).
+fn update_needs_prompt(caps_changed: bool, featured: FeaturedValidation) -> bool {
+    caps_changed || featured == FeaturedValidation::UnknownVersion
+}
+
 /// Update one installed plugin from its recorded source. Re-prompts via
-/// `confirm` only when the new manifest's capability set differs from the
-/// granted one; an unchanged set keeps the grant (re-pinned to the new
+/// `confirm` when the capability set differs from the granted one, or when a
+/// featured slug serves an unverified (unlisted) version; an unchanged set on
+/// a verified/non-featured release keeps the grant (re-pinned to the new
 /// manifest hash).
 pub fn update(
     plugin_id: &str,
@@ -304,7 +314,7 @@ pub fn update(
     let mut old_caps = granted_caps.clone();
     new_caps.sort();
     old_caps.sort();
-    if new_caps != old_caps {
+    if update_needs_prompt(new_caps != old_caps, featured) {
         let prompt = InstallPrompt {
             id: plugin_id.to_string(),
             name: staged.manifest.name.clone(),
@@ -448,6 +458,23 @@ fn copy_plugin_tree(src: &Path, dst: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn update_prompts_on_unverified_featured_version_even_with_unchanged_caps() {
+        // The hijack: caps unchanged, but a featured slug now serves a version
+        // not in the index. Must still prompt (so auto-update fail-closes).
+        assert!(update_needs_prompt(
+            false,
+            FeaturedValidation::UnknownVersion
+        ));
+        // Capability change always prompts, regardless of featured status.
+        assert!(update_needs_prompt(true, FeaturedValidation::Verified));
+        assert!(update_needs_prompt(true, FeaturedValidation::NotFeatured));
+        // The only silent path: unchanged caps on a verified or ordinary
+        // community release.
+        assert!(!update_needs_prompt(false, FeaturedValidation::Verified));
+        assert!(!update_needs_prompt(false, FeaturedValidation::NotFeatured));
+    }
 
     #[test]
     fn parse_source_distinguishes_paths_and_slugs() {
