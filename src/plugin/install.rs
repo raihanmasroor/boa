@@ -43,6 +43,10 @@ pub struct InstallPrompt {
     /// binds to what the user reviewed, not whatever the source serves on
     /// the second fetch.
     pub manifest_hash: String,
+    /// Core setting defaults this plugin will redirect, as `section.field =
+    /// value` strings. Surfaced on every prompt because redirecting a core
+    /// default needs no capability, so it would otherwise be invisible.
+    pub core_default_overrides: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -233,6 +237,7 @@ pub fn install(
         previous_capabilities: None,
         featured,
         manifest_hash: staged_hash.clone(),
+        core_default_overrides: super::core_overrides::declared_core_overrides(&staged.manifest),
     };
     if !confirm(&prompt) {
         return Ok(InstallOutcome::Declined);
@@ -338,6 +343,9 @@ pub fn update(
             previous_capabilities: Some(granted_caps),
             featured,
             manifest_hash: new_hash.clone(),
+            core_default_overrides: super::core_overrides::declared_core_overrides(
+                &staged.manifest,
+            ),
         };
         if !confirm(&prompt) {
             return Ok(InstallOutcome::Declined);

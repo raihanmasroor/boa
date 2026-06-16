@@ -414,6 +414,16 @@ export function PluginsSettings({ onPluginsChanged }: { onPluginsChanged?: () =>
               prompt.capabilities.map((c) => <li key={c}>{c}</li>)
             )}
           </ul>
+          {prompt.core_default_overrides.length > 0 && (
+            <>
+              <p className="mt-2 text-xs">Changes the default of these core settings:</p>
+              <ul className="mt-1 list-inside list-disc text-xs">
+                {prompt.core_default_overrides.map((ov) => (
+                  <li key={ov}>{ov}</li>
+                ))}
+              </ul>
+            </>
+          )}
           <p className="mt-2 text-[11px] text-amber-300">
             Capability gating limits what the plugin can ask aoe to do; it is not an OS sandbox. This plugin{" "}
             {prompt.isolation_summary}.

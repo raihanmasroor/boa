@@ -249,7 +249,7 @@ pub fn resolve_all(registry: &PluginRegistry) -> Vec<ResolvedSetting> {
         .flat_map(|p| p.manifest.setting_defaults.iter())
         .filter_map(|ov| {
             let (section, field) = ov.target.rsplit_once('.')?;
-            super::core_overrides::is_core_field(section, field)
+            super::core_overrides::is_plugin_overridable(section, field)
                 .then(|| (section.to_string(), field.to_string()))
         })
         .collect();

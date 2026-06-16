@@ -110,11 +110,18 @@ priority = 10
 reason = "This plugin ships its own custom-agent detection."
 
 [[setting_defaults]]
-target = "session.yolo_mode_default"
+target = "session.strict_hotkeys"
 value = true
 priority = 5
 reason = "Example core-setting target."
 ```
+
+Core targets are restricted to a curated allowlist of cosmetic and workflow
+defaults (theme, a handful of `session.*` UX toggles). Security-load-bearing
+defaults (`auth.*`, `web.*`, `updates.*`, `telemetry.*`, sandbox/container
+settings, agent command/args/hooks, `session.yolo_mode_default`) are NOT
+plugin-overridable; an override targeting one is silently ignored. Any core
+default a plugin does change is listed on the install prompt.
 
 Overrides never beat the user: a value set in config.toml always wins,
 and a core override only applies while the on-disk value is absent or

@@ -181,6 +181,7 @@ fn prompt_json(prompt: &InstallPrompt) -> serde_json::Value {
         "source": prompt.source.describe_redacted(),
         "featured": prompt.featured,
         "manifest_hash": prompt.manifest_hash,
+        "core_default_overrides": prompt.core_default_overrides,
         "isolation_summary": plugin::sandbox::backend().isolation_summary(),
     })
 }

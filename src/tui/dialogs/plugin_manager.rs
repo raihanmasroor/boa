@@ -618,6 +618,13 @@ fn prompt_summary(prompt: &InstallPrompt) -> Vec<String> {
             lines.push(format!("  - {}", cap.as_str()));
         }
     }
+    if !prompt.core_default_overrides.is_empty() {
+        lines.push(String::new());
+        lines.push("Changes the default of these core settings:".into());
+        for ov in &prompt.core_default_overrides {
+            lines.push(format!("  - {ov}"));
+        }
+    }
     lines.push(String::new());
     lines.push(format!(
         "Capability gating limits what the plugin can ask aoe to do; it is not an OS \

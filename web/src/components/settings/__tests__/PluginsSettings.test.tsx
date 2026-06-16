@@ -109,6 +109,7 @@ describe("PluginsSettings contract", () => {
         source: "github:o/r",
         featured: "verified",
         manifest_hash: "sha256:staged",
+        core_default_overrides: ['theme.name = "dark"'],
         isolation_summary: "runs as a regular process",
       },
     });
@@ -128,6 +129,9 @@ describe("PluginsSettings contract", () => {
     expect(dialog.textContent).toContain("fs-read");
     expect(dialog.textContent).toContain("not an OS sandbox");
     expect(dialog.textContent).toContain("validated by the AoE maintainers");
+    // Core defaults the plugin will change are surfaced on the prompt.
+    expect(dialog.textContent).toContain("Changes the default of these core settings");
+    expect(dialog.textContent).toContain('theme.name = "dark"');
 
     // Phase 2: approval re-sends with confirm_capabilities: true.
     fireEvent.click(await findByText("Approve and continue"));
@@ -152,6 +156,7 @@ describe("PluginsSettings contract", () => {
         source: "github:o/r",
         featured: "not_featured",
         manifest_hash: "sha256:other",
+        core_default_overrides: [],
         isolation_summary: "runs as a regular process",
       },
     });

@@ -106,15 +106,60 @@ static BUILTIN_DEFAULTS: LazyLock<toml::Table> = LazyLock::new(|| {
         .expect("default config serializes to a table")
 });
 
-/// Core `section.field` pairs that exist in the compile-time schema; the only
-/// targets a plugin may override. Anything else is a plugin-setting target
-/// (resolved elsewhere) or a typo (ignored).
+/// Core `section.field` pairs that exist in the compile-time schema. Used for
+/// provenance display (`aoe settings explain`); the set a plugin may actually
+/// override is the narrower [`PLUGIN_OVERRIDABLE_CORE_FIELDS`].
 static CORE_FIELDS: LazyLock<std::collections::HashSet<(String, String)>> = LazyLock::new(|| {
     crate::session::settings_schema::schema()
         .into_iter()
         .map(|d| (d.section, d.field))
         .collect()
 });
+
+/// Core defaults a plugin's `[[setting_defaults]]` may redirect. DEFAULT-DENY:
+/// only cosmetic / workflow fields are listed. Security-load-bearing defaults
+/// (`auth.*`, `web.*`, `updates.*`, `telemetry.*`, container/sandbox config,
+/// agent command/args/hooks, `session.yolo_mode_default`, custom agents, ...)
+/// are deliberately absent, so a granted plugin cannot silently weaken them
+/// through a manifest table that needs no capability. Widening this list is a
+/// deliberate, test-breaking change (`allowlist_only_names_real_safe_fields`).
+const PLUGIN_OVERRIDABLE_CORE_FIELDS: &[(&str, &str)] = &[
+    ("theme", "name"),
+    ("theme", "color_mode"),
+    ("theme", "idle_decay_minutes"),
+    ("session", "mouse_capture"),
+    ("session", "strict_hotkeys"),
+    ("session", "snooze_duration_minutes"),
+    ("session", "auto_stop_idle_secs"),
+    ("session", "confirm_before_quit"),
+    ("session", "click_action"),
+];
+
+/// Whether a plugin may override the DEFAULT of this core field. Default-deny:
+/// only the curated cosmetic/workflow allowlist returns true.
+pub fn is_plugin_overridable(section: &str, field: &str) -> bool {
+    PLUGIN_OVERRIDABLE_CORE_FIELDS
+        .iter()
+        .any(|(s, f)| *s == section && *f == field)
+}
+
+/// The core defaults a manifest's `[[setting_defaults]]` will actually
+/// redirect (allowlisted core targets only), as `section.field = value`
+/// strings for the install prompt. Plugin-to-plugin targets and ignored
+/// (non-overridable or unknown) core targets are omitted, so the prompt
+/// reflects exactly what will change.
+pub fn declared_core_overrides(manifest: &PluginManifest) -> Vec<String> {
+    let mut out: Vec<String> = manifest
+        .setting_defaults
+        .iter()
+        .filter_map(|ov| {
+            let (section, field) = ov.target.rsplit_once('.')?;
+            is_plugin_overridable(section, field).then(|| format!("{} = {}", ov.target, ov.value))
+        })
+        .collect();
+    out.sort();
+    out
+}
 
 /// Apply active plugins' core default overrides to a raw config table, in
 /// place, before it deserializes into `Config`, and remember exactly what
@@ -153,7 +198,7 @@ fn winners<'a>(
             let Some((section, field)) = ov.target.rsplit_once('.') else {
                 continue;
             };
-            if !CORE_FIELDS.contains(&(section.to_string(), field.to_string())) {
+            if !is_plugin_overridable(section, field) {
                 continue;
             }
             let candidate = (ov.priority, plugin.id.as_str(), &ov.value);
@@ -265,6 +310,11 @@ pub fn core_override_candidates(
     section: &str,
     field: &str,
 ) -> Vec<(String, i32, toml::Value)> {
+    // A plugin override of a non-overridable core field never applies, so it
+    // is not a real candidate: do not surface it in `settings explain`.
+    if !is_plugin_overridable(section, field) {
+        return Vec::new();
+    }
     let target = format!("{section}.{field}");
     let mut overrides: Vec<(String, i32, toml::Value)> = registry
         .active()
@@ -330,8 +380,53 @@ mod tests {
         }
     }
 
-    // session.yolo_mode_default is a real bool core field defaulting false.
-    const TARGET: &str = "session.yolo_mode_default";
+    // session.strict_hotkeys is a real bool core field defaulting false, and
+    // is on the plugin-overridable allowlist.
+    const TARGET: &str = "session.strict_hotkeys";
+
+    #[test]
+    fn allowlist_only_names_real_safe_fields() {
+        // Every allowlisted pair must be a real schema field (catches typos
+        // and fields removed/renamed out from under the allowlist).
+        for (section, field) in PLUGIN_OVERRIDABLE_CORE_FIELDS {
+            assert!(
+                CORE_FIELDS.contains(&(section.to_string(), field.to_string())),
+                "allowlisted {section}.{field} is not a real core schema field"
+            );
+            assert!(is_plugin_overridable(section, field));
+        }
+        // Security-load-bearing defaults must never be plugin-overridable.
+        for (section, field) in [
+            ("auth", "persist_sessions"),
+            ("updates", "auto_update_plugins"),
+            ("session", "yolo_mode_default"),
+            ("session", "agent_command_override"),
+            ("web", "notifications_enabled"),
+        ] {
+            assert!(
+                !is_plugin_overridable(section, field),
+                "{section}.{field} must not be plugin-overridable"
+            );
+        }
+    }
+
+    #[test]
+    fn non_overridable_core_target_is_ignored() {
+        // A granted, enabled plugin overriding a sensitive core default has no
+        // effect: the allowlist denies it.
+        let scan = vec![plugin(
+            "acme.evil",
+            true,
+            "auth.persist_sessions",
+            toml::Value::Boolean(false),
+            10,
+        )];
+        let mut table = toml::Table::new();
+        enable(&mut table, "acme.evil");
+        let applied = apply_with(&mut table, &scan);
+        assert!(applied.is_empty(), "sensitive override should not apply");
+        assert!(table.get("auth").is_none());
+    }
 
     #[test]
     fn override_applies_when_absent_or_still_default() {
@@ -347,17 +442,17 @@ mod tests {
         enable(&mut absent, "acme.a");
         apply_with(&mut absent, &scan);
         assert_eq!(
-            absent["session"]["yolo_mode_default"],
+            absent["session"]["strict_hotkeys"],
             toml::Value::Boolean(true)
         );
 
         // Materialized at the built-in default: still counts as unchosen.
         let mut at_default: toml::Table =
-            toml::from_str("[session]\nyolo_mode_default = false").unwrap();
+            toml::from_str("[session]\nstrict_hotkeys = false").unwrap();
         enable(&mut at_default, "acme.a");
         apply_with(&mut at_default, &scan);
         assert_eq!(
-            at_default["session"]["yolo_mode_default"],
+            at_default["session"]["strict_hotkeys"],
             toml::Value::Boolean(true)
         );
     }
@@ -372,12 +467,11 @@ mod tests {
             toml::Value::Boolean(false),
             10,
         )];
-        let mut user_set: toml::Table =
-            toml::from_str("[session]\nyolo_mode_default = true").unwrap();
+        let mut user_set: toml::Table = toml::from_str("[session]\nstrict_hotkeys = true").unwrap();
         enable(&mut user_set, "acme.a");
         apply_with(&mut user_set, &scan);
         assert_eq!(
-            user_set["session"]["yolo_mode_default"],
+            user_set["session"]["strict_hotkeys"],
             toml::Value::Boolean(true)
         );
 
@@ -418,7 +512,7 @@ mod tests {
             assert!(
                 table
                     .get("session")
-                    .and_then(|s| s.get("yolo_mode_default"))
+                    .and_then(|s| s.get("strict_hotkeys"))
                     .is_none()
                     && table
                         .get("session")
@@ -446,12 +540,12 @@ mod tests {
         enable(&mut table, "acme.a");
         let applied = apply_with(&mut table, &scan);
         assert_eq!(
-            table["session"]["yolo_mode_default"],
+            table["session"]["strict_hotkeys"],
             toml::Value::Boolean(true)
         );
         strip_with(&mut table, &applied);
         assert_eq!(
-            table["session"]["yolo_mode_default"],
+            table["session"]["strict_hotkeys"],
             toml::Value::Boolean(false)
         );
 
@@ -461,24 +555,23 @@ mod tests {
         enable(&mut changed, "acme.a");
         let applied = apply_with(&mut changed, &scan);
         if let Some(toml::Value::Table(session)) = changed.get_mut("session") {
-            session.insert("yolo_mode_default".into(), toml::Value::Boolean(false));
+            session.insert("strict_hotkeys".into(), toml::Value::Boolean(false));
         }
         strip_with(&mut changed, &applied);
         assert_eq!(
-            changed["session"]["yolo_mode_default"],
+            changed["session"]["strict_hotkeys"],
             toml::Value::Boolean(false)
         );
 
         // A user value that merely EQUALS a declared override which was
         // never applied (plugin disabled): untouched. This is the data-loss
         // case provenance-based stripping exists to prevent.
-        let mut chosen: toml::Table =
-            toml::from_str("[session]\nyolo_mode_default = true").unwrap();
+        let mut chosen: toml::Table = toml::from_str("[session]\nstrict_hotkeys = true").unwrap();
         let applied = apply_with(&mut chosen, &scan); // not enabled: applies nothing
         assert!(applied.is_empty());
         strip_with(&mut chosen, &applied);
         assert_eq!(
-            chosen["session"]["yolo_mode_default"],
+            chosen["session"]["strict_hotkeys"],
             toml::Value::Boolean(true)
         );
     }
@@ -494,7 +587,7 @@ mod tests {
         enable(&mut table, "acme.high");
         apply_with(&mut table, &scan);
         assert_eq!(
-            table["session"]["yolo_mode_default"],
+            table["session"]["strict_hotkeys"],
             toml::Value::Boolean(true)
         );
     }

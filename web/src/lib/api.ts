@@ -218,6 +218,9 @@ export interface PluginCapabilityPrompt {
   /** Hash of the staged manifest this prompt describes; echoed back on
    *  confirm so approval binds to what the user reviewed. */
   manifest_hash: string;
+  /** Core setting defaults this plugin will redirect ("section.field =
+   *  value"). Surfaced because changing a core default needs no capability. */
+  core_default_overrides: string[];
   isolation_summary: string;
 }
 

@@ -309,6 +309,12 @@ fn prompt_for_capabilities(prompt: &InstallPrompt) -> bool {
             println!("  - {}", cap.as_str());
         }
     }
+    if !prompt.core_default_overrides.is_empty() {
+        println!("\nThis plugin will change the default of these core settings:");
+        for ov in &prompt.core_default_overrides {
+            println!("  - {ov}");
+        }
+    }
     if prompt.trust == TrustLevel::Community {
         println!(
             "\nNote: capability grants gate this plugin's access to aoe's APIs.\n\
