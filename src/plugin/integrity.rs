@@ -23,7 +23,7 @@ pub fn tree_hash(root: &Path) -> Result<String> {
     files.sort();
     let mut hasher = Sha256::new();
     for (rel, path) in files {
-        let bytes = std::fs::read(&path).with_context(|| format!("hashing {}", path.display()))?;
+        let bytes = read_nofollow(&path).with_context(|| format!("hashing {}", path.display()))?;
         hasher.update(rel.as_bytes());
         hasher.update([0u8]);
         hasher.update((bytes.len() as u64).to_le_bytes());
@@ -61,6 +61,57 @@ pub(crate) fn dir_or_reject(ft: &std::fs::FileType, path: &Path) -> Result<bool>
     );
 }
 
+/// Read a file without following a final symlink. `dir_or_reject`'s
+/// `is_symlink()` check is `lstat`-based and a separate syscall from the read,
+/// so a same-uid process could swap a regular file for a symlink to a host
+/// secret in between (TOCTOU). `O_NOFOLLOW` makes the open itself fail
+/// (`ELOOP`) on a symlinked final component, closing the race.
+#[cfg(unix)]
+pub(crate) fn read_nofollow(path: &Path) -> Result<Vec<u8>> {
+    use std::io::Read;
+    use std::os::unix::fs::OpenOptionsExt;
+    let mut f = std::fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW)
+        .open(path)
+        .with_context(|| format!("opening {} without following symlinks", path.display()))?;
+    let mut buf = Vec::new();
+    f.read_to_end(&mut buf)?;
+    Ok(buf)
+}
+
+/// Windows: creating symlinks is a privileged operation and there is no
+/// `O_NOFOLLOW` equivalent; the `lstat`-based `dir_or_reject` check already
+/// rejects symlinks, so a plain read is the best available.
+#[cfg(not(unix))]
+pub(crate) fn read_nofollow(path: &Path) -> Result<Vec<u8>> {
+    Ok(std::fs::read(path)?)
+}
+
+/// Copy a regular file without following a final symlink on the source,
+/// preserving its mode (the worker entrypoint relies on its executable bit).
+/// Same TOCTOU reasoning as [`read_nofollow`].
+#[cfg(unix)]
+pub(crate) fn copy_file_nofollow(from: &Path, to: &Path) -> Result<()> {
+    use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+    let mut src = std::fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW)
+        .open(from)
+        .with_context(|| format!("opening {} without following symlinks", from.display()))?;
+    let mode = src.metadata()?.permissions().mode();
+    let mut dst = std::fs::File::create(to)?;
+    std::io::copy(&mut src, &mut dst)?;
+    dst.set_permissions(std::fs::Permissions::from_mode(mode))?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+pub(crate) fn copy_file_nofollow(from: &Path, to: &Path) -> Result<()> {
+    std::fs::copy(from, to)?;
+    Ok(())
+}
+
 fn collect(root: &Path, dir: &Path, files: &mut Vec<(String, PathBuf)>) -> Result<()> {
     for entry in std::fs::read_dir(dir).with_context(|| format!("reading {}", dir.display()))? {
         let entry = entry?;
@@ -72,17 +123,30 @@ fn collect(root: &Path, dir: &Path, files: &mut Vec<(String, PathBuf)>) -> Resul
         if dir_or_reject(&entry.file_type()?, &path)? {
             collect(root, &path, files)?;
         } else {
+            // Require valid UTF-8 per component: to_string_lossy() would map
+            // invalid bytes to U+FFFD and could collapse distinct names onto
+            // the same hash path, making the pin ambiguous.
             let rel = path
                 .strip_prefix(root)
                 .expect("entry is under root")
                 .components()
-                .map(|c| c.as_os_str().to_string_lossy())
-                .collect::<Vec<_>>()
+                .map(|c| {
+                    c.as_os_str().to_str().map(str::to_string).ok_or_else(|| {
+                        anyhow::anyhow!("plugin path is not valid UTF-8: {}", path.display())
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?
                 .join("/");
             // NFC-normalize so a name stored decomposed (APFS/HFS+) and the
             // same name stored composed (ext4/btrfs) hash identically; the
             // featured pins in `featured.rs` are a cross-platform contract.
             let rel = rel.nfc().collect::<String>();
+            // Two distinct on-disk names can normalize to the same rel (e.g. a
+            // tree carrying both the composed and decomposed form); that makes
+            // the hash ambiguous, so refuse rather than silently pick one.
+            if files.iter().any(|(existing, _)| existing == &rel) {
+                anyhow::bail!("plugin tree contains a duplicate normalized path: {rel}");
+            }
             files.push((rel, path));
         }
     }

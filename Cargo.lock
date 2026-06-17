@@ -112,6 +112,7 @@ dependencies = [
  "glob",
  "hkdf 0.13.0",
  "jsonwebtoken",
+ "libc",
  "mime_guess",
  "nix 0.31.3",
  "notify",

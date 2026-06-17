@@ -108,8 +108,12 @@ pub fn parse_source(input: &str) -> Result<PluginSource> {
                     .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'))
         };
         if valid(owner) && valid(repo) {
+            // GitHub owner/repo are case-insensitive, so normalize to
+            // lowercase: otherwise a case-variant slug (Acme/AOE-Review) clones
+            // the same repo but byte-compares unequal to a lowercase featured
+            // pin, skipping hash verification.
             return Ok(PluginSource::GitHub {
-                slug: format!("{owner}/{repo}"),
+                slug: format!("{owner}/{repo}").to_lowercase(),
             });
         }
     }
@@ -521,7 +525,10 @@ fn copy_plugin_tree(src: &Path, dst: &Path) -> Result<()> {
         if super::integrity::dir_or_reject(&entry.file_type()?, &from)? {
             copy_plugin_tree(&from, &to)?;
         } else {
-            std::fs::copy(&from, &to)?;
+            // O_NOFOLLOW on the source closes the same TOCTOU window as the
+            // hashing read: a symlink swapped in after dir_or_reject's lstat
+            // must not be copied through to <app_dir>/plugins/<id>/.
+            super::integrity::copy_file_nofollow(&from, &to)?;
         }
     }
     Ok(())

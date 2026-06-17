@@ -67,7 +67,9 @@ impl FeaturedIndex {
     /// Whether a GitHub `owner/repo` slug is a featured source. Discovery
     /// uses this to badge curated results.
     pub fn contains_slug(&self, slug: &str) -> bool {
-        self.featured.iter().any(|p| p.slug == slug)
+        self.featured
+            .iter()
+            .any(|p| p.slug.eq_ignore_ascii_case(slug))
     }
 
     /// The pinned GitHub slug for a featured plugin id, if any. Auto-update
@@ -91,7 +93,11 @@ impl FeaturedIndex {
         version: &str,
         tree_hash: &str,
     ) -> Result<FeaturedValidation> {
-        let Some(entry) = self.featured.iter().find(|p| p.slug == slug) else {
+        let Some(entry) = self
+            .featured
+            .iter()
+            .find(|p| p.slug.eq_ignore_ascii_case(slug))
+        else {
             return Ok(FeaturedValidation::NotFeatured);
         };
         if entry.id != manifest_id {

@@ -117,7 +117,9 @@ fn featured_source_drifted(id: &str, source: &PluginSource) -> bool {
         return false;
     };
     match source {
-        PluginSource::GitHub { slug } => slug != pinned,
+        // GitHub slugs are case-insensitive; compare accordingly so a legacy
+        // mixed-case lockfile entry is not flagged as a (false) drift.
+        PluginSource::GitHub { slug } => !slug.eq_ignore_ascii_case(pinned),
         _ => true,
     }
 }
