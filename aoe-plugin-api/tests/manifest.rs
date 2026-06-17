@@ -1,4 +1,41 @@
-use aoe_plugin_api::{Capability, DetectionMode, ManifestError, PluginManifest, SettingWidget};
+use aoe_plugin_api::{
+    platforms_allow, Capability, DetectionMode, ManifestError, Platform, PluginManifest,
+    SettingWidget,
+};
+
+#[test]
+fn platforms_parse_and_gate() {
+    let m = PluginManifest::from_toml_str(
+        r#"
+id = "acme.macplugin"
+name = "Mac Plugin"
+version = "0.1.0"
+api_version = 1
+platforms = ["macos", "linux"]
+"#,
+    )
+    .expect("platforms must parse");
+    assert_eq!(m.platforms, vec![Platform::Macos, Platform::Linux]);
+
+    // Empty list permits every platform; a non-empty list gates on membership.
+    assert!(platforms_allow(&[], None));
+    assert!(platforms_allow(&[Platform::Macos], Some(Platform::Macos)));
+    assert!(!platforms_allow(&[Platform::Macos], Some(Platform::Linux)));
+    // An OS outside the known set is excluded by any non-empty declaration.
+    assert!(!platforms_allow(&[Platform::Linux], None));
+
+    // An unknown platform value is rejected (deny_unknown enum).
+    assert!(PluginManifest::from_toml_str(
+        r#"
+id = "acme.x"
+name = "X"
+version = "0.1.0"
+api_version = 1
+platforms = ["plan9"]
+"#,
+    )
+    .is_err());
+}
 
 const FULL: &str = r#"
 id = "aoe.status"

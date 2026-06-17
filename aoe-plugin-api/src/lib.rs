@@ -14,11 +14,11 @@ mod manifest;
 pub use capability::Capability;
 pub use id::{InvalidPluginId, PluginId};
 pub use manifest::{
-    ActionContribution, CliArg, CliCommandContribution, DetectionMode, DetectionRule,
-    EventHandlerContribution, KeybindContribution, LinkHandlerContribution, ManifestError,
-    PaneContribution, PluginManifest, RuntimeContribution, SettingContribution,
-    SettingDefaultOverride, SettingWidget, StatusDetectionContribution, StatusKind,
-    ThemeContribution, UiContribution, UiSlot,
+    platforms_allow, ActionContribution, CliArg, CliCommandContribution, DetectionMode,
+    DetectionRule, EventHandlerContribution, KeybindContribution, LinkHandlerContribution,
+    ManifestError, PaneContribution, Platform, PluginManifest, RuntimeContribution,
+    SettingContribution, SettingDefaultOverride, SettingWidget, StatusDetectionContribution,
+    StatusKind, ThemeContribution, UiContribution, UiSlot,
 };
 
 /// Version of the manifest schema and host API this crate describes.

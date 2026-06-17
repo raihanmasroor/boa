@@ -11,7 +11,7 @@
 
 use std::path::PathBuf;
 
-use aoe_plugin_api::PluginManifest;
+use aoe_plugin_api::{platforms_allow, Platform, PluginManifest};
 use tracing::warn;
 
 use super::grants::{manifest_hash, GrantStatus, GrantStore};
@@ -206,6 +206,14 @@ impl PluginRegistry {
                     continue;
                 }
             }
+            if !platforms_allow(&manifest.platforms, Platform::current()) {
+                load_errors.push(format!(
+                    "{}: not supported on this platform (declares {:?}); skipped",
+                    manifest_path.display(),
+                    manifest.platforms
+                ));
+                continue;
+            }
             let id = manifest.id.as_str().to_string();
             if plugins.iter().any(|p| p.id() == id) {
                 load_errors.push(format!(
@@ -283,6 +291,13 @@ impl PluginRegistry {
                         ));
                         continue;
                     }
+                }
+                if !platforms_allow(&manifest.platforms, Platform::current()) {
+                    load_errors.push(format!(
+                        "linked {id:?} not supported on this platform (declares {:?}); skipped",
+                        manifest.platforms
+                    ));
+                    continue;
                 }
                 let hash = manifest_hash(raw.as_bytes());
                 let grant = grant_store

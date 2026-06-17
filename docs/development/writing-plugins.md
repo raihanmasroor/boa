@@ -66,6 +66,17 @@ it as a warning in `aoe plugin list` rather than activating it with missing
 features. Omit it to support any host. This differs from `api_version`: the
 latter gates the manifest schema, the former gates the host's release version.
 
+To restrict the operating systems a plugin runs on, declare `platforms`
+(`linux`, `macos`, `windows`):
+
+```toml
+platforms = ["macos", "linux"]
+```
+
+The host skips loading the plugin on any OS not listed and reports it in
+`aoe plugin list` rather than failing silently. Omit `platforms` (or leave it
+empty) to support every platform.
+
 Install it:
 
 ```sh

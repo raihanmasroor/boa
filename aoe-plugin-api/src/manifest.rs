@@ -50,7 +50,44 @@ pub struct PluginManifest {
     pub link_handlers: Vec<LinkHandlerContribution>,
     #[serde(default)]
     pub panes: Vec<PaneContribution>,
+    /// Operating systems this plugin supports. Empty means all; otherwise the
+    /// host skips loading the plugin on any OS not listed (surfaced in
+    /// `aoe plugin list`, not silently dropped).
+    #[serde(default)]
+    pub platforms: Vec<Platform>,
     pub runtime: Option<RuntimeContribution>,
+}
+
+/// An operating system a plugin can declare support for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
+pub enum Platform {
+    Linux,
+    Macos,
+    Windows,
+}
+
+impl Platform {
+    /// The platform this binary is running on, or `None` for an OS outside the
+    /// known set (a plugin listing only known platforms is then skipped there).
+    pub fn current() -> Option<Self> {
+        if cfg!(target_os = "linux") {
+            Some(Platform::Linux)
+        } else if cfg!(target_os = "macos") {
+            Some(Platform::Macos)
+        } else if cfg!(target_os = "windows") {
+            Some(Platform::Windows)
+        } else {
+            None
+        }
+    }
+}
+
+/// Whether a `platforms` declaration permits `current`. Empty permits every
+/// platform; otherwise `current` must be a known OS present in the list.
+pub fn platforms_allow(declared: &[Platform], current: Option<Platform>) -> bool {
+    declared.is_empty() || current.is_some_and(|c| declared.contains(&c))
 }
 
 /// A declarative binding from a bus topic to a worker RPC method. The host
