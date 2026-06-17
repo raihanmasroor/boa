@@ -338,6 +338,32 @@ starts (on load or after a reload); there is no replay or resume cursor, so
 use `events.subscribe { after_seq }` instead if you need to catch up on
 events missed while disabled. Events are delivered sequentially per plugin.
 
+## Terminal link handlers
+
+A plugin can make terminal output clickable: declare a regex and the worker
+method a click routes to. In the TUI a Ctrl+click on matching preview text
+fires the handler; in the web dashboard the match becomes a clickable link.
+
+```toml
+capabilities = ["terminal-links"]
+
+[[link_handlers]]
+pattern = '#\d+'
+rpc_method = "open_issue"
+
+[runtime]
+entrypoint = "worker.mjs"
+```
+
+`pattern` is a regex matched against a line of terminal text; every match is
+a link. A click calls `rpc_method` with `{ text, session_id }`, where `text`
+is the matched substring and `session_id` is the focused session (may be
+null). Link handlers need the `terminal-links` capability and a `[runtime]`
+worker. The host compiles each pattern once; an invalid regex is skipped with
+a warning rather than failing the plugin. The web endpoint validates the
+clicked method against the declared handlers, so a click can never reach an
+undeclared worker method.
+
 ## UI extension points
 
 Plugins never render. The manifest declares contributions against fixed
@@ -457,7 +483,7 @@ The full declared capability list (kebab-case, from
 `aoe-plugin-api/src/capability.rs`): `sessions-read`,
 `sessions-meta-write`, `pane-read`, `events-subscribe`, `events-publish`,
 `process-spawn`, `net-fetch`, `fs-read`, `fs-write`, `agent-reconcile`,
-`agent-hooks`, `cli-top-level`.
+`agent-hooks`, `cli-top-level`, `terminal-links`.
 
 ### Capabilities not yet implemented
 
@@ -467,8 +493,8 @@ the host has no RPC for them yet, so a worker that calls one gets an
 "unknown host method" error. Declare them only when the host actually
 implements them (a later `api_version`). The implemented set today is
 `sessions.list`, `session.meta.*`, `events.publish`, `events.subscribe`, and
-the `ui.*` pushes; `pane-read` and `cli-top-level` are consumed at manifest
-validation, not as worker-initiated RPCs.
+the `ui.*` pushes; `pane-read`, `cli-top-level`, and `terminal-links` are
+consumed at manifest validation, not as worker-initiated RPCs.
 
 When the reserved capabilities land, the prompt will spell out their reach
 (outbound network, arbitrary host file read/write, spawning host processes):

@@ -75,6 +75,7 @@ fn plugin_json(p: &plugin::LoadedPlugin) -> serde_json::Value {
         "has_runtime": p.manifest.runtime.is_some(),
         "setting_count": p.manifest.settings.len(),
         "builtin": p.root.is_none(),
+        "link_handlers": p.manifest.link_handlers,
     })
 }
 
@@ -281,6 +282,55 @@ pub async fn update_plugin(
     .await;
     match result {
         Ok(Ok((outcome, prompt))) => outcome_response(outcome, prompt),
+        Ok(Err(e)) => error_response(StatusCode::BAD_REQUEST, "plugin_error", format!("{e:#}")),
+        Err(e) => error_response(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct LinkActionBody {
+    /// The link handler's rpc_method, as advertised in `GET /api/plugins`.
+    pub rpc_method: String,
+    /// The terminal text that matched the pattern.
+    pub text: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
+}
+
+/// `POST /api/plugins/{id}/link-action`: invoke a declared terminal link
+/// handler with `{ text, session_id }`. Running plugin code is an execution
+/// surface, so it takes the same read-only + elevation gate as the other
+/// mutations. The client-supplied `rpc_method` is validated against the
+/// plugin's declared link handlers, so a click cannot reach an arbitrary
+/// worker method.
+pub async fn invoke_link_action(
+    State(state): State<std::sync::Arc<AppState>>,
+    session: Option<axum::Extension<AuthenticatedSession>>,
+    Path(id): Path<String>,
+    Json(body): Json<LinkActionBody>,
+) -> Response {
+    if let Err(resp) = mutation_gate(&state, session.as_deref()).await {
+        return resp;
+    }
+    let LinkActionBody {
+        rpc_method,
+        text,
+        session_id,
+    } = body;
+    if !plugin::links::is_declared(&id, &rpc_method) {
+        return error_response(
+            StatusCode::FORBIDDEN,
+            "undeclared_link",
+            "no link handler declares this rpc_method".into(),
+        );
+    }
+    let params = json!({ "text": text, "session_id": session_id });
+    let result = tokio::task::spawn_blocking(move || {
+        plugin::runtime::invoke_action(&id, &rpc_method, params)
+    })
+    .await;
+    match result {
+        Ok(Ok(value)) => Json(json!({ "result": value })).into_response(),
         Ok(Err(e)) => error_response(StatusCode::BAD_REQUEST, "plugin_error", format!("{e:#}")),
         Err(e) => error_response(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()),
     }

@@ -3,6 +3,13 @@
   "description": "Surface/flow coverage matrix for the agent-of-empires web dashboard. Every component file under web/src/components/** must appear in at least one entry's `components` list (covered, deferred, or out-of-scope), or in coverage-matrix.exempt.json. CI validates this on every PR via tests/validate-coverage-matrix.mjs.",
   "surfaces": [
     {
+      "id": "terminal.plugin-link-handlers",
+      "kind": "vitest",
+      "risk": "medium",
+      "specs": ["src/lib/__tests__/terminalLinks.test.ts"],
+      "components": ["web/src/components/XtermTerminalView.tsx"]
+    },
+    {
       "id": "settings.mcp-servers",
       "kind": "live-playwright",
       "risk": "high",

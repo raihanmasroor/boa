@@ -180,6 +180,13 @@ export function resetSettingsSchemaCache(): void {
 
 // --- Plugins (#268) ---
 
+/** A plugin terminal link handler: text matching `pattern` (a regex) becomes
+ *  a clickable link routed to `rpc_method`. */
+export interface PluginLinkHandler {
+  pattern: string;
+  rpc_method: string;
+}
+
 export interface PluginInfo {
   id: string;
   name: string;
@@ -194,6 +201,7 @@ export interface PluginInfo {
   has_runtime: boolean;
   setting_count: number;
   builtin: boolean;
+  link_handlers: PluginLinkHandler[];
 }
 
 export interface PluginListResponse {
@@ -318,6 +326,27 @@ export async function setPluginEnabled(id: string, enabled: boolean): Promise<bo
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ enabled }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Invoke a plugin terminal link handler. `rpc_method` is validated
+ *  server-side against the plugin's declared link handlers. Returns true on a
+ *  2xx response. */
+export async function postLinkAction(
+  id: string,
+  rpc_method: string,
+  text: string,
+  sessionId: string | null,
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/plugins/${encodeURIComponent(id)}/link-action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rpc_method, text, session_id: sessionId }),
     });
     return res.ok;
   } catch {

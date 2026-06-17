@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
-import { Terminal, type ITheme } from "@xterm/xterm";
+import { Terminal, type IDisposable, type ITheme } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
@@ -13,6 +13,7 @@ import type {
 import { getOrCreateDeviceBindingSecret } from "../lib/deviceBinding";
 import { reportTelemetrySeen } from "../lib/api";
 import { getToken } from "../lib/token";
+import { registerPluginLinkProvider } from "../lib/terminalLinks";
 import { useWebSettings } from "./useWebSettings";
 import { TerminalTiming } from "../lib/terminalTiming";
 import { WheelAccumulator, LINES_PER_WHEEL_EVENT } from "../lib/wheelScroll";
@@ -340,6 +341,17 @@ export function useTerminal(
     term.loadAddon(new WebLinksAddon());
 
     term.open(termEl);
+
+    // Plugin terminal link handlers: text matching an active plugin's pattern
+    // becomes clickable and a click POSTs to its link-action endpoint.
+    // Registration fetches the active plugin set, so it is async; guard
+    // against the terminal being disposed before it resolves.
+    let linkProviderDisposed = false;
+    let linkProvider: IDisposable | null = null;
+    void registerPluginLinkProvider(term, sessionId).then((d) => {
+      if (linkProviderDisposed) d?.dispose();
+      else linkProvider = d;
+    });
 
     // Select-to-copy bridge. tmux owns text selection here: mouse-mode is on
     // (src/tmux/utils.rs) so a drag drives tmux copy-mode, which is the only
@@ -1483,6 +1495,8 @@ export function useTerminal(
         owned.onerror = null;
         owned.close();
       }
+      linkProviderDisposed = true;
+      linkProvider?.dispose();
       term.dispose();
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);

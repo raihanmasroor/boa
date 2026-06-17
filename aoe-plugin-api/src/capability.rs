@@ -46,6 +46,9 @@ pub enum Capability {
     AgentHooks,
     /// Place a contributed CLI command at the top level of the command tree.
     CliTopLevel,
+    /// Match terminal/pane text against declared regex patterns and route a
+    /// Ctrl+click (TUI) or click (web) on a match to a plugin action.
+    TerminalLinks,
 }
 
 impl Capability {
@@ -64,6 +67,7 @@ impl Capability {
             Capability::AgentReconcile => "agent-reconcile",
             Capability::AgentHooks => "agent-hooks",
             Capability::CliTopLevel => "cli-top-level",
+            Capability::TerminalLinks => "terminal-links",
         }
     }
 }
@@ -87,6 +91,7 @@ mod tests {
             Capability::AgentReconcile,
             Capability::AgentHooks,
             Capability::CliTopLevel,
+            Capability::TerminalLinks,
         ] {
             let json = serde_json::to_string(&cap).unwrap();
             assert_eq!(json, format!("\"{}\"", cap.as_str()));

@@ -722,6 +722,48 @@ impl HomeView {
         Some(out)
     }
 
+    /// The plain text and byte-column under a click in the preview pane,
+    /// mapped through the same column layout the renderer used so wide chars
+    /// line up. Returns the full (untrimmed) line text and the byte offset of
+    /// the clicked cell within it.
+    fn preview_line_and_col_at(&self, col: u16, row: u16) -> Option<(String, usize)> {
+        let view = self.preview_text_view;
+        let width = view.pane.width;
+        if width == 0 || view.total_lines == 0 || !view.contains(col, row) {
+            return None;
+        }
+        let (col_off, from_bottom) = view.screen_to_content(col, row);
+        let abs = view.abs_from_bottom(from_bottom);
+        let lines = self.active_preview_cache().parsed_text.as_ref()?;
+        let line = lines.lines.get(abs)?;
+        let full = slice_line_columns(line, 0, width, width);
+        let byte_col = slice_line_columns(line, 0, col_off, width).len();
+        Some((full, byte_col))
+    }
+
+    /// Ctrl+click on the preview pane: if the clicked text matches an active
+    /// plugin's link pattern, invoke its handler with `{ text, session_id }`.
+    /// Returns true when a link was dispatched.
+    pub fn handle_preview_link_click(&mut self, col: u16, row: u16) -> bool {
+        let Some((line, byte_col)) = self.preview_line_and_col_at(col, row) else {
+            return false;
+        };
+        let Some(m) = crate::plugin::links::match_in_line(&line, byte_col) else {
+            return false;
+        };
+        let params = serde_json::json!({
+            "text": m.text,
+            "session_id": self.selected_session.clone(),
+        });
+        if let Err(e) = crate::plugin::runtime::invoke_action(&m.plugin_id, &m.rpc_method, params) {
+            self.info_dialog = Some(InfoDialog::new(
+                &format!("Plugin link: {}", m.rpc_method),
+                &format!("{e:#}"),
+            ));
+        }
+        true
+    }
+
     /// Drain the text captured on the last render that painted a
     /// finalized preview selection. Returns `Some` exactly once per
     /// finalized drag; `App` calls this immediately after the draw

@@ -15,9 +15,10 @@ pub use capability::Capability;
 pub use id::{InvalidPluginId, PluginId};
 pub use manifest::{
     ActionContribution, CliArg, CliCommandContribution, DetectionMode, DetectionRule,
-    EventHandlerContribution, KeybindContribution, ManifestError, PluginManifest,
-    RuntimeContribution, SettingContribution, SettingDefaultOverride, SettingWidget,
-    StatusDetectionContribution, StatusKind, ThemeContribution, UiContribution, UiSlot,
+    EventHandlerContribution, KeybindContribution, LinkHandlerContribution, ManifestError,
+    PluginManifest, RuntimeContribution, SettingContribution, SettingDefaultOverride,
+    SettingWidget, StatusDetectionContribution, StatusKind, ThemeContribution, UiContribution,
+    UiSlot,
 };
 
 /// Version of the manifest schema and host API this crate describes.

@@ -40,6 +40,8 @@ pub struct PluginManifest {
     pub ui: Vec<UiContribution>,
     #[serde(default)]
     pub event_handlers: Vec<EventHandlerContribution>,
+    #[serde(default)]
+    pub link_handlers: Vec<LinkHandlerContribution>,
     pub runtime: Option<RuntimeContribution>,
 }
 
@@ -56,6 +58,21 @@ pub struct EventHandlerContribution {
     /// Bus topic pattern, exact or trailing-`*` prefix (`plugin.acme.*`).
     pub on: String,
     /// JSON-RPC method invoked on the worker with `{ topic, payload, seq }`.
+    pub rpc_method: String,
+}
+
+/// A clickable-link binding: terminal/pane text matching `pattern` (a regex)
+/// becomes a link, and a Ctrl+click (TUI) or click (web) on a match calls
+/// `rpc_method` on the worker with `{ text, session_id }`. The host compiles
+/// the pattern; an invalid regex is skipped with a warning, not fatal.
+/// Requires the `terminal-links` capability and a `[runtime]` worker.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[non_exhaustive]
+pub struct LinkHandlerContribution {
+    /// Regex matched against a line of terminal output; each match is a link.
+    pub pattern: String,
+    /// JSON-RPC method invoked on the worker with `{ text, session_id }`.
     pub rpc_method: String,
 }
 
@@ -489,13 +506,14 @@ impl PluginManifest {
             || !self.actions.is_empty()
             || !self.ui.is_empty()
             || !self.event_handlers.is_empty()
+            || !self.link_handlers.is_empty()
             || self
                 .status_detection
                 .iter()
                 .any(|d| matches!(d.mode, DetectionMode::Rpc { .. }));
         check(
             !needs_runtime || self.runtime.is_some(),
-            "commands, actions, ui contributions, event handlers, and rpc status detection require a [runtime] section"
+            "commands, actions, ui contributions, event handlers, link handlers, and rpc status detection require a [runtime] section"
                 .into(),
         );
 
@@ -512,6 +530,20 @@ impl PluginManifest {
             self.event_handlers.is_empty()
                 || self.capabilities.contains(&Capability::EventsSubscribe),
             "event_handlers observe the bus and require the events-subscribe capability".into(),
+        );
+
+        for handler in &self.link_handlers {
+            check(
+                !handler.pattern.is_empty() && !handler.rpc_method.is_empty(),
+                format!(
+                    "link handler {:?} -> {:?} needs a non-empty pattern and rpc_method",
+                    handler.pattern, handler.rpc_method
+                ),
+            );
+        }
+        check(
+            self.link_handlers.is_empty() || self.capabilities.contains(&Capability::TerminalLinks),
+            "link_handlers read terminal text and require the terminal-links capability".into(),
         );
 
         if let Some(runtime) = &self.runtime {

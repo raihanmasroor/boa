@@ -959,6 +959,18 @@ impl App {
                                     self.sync_mouse_capture(terminal)?;
                                     self.draw(terminal)?;
                                     None
+                                } else if mouse.modifiers.contains(KeyModifiers::CONTROL)
+                                    && hit_preview
+                                    && self
+                                        .home
+                                        .handle_preview_link_click(mouse.column, mouse.row)
+                                {
+                                    // Ctrl+click landed on a plugin link
+                                    // pattern: the action fired, consume the
+                                    // click instead of starting a selection.
+                                    let _ = self.home.clear_preview_selection();
+                                    self.draw(terminal)?;
+                                    None
                                 } else if self
                                     .home
                                     .handle_drag_start(mouse.column, mouse.row)

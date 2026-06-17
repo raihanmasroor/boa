@@ -15,6 +15,7 @@ pub mod grants;
 pub mod host;
 pub mod install;
 pub mod integrity;
+pub mod links;
 pub mod lockfile;
 pub mod registry;
 pub mod runtime;
@@ -196,6 +197,7 @@ pub fn reload_registry() -> Arc<PluginRegistry> {
     let reg = Arc::new(PluginRegistry::load(&config));
     *REGISTRY.write_safe() = Some(reg.clone());
     status::invalidate_cache();
+    links::invalidate();
     host::host().reset();
     host::start_event_handlers(&reg);
     // UI state of plugins that are no longer active must vanish with them.

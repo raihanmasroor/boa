@@ -409,6 +409,75 @@ entrypoint = "worker"
 }
 
 #[test]
+fn link_handlers_parse_and_round_trip() {
+    let manifest = PluginManifest::from_toml_str(
+        r#"
+id = "acme.linker"
+name = "Linker"
+version = "0.1.0"
+api_version = 1
+capabilities = ["terminal-links"]
+
+[[link_handlers]]
+pattern = '#\d+'
+rpc_method = "open_issue"
+
+[runtime]
+entrypoint = "worker"
+"#,
+    )
+    .expect("link-handler manifest must parse");
+    assert_eq!(manifest.link_handlers.len(), 1);
+    assert_eq!(manifest.link_handlers[0].pattern, r"#\d+");
+    assert_eq!(manifest.link_handlers[0].rpc_method, "open_issue");
+
+    let serialized = toml::to_string(&manifest).expect("must serialize");
+    let reparsed = PluginManifest::from_toml_str(&serialized).expect("must reparse");
+    assert_eq!(reparsed.link_handlers[0].pattern, r"#\d+");
+}
+
+#[test]
+fn link_handlers_require_runtime_and_capability() {
+    let all = invalid_messages(
+        r#"
+id = "acme.linker"
+name = "Linker"
+version = "0.1.0"
+api_version = 1
+
+[[link_handlers]]
+pattern = '#\d+'
+rpc_method = "open_issue"
+"#,
+    )
+    .join("\n");
+    assert!(all.contains("[runtime]"), "{all}");
+    assert!(all.contains("terminal-links"), "{all}");
+}
+
+#[test]
+fn link_handler_empty_fields_are_rejected() {
+    let all = invalid_messages(
+        r#"
+id = "acme.linker"
+name = "Linker"
+version = "0.1.0"
+api_version = 1
+capabilities = ["terminal-links"]
+
+[[link_handlers]]
+pattern = ""
+rpc_method = ""
+
+[runtime]
+entrypoint = "worker"
+"#,
+    )
+    .join("\n");
+    assert!(all.contains("non-empty pattern and rpc_method"), "{all}");
+}
+
+#[test]
 fn unknown_manifest_fields_are_rejected() {
     let err = PluginManifest::from_toml_str(
         r#"
