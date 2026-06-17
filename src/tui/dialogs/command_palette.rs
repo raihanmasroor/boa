@@ -68,6 +68,8 @@ pub enum PaletteAction {
     JumpToCursor(usize),
     /// Open a tool session by name (lazygit, yazi, etc.)
     ToolSession(String),
+    /// Open a plugin-contributed terminal pane.
+    OpenPluginPane { plugin_id: String, pane_id: String },
 }
 
 /// One entry in the palette. `payload` is what gets returned when the user picks it.

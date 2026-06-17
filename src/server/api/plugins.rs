@@ -76,6 +76,12 @@ fn plugin_json(p: &plugin::LoadedPlugin) -> serde_json::Value {
         "setting_count": p.manifest.settings.len(),
         "builtin": p.root.is_none(),
         "link_handlers": p.manifest.link_handlers,
+        "panes": p
+            .manifest
+            .panes
+            .iter()
+            .map(|pane| json!({ "id": pane.id, "title": pane.title }))
+            .collect::<Vec<_>>(),
     })
 }
 
@@ -331,6 +337,91 @@ pub async fn invoke_link_action(
     .await;
     match result {
         Ok(Ok(value)) => Json(json!({ "result": value })).into_response(),
+        Ok(Err(e)) => error_response(StatusCode::BAD_REQUEST, "plugin_error", format!("{e:#}")),
+        Err(e) => error_response(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct OpenPaneBody {
+    /// The focused agent session, used for the `AOE_SESSION_ID` / `AOE_WORKTREE`
+    /// env and for dedup. Optional: a pane may be session-independent.
+    #[serde(default)]
+    pub session_id: Option<String>,
+}
+
+/// `POST /api/plugins/{id}/panes/{pane_id}/open`: spawn (or refocus) a plugin
+/// pane. Running a command is an execution surface, so it takes the read-only +
+/// elevation gate; the pane registry additionally enforces the `terminal-pane`
+/// capability and that the pane is declared.
+pub async fn open_plugin_pane(
+    State(state): State<std::sync::Arc<AppState>>,
+    session: Option<axum::Extension<AuthenticatedSession>>,
+    Path((id, pane_id)): Path<(String, String)>,
+    Json(body): Json<OpenPaneBody>,
+) -> Response {
+    if let Err(resp) = mutation_gate(&state, session.as_deref()).await {
+        return resp;
+    }
+    let worktree = match body.session_id.as_deref() {
+        Some(sid) => state
+            .instances
+            .read()
+            .await
+            .iter()
+            .find(|i| i.id == sid)
+            .map(|i| i.project_path.clone()),
+        None => None,
+    };
+    let ctx = plugin::panes::PaneContext {
+        session_id: body.session_id.clone(),
+        worktree,
+    };
+    let result =
+        tokio::task::spawn_blocking(move || plugin::panes::open(&id, &pane_id, &ctx)).await;
+    match result {
+        Ok(Ok(opened)) => Json(json!({
+            "handle": opened.handle,
+            "title": opened.title,
+            "ws_path": format!("/api/plugin-panes/{}/ws", opened.handle),
+        }))
+        .into_response(),
+        Ok(Err(e)) => error_response(StatusCode::BAD_REQUEST, "plugin_error", format!("{e:#}")),
+        Err(e) => error_response(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()),
+    }
+}
+
+/// `GET /api/plugins/panes`: every open plugin pane, so a refreshed dashboard
+/// re-discovers and re-attaches. Read-only.
+pub async fn list_plugin_panes() -> Json<serde_json::Value> {
+    let panes = plugin::panes::list_open()
+        .into_iter()
+        .map(|p| {
+            json!({
+                "handle": p.handle,
+                "plugin_id": p.plugin_id,
+                "pane_id": p.pane_id,
+                "session_id": p.session_id,
+                "title": p.title,
+                "ws_path": format!("/api/plugin-panes/{}/ws", p.handle),
+            })
+        })
+        .collect::<Vec<_>>();
+    Json(json!({ "panes": panes }))
+}
+
+/// `DELETE /api/plugin-panes/{handle}`: close a pane and kill its tmux session.
+pub async fn close_plugin_pane(
+    State(state): State<std::sync::Arc<AppState>>,
+    session: Option<axum::Extension<AuthenticatedSession>>,
+    Path(handle): Path<String>,
+) -> Response {
+    if let Err(resp) = mutation_gate(&state, session.as_deref()).await {
+        return resp;
+    }
+    let result = tokio::task::spawn_blocking(move || plugin::panes::close(&handle)).await;
+    match result {
+        Ok(Ok(())) => Json(json!({ "closed": true })).into_response(),
         Ok(Err(e)) => error_response(StatusCode::BAD_REQUEST, "plugin_error", format!("{e:#}")),
         Err(e) => error_response(StatusCode::INTERNAL_SERVER_ERROR, "internal", e.to_string()),
     }

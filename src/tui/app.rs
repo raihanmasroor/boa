@@ -2547,6 +2547,9 @@ impl App {
             Action::AttachToolSession(id, tool_name) => {
                 self.attach_tool_session(&id, &tool_name, terminal)?;
             }
+            Action::OpenPluginPane { plugin_id, pane_id } => {
+                self.attach_plugin_pane(&plugin_id, &pane_id, terminal)?;
+            }
             #[cfg(feature = "serve")]
             Action::OpenStructuredView(id) => {
                 // Stash for the async main loop. The acp view needs
@@ -2910,6 +2913,50 @@ impl App {
         Ok(())
     }
 
+    /// Spawn (if needed) and attach to a plugin-contributed terminal pane. The
+    /// pane is a dedicated tmux session; attaching reuses the same suspend /
+    /// status-hook machinery as agent and tool sessions. The focused session
+    /// supplies the `AOE_SESSION_ID` / `AOE_WORKTREE` context.
+    fn attach_plugin_pane(
+        &mut self,
+        plugin_id: &str,
+        pane_id: &str,
+        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    ) -> Result<()> {
+        let session_id = self.home.selected_session.clone();
+        let worktree = session_id
+            .as_deref()
+            .and_then(|sid| self.home.get_instance(sid))
+            .map(|inst| inst.project_path.clone());
+        let ctx = crate::plugin::panes::PaneContext {
+            session_id,
+            worktree,
+        };
+        let opened = match crate::plugin::panes::open(plugin_id, pane_id, &ctx) {
+            Ok(o) => o,
+            Err(e) => {
+                self.update_status = Some(UpdateStatus::transient(format!("plugin pane: {e}")));
+                return Ok(());
+            }
+        };
+        let pane = crate::tmux::Session::from_name(&opened.handle);
+        let attach_fn: Box<dyn FnOnce() -> Result<()>> = Box::new(move || pane.attach());
+        let (attach_result, attached_status_updates) =
+            self.with_attached_status_hooks(terminal, attach_fn)?;
+
+        self.needs_redraw = true;
+        crate::tmux::refresh_session_cache();
+        self.home.reload()?;
+        self.home
+            .apply_status_updates_without_hooks(attached_status_updates);
+
+        if let Err(e) = attach_result {
+            tracing::warn!("plugin pane '{plugin_id}/{pane_id}' attach returned error: {e}");
+        }
+
+        Ok(())
+    }
+
     fn edit_file(
         &mut self,
         path: &std::path::Path,
@@ -3009,6 +3056,13 @@ pub enum Action {
     /// against the borrowed terminal + event stream.
     #[cfg(feature = "serve")]
     OpenStructuredView(String),
+    /// Open a plugin-contributed terminal pane: spawn its dedicated tmux
+    /// session (if not already running) and attach, like a tool session. The
+    /// focused session supplies the `AOE_SESSION_ID` / `AOE_WORKTREE` context.
+    OpenPluginPane {
+        plugin_id: String,
+        pane_id: String,
+    },
 }
 
 #[cfg(test)]

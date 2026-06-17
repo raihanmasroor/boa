@@ -2809,6 +2809,24 @@ impl HomeView {
             });
         }
 
+        // Plugin-contributed terminal panes: one entry per declared pane of an
+        // active plugin, opened (and attached) through the host pane registry.
+        for plugin in crate::plugin::registry().active() {
+            for pane in &plugin.manifest.panes {
+                entries.push(PaletteCommand {
+                    id: "plugin-pane",
+                    title: format!("Open pane: {} ({})", pane.title, plugin.id()),
+                    group: PaletteGroup::Actions,
+                    keywords: vec!["plugin", "pane", "terminal"],
+                    hotkey: String::new(),
+                    payload: PaletteAction::OpenPluginPane {
+                        plugin_id: plugin.id().to_string(),
+                        pane_id: pane.id.clone(),
+                    },
+                });
+            }
+        }
+
         self.command_palette = Some(CommandPaletteDialog::new(entries));
     }
 
@@ -2857,6 +2875,9 @@ impl HomeView {
                 self.preview_scroll_offset = 0;
                 self.tool_preview_cache = super::PreviewCache::default();
                 None
+            }
+            PaletteAction::OpenPluginPane { plugin_id, pane_id } => {
+                Some(Action::OpenPluginPane { plugin_id, pane_id })
             }
         }
     }

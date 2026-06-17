@@ -478,6 +478,95 @@ entrypoint = "worker"
 }
 
 #[test]
+fn panes_parse_and_round_trip() {
+    let manifest = PluginManifest::from_toml_str(
+        r#"
+id = "acme.panes"
+name = "Panes"
+version = "0.1.0"
+api_version = 1
+capabilities = ["terminal-pane"]
+
+[[panes]]
+id = "logs"
+title = "Tail logs"
+command = ["tail", "-f", "log.txt"]
+"#,
+    )
+    .expect("pane manifest must parse");
+    assert_eq!(manifest.panes.len(), 1);
+    assert_eq!(manifest.panes[0].id, "logs");
+    assert_eq!(manifest.panes[0].command, ["tail", "-f", "log.txt"]);
+
+    let serialized = toml::to_string(&manifest).expect("must serialize");
+    let reparsed = PluginManifest::from_toml_str(&serialized).expect("must reparse");
+    assert_eq!(reparsed.panes[0].command, manifest.panes[0].command);
+}
+
+#[test]
+fn panes_require_capability_but_not_runtime() {
+    // Panes are host-spawned, so no [runtime] is needed, but the capability is.
+    let manifest = PluginManifest::from_toml_str(
+        r#"
+id = "acme.panes"
+name = "Panes"
+version = "0.1.0"
+api_version = 1
+capabilities = ["terminal-pane"]
+
+[[panes]]
+id = "logs"
+title = "Tail logs"
+command = ["tail", "-f", "log.txt"]
+"#,
+    )
+    .expect("pane manifest needs no runtime");
+    assert!(manifest.runtime.is_none());
+
+    let all = invalid_messages(
+        r#"
+id = "acme.panes"
+name = "Panes"
+version = "0.1.0"
+api_version = 1
+
+[[panes]]
+id = "logs"
+title = "Tail logs"
+command = ["tail"]
+"#,
+    )
+    .join("\n");
+    assert!(all.contains("terminal-pane"), "{all}");
+}
+
+#[test]
+fn pane_empty_command_and_dup_ids_are_rejected() {
+    let all = invalid_messages(
+        r#"
+id = "acme.panes"
+name = "Panes"
+version = "0.1.0"
+api_version = 1
+capabilities = ["terminal-pane"]
+
+[[panes]]
+id = "logs"
+title = "First"
+command = []
+
+[[panes]]
+id = "logs"
+title = "Second"
+command = ["echo", ""]
+"#,
+    )
+    .join("\n");
+    assert!(all.contains("non-empty argv"), "{all}");
+    assert!(all.contains("duplicate pane id"), "{all}");
+}
+
+#[test]
 fn unknown_manifest_fields_are_rejected() {
     let err = PluginManifest::from_toml_str(
         r#"

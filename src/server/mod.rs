@@ -609,6 +609,10 @@ pub async fn start_server(config: ServerConfig<'_>) -> anyhow::Result<()> {
 
     raise_fd_limit();
 
+    // Plugin panes are ephemeral: kill any left over from a previous daemon so
+    // a stale plugin command does not survive a restart invisibly.
+    crate::plugin::panes::sweep_orphans();
+
     // Single live `FileWatchService` per daemon. Threaded into AppState
     // and into every `Storage::new` call so in-process writes surface via
     // `notify_local_change` and per-profile subscriptions multiplex
@@ -1460,6 +1464,13 @@ fn build_router(state: Arc<AppState>) -> Router {
             "/api/plugins/{id}/link-action",
             post(api::invoke_link_action),
         )
+        .route("/api/plugins/panes", get(api::list_plugin_panes))
+        .route(
+            "/api/plugins/{id}/panes/{pane_id}/open",
+            post(api::open_plugin_pane),
+        )
+        .route("/api/plugin-panes/{handle}", delete(api::close_plugin_pane))
+        .route("/api/plugin-panes/{handle}/ws", get(ws::plugin_pane_ws))
         .route(
             "/api/app-state/web-tour-seen",
             post(api::mark_web_tour_seen),

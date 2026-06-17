@@ -355,6 +355,30 @@ pub async fn terminal_ws(
     }
 }
 
+/// WebSocket for a plugin-owned terminal pane. The handle IS the pane's tmux
+/// session name; we attach only if it is a registered open pane, so a client
+/// cannot relay an arbitrary tmux session through this route.
+pub async fn plugin_pane_ws(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<AppState>>,
+    Path(handle): Path<String>,
+) -> impl IntoResponse {
+    debug!(target: "terminal.ws", pane = %handle, kind = "plugin-pane", "ws route entered");
+    if !crate::plugin::panes::is_open(&handle) {
+        warn!(target: "terminal.ws", pane = %handle, "plugin pane not open, returning 404");
+        return (axum::http::StatusCode::NOT_FOUND, "Plugin pane not found").into_response();
+    }
+    let read_only = state.read_only;
+    let primaries = Arc::clone(&state.session_primaries);
+    let pause_counts = Arc::clone(&state.session_pause_counts);
+    let shutdown = state.shutdown.clone();
+    ws.protocols(["aoe-auth"])
+        .on_upgrade(move |socket| {
+            handle_terminal_ws(socket, handle, read_only, primaries, pause_counts, shutdown)
+        })
+        .into_response()
+}
+
 /// Argv for the web attach: reset `window-size` to `latest`, hide the
 /// tmux status line, then attach, all in one tmux invocation (`;`
 /// separates commands).

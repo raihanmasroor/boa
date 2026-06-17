@@ -17,6 +17,7 @@ pub mod install;
 pub mod integrity;
 pub mod links;
 pub mod lockfile;
+pub mod panes;
 pub mod registry;
 pub mod runtime;
 pub mod sandbox;
@@ -204,6 +205,7 @@ pub fn reload_registry() -> Arc<PluginRegistry> {
     let active: std::collections::HashSet<String> =
         reg.active().map(|p| p.id().to_string()).collect();
     ui::evict_except(&active);
+    panes::evict_except(&active);
     reg
 }
 

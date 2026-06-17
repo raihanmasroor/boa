@@ -2484,6 +2484,10 @@ pub async fn delete_session(
         );
     };
 
+    // Kill any plugin panes bound to this session before its teardown, so a
+    // plugin pane never outlives the agent session it was opened against.
+    crate::plugin::panes::evict_session(&id);
+
     let profile = instance.source_profile.clone();
     // Captured before `instance` moves into the deletion task; recorded into
     // the persisted recent-projects store only once the delete fully

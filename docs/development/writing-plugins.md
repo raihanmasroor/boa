@@ -364,6 +364,35 @@ a warning rather than failing the plugin. The web endpoint validates the
 clicked method against the declared handlers, so a click can never reach an
 undeclared worker method.
 
+## Terminal panes
+
+A plugin can contribute a command that runs in a real terminal. The host runs
+it in a dedicated tmux session with the plugin install root as the working
+directory; the TUI attaches to it (command palette: "Open pane: ..."), and the
+web dashboard renders it as a full terminal panel.
+
+```toml
+capabilities = ["terminal-pane"]
+
+[[panes]]
+id = "logs"
+title = "Tail plugin logs"
+command = ["tail", "-f", "plugin.log"]
+```
+
+`command` is an argv array run directly (no shell, no interpolation). Panes
+need the `terminal-pane` capability; no `[runtime]` worker is required because
+the pane is a host-spawned process rather than a JSON-RPC worker. The host
+injects discrete context env vars into the command: `AOE_PLUGIN_ID`,
+`AOE_PLUGIN_ROOT`, `AOE_PANE_ID`, `AOE_SESSION_ID` (the focused agent session,
+may be empty), and `AOE_WORKTREE` (that session's working directory).
+
+Panes are ephemeral. Opening the same pane for the same session twice refocuses
+the existing one rather than spawning a second. A pane is killed when it is
+closed, when its plugin is disabled or uninstalled, when its bound session is
+deleted, and on daemon restart (a startup sweep clears strays); plugin process
+state is not resumed across a restart, so reopen the pane to get it back.
+
 ## UI extension points
 
 Plugins never render. The manifest declares contributions against fixed
@@ -483,7 +512,7 @@ The full declared capability list (kebab-case, from
 `aoe-plugin-api/src/capability.rs`): `sessions-read`,
 `sessions-meta-write`, `pane-read`, `events-subscribe`, `events-publish`,
 `process-spawn`, `net-fetch`, `fs-read`, `fs-write`, `agent-reconcile`,
-`agent-hooks`, `cli-top-level`, `terminal-links`.
+`agent-hooks`, `cli-top-level`, `terminal-links`, `terminal-pane`.
 
 ### Capabilities not yet implemented
 
@@ -493,8 +522,9 @@ the host has no RPC for them yet, so a worker that calls one gets an
 "unknown host method" error. Declare them only when the host actually
 implements them (a later `api_version`). The implemented set today is
 `sessions.list`, `session.meta.*`, `events.publish`, `events.subscribe`, and
-the `ui.*` pushes; `pane-read`, `cli-top-level`, and `terminal-links` are
-consumed at manifest validation, not as worker-initiated RPCs.
+the `ui.*` pushes; `pane-read`, `cli-top-level`, `terminal-links`, and
+`terminal-pane` are consumed by the host (manifest validation, link routing,
+pane spawning), not as worker-initiated RPCs.
 
 When the reserved capabilities land, the prompt will spell out their reach
 (outbound network, arbitrary host file read/write, spawning host processes):

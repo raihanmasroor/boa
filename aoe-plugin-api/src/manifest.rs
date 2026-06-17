@@ -42,6 +42,8 @@ pub struct PluginManifest {
     pub event_handlers: Vec<EventHandlerContribution>,
     #[serde(default)]
     pub link_handlers: Vec<LinkHandlerContribution>,
+    #[serde(default)]
+    pub panes: Vec<PaneContribution>,
     pub runtime: Option<RuntimeContribution>,
 }
 
@@ -74,6 +76,24 @@ pub struct LinkHandlerContribution {
     pub pattern: String,
     /// JSON-RPC method invoked on the worker with `{ text, session_id }`.
     pub rpc_method: String,
+}
+
+/// A plugin-owned terminal pane: the host runs `command` (argv, never a
+/// shell) in a dedicated tmux session with the plugin install root as the
+/// working directory and `AOE_PLUGIN_*` context env injected. The TUI attaches
+/// to it; the web dashboard renders it as a full terminal panel. Requires the
+/// `terminal-pane` capability and a `[runtime]` worker is NOT needed (the pane
+/// is a host-spawned process, not a JSON-RPC worker).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[non_exhaustive]
+pub struct PaneContribution {
+    /// Pane id, unique within the plugin, e.g. `logs`.
+    pub id: String,
+    /// Human-readable label shown in the open-pane affordance.
+    pub title: String,
+    /// argv executed directly (no shell); the first element is the program.
+    pub command: Vec<String>,
 }
 
 /// One typed contribution to a fixed UI extension point. The host renders
@@ -544,6 +564,33 @@ impl PluginManifest {
         check(
             self.link_handlers.is_empty() || self.capabilities.contains(&Capability::TerminalLinks),
             "link_handlers read terminal text and require the terminal-links capability".into(),
+        );
+
+        let mut pane_ids = std::collections::HashSet::new();
+        for pane in &self.panes {
+            check(
+                !pane.id.is_empty() && !pane.title.is_empty(),
+                format!("pane {:?} needs a non-empty id and title", pane.id),
+            );
+            check(
+                pane_ids.insert(pane.id.as_str()),
+                format!("duplicate pane id {:?}", pane.id),
+            );
+            check(
+                !pane.command.is_empty()
+                    && pane
+                        .command
+                        .iter()
+                        .all(|arg| !arg.is_empty() && !arg.contains('\0')),
+                format!(
+                    "pane {:?} command must be a non-empty argv with no empty or NUL arguments",
+                    pane.id
+                ),
+            );
+        }
+        check(
+            self.panes.is_empty() || self.capabilities.contains(&Capability::TerminalPane),
+            "panes run a command and require the terminal-pane capability".into(),
         );
 
         if let Some(runtime) = &self.runtime {

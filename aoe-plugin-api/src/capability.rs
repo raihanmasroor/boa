@@ -49,6 +49,10 @@ pub enum Capability {
     /// Match terminal/pane text against declared regex patterns and route a
     /// Ctrl+click (TUI) or click (web) on a match to a plugin action.
     TerminalLinks,
+    /// Run a declared command in a dedicated tmux terminal pane (the plugin's
+    /// install root is the cwd, with `AOE_PLUGIN_*` env injected). Arbitrary
+    /// process execution, so the install prompt words it as such.
+    TerminalPane,
 }
 
 impl Capability {
@@ -68,6 +72,7 @@ impl Capability {
             Capability::AgentHooks => "agent-hooks",
             Capability::CliTopLevel => "cli-top-level",
             Capability::TerminalLinks => "terminal-links",
+            Capability::TerminalPane => "terminal-pane",
         }
     }
 }
@@ -92,6 +97,7 @@ mod tests {
             Capability::AgentHooks,
             Capability::CliTopLevel,
             Capability::TerminalLinks,
+            Capability::TerminalPane,
         ] {
             let json = serde_json::to_string(&cap).unwrap();
             assert_eq!(json, format!("\"{}\"", cap.as_str()));
