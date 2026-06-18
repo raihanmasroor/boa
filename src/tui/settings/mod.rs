@@ -336,7 +336,7 @@ impl SettingsView {
             category_rects: Vec::new(),
             field_rects: Vec::new(),
             mouse_pos: None,
-            plugin_manager: crate::tui::dialogs::PluginManagerDialog::new(),
+            plugin_manager: crate::tui::dialogs::PluginManagerDialog::embedded(),
             plugin_settings_id: None,
         };
 

@@ -13,8 +13,10 @@ Three equivalent surfaces:
 - **CLI**: `aoe plugin list`, `aoe plugin info <id>`, `aoe plugin install
   <owner/repo | path>`, `aoe plugin enable|disable <id>`, `aoe plugin update
   <id>`, `aoe plugin uninstall <id>`.
-- **TUI**: open the command palette and run "Manage plugins". Space toggles
-  enable/disable, `i` installs, `u` updates, `x` uninstalls.
+- **TUI**: open the command palette and run "Manage plugins", or open Settings
+  and select the Plugins tab (the same manager, hosted inline). Space toggles
+  enable/disable, `i` installs, `u` updates, `x` uninstalls; in the Settings tab
+  `Enter` on a plugin marked `[settings]` opens its settings.
 - **Web dashboard**: Settings, then the Plugins tab. The same list, toggles,
   install form, and capability approval dialog. Plugin mutations require an
   elevated (passphrase) session when login is enabled and are blocked in

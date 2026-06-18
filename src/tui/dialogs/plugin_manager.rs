@@ -57,6 +57,10 @@ pub struct PluginManagerDialog {
     /// update, uninstall). An embedding surface drains it via [`take_mutated`]
     /// to re-sync its own config view; the standalone modal ignores it.
     mutated: bool,
+    /// True when hosted inside the settings screen (vs the command-palette
+    /// modal). Only changes the footer and per-row hints: Enter opens a
+    /// plugin's settings and Esc returns to the category list.
+    embedded: bool,
 }
 
 impl Default for PluginManagerDialog {
@@ -79,8 +83,18 @@ impl PluginManagerDialog {
             discovered: Vec::new(),
             discover_selected: 0,
             mutated: false,
+            embedded: false,
         };
         dialog.reload();
+        dialog
+    }
+
+    /// A manager hosted inside the settings screen rather than the command
+    /// palette. Only the footer and per-row hints differ: Enter opens a
+    /// plugin's settings and Esc returns to the category list.
+    pub fn embedded() -> Self {
+        let mut dialog = Self::new();
+        dialog.embedded = true;
         dialog
     }
 
@@ -429,15 +443,31 @@ impl PluginManagerDialog {
                     TrustLevel::Builtin => "builtin",
                     TrustLevel::Community => "community",
                 };
-                let mut spans = vec![
-                    Span::styled(
-                        format!("{:<28}", format!("{} v{}", row.name, row.version)),
-                        Style::default().fg(theme.text),
-                    ),
-                    Span::styled(format!("{trust:<10}"), Style::default().fg(theme.dimmed)),
-                    Span::styled(format!("{:<12}", state.0), Style::default().fg(state.1)),
-                    Span::styled(row.source.describe(), Style::default().fg(theme.dimmed)),
-                ];
+                let mut spans = Vec::new();
+                // In the settings host, a leading mark flags plugins whose
+                // Enter opens settings (the footer ties "*" to it). A fixed
+                // 2-col slot keeps names aligned with non-configurable rows,
+                // and being leading it never clips in the narrow settings pane.
+                if self.embedded {
+                    let mark = if row.setting_count > 0 { "* " } else { "  " };
+                    spans.push(Span::styled(mark, Style::default().fg(theme.accent)));
+                }
+                spans.push(Span::styled(
+                    format!("{:<28}", format!("{} v{}", row.name, row.version)),
+                    Style::default().fg(theme.text),
+                ));
+                spans.push(Span::styled(
+                    format!("{trust:<10}"),
+                    Style::default().fg(theme.dimmed),
+                ));
+                spans.push(Span::styled(
+                    format!("{:<12}", state.0),
+                    Style::default().fg(state.1),
+                ));
+                spans.push(Span::styled(
+                    row.source.describe(),
+                    Style::default().fg(theme.dimmed),
+                ));
                 if self.update_status.get(&row.id)
                     == Some(&crate::plugin::update_check::UpdateStatus::Available)
                 {
@@ -480,9 +510,11 @@ impl PluginManagerDialog {
             Some((message, color)) => Paragraph::new(message.to_string())
                 .style(Style::default().fg(color))
                 .wrap(Wrap { trim: true }),
-            None => Paragraph::new(
-                "space/enter toggle · i install · d discover · u update · c check updates · x uninstall · esc close",
-            )
+            None => Paragraph::new(if self.embedded {
+                "space toggle · enter opens settings (*) · i install · d discover · u update · c check updates · x uninstall · esc back"
+            } else {
+                "space/enter toggle · i install · d discover · u update · c check updates · x uninstall · esc close"
+            })
             .style(Style::default().fg(theme.dimmed)),
         };
         f.render_widget(footer, chunks[2]);

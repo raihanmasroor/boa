@@ -410,14 +410,18 @@ impl SettingsView {
     /// else is the shared manager's job. A management mutation re-syncs the
     /// view's config; Esc/`q` (manager Cancel) returns to the category panel.
     fn handle_plugins_manager_key(&mut self, key: KeyEvent) -> SettingsAction {
+        // In the list view Enter means "open this plugin's settings" (a no-op
+        // when it has none); Space is the toggle. Enter keeps its manager
+        // meaning in the sub-modes (submit install path, install discovered,
+        // approve caps), which `is_browsing` excludes.
         if key.code == KeyCode::Enter && self.plugin_manager.is_browsing() {
             if let Some(p) = self.plugin_manager.selected() {
                 if p.setting_count > 0 {
                     let id = p.id.clone();
                     self.enter_plugin_settings(id);
-                    return SettingsAction::Continue;
                 }
             }
+            return SettingsAction::Continue;
         }
         match self.plugin_manager.handle_key(key) {
             DialogResult::Continue | DialogResult::Submit(()) => {

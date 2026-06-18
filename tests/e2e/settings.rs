@@ -61,7 +61,8 @@ fn settings_plugins_tab_hosts_manager_and_drills_into_settings() {
     h.assert_screen_contains("Detect custom agent status");
 
     // Esc steps back from the per-plugin settings to the embedded manager
-    // list, which shows the installed plugins by name.
+    // list, which shows the installed plugins by name plus the inline footer.
     h.send_keys("Escape");
     h.wait_for("Agent Status Detection");
+    h.assert_screen_contains("opens settings");
 }
