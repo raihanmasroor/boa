@@ -26,17 +26,19 @@ pub struct BuiltinPlugin {
     pub manifest_toml: &'static str,
 }
 
-/// First-party plugins bundled with the binary, registered by later phases
-/// (status detection, attention sort). Kept in `plugins/` in the repository
-/// so they can move to their own repo without touching host code.
+/// First-party plugins bundled with the binary. Kept in `plugins/` in the
+/// repository so they can move to their own repo without touching host code.
+///
+/// `aoe-attention` is intentionally NOT bundled yet: its manifest is a stub
+/// that contributes nothing (the attention sort is still a core `SortOrder`),
+/// so a bundled toggle would be a confusing no-op (you could disable
+/// "Attention Sort" and the sort would stay). It joins this list when the
+/// attention-sort extraction makes it real; the manifest stays in `plugins/`
+/// until then.
 pub static BUILTINS: &[BuiltinPlugin] = &[
     #[cfg(feature = "default-plugins")]
     BuiltinPlugin {
         manifest_toml: include_str!("../../plugins/aoe-status/aoe-plugin.toml"),
-    },
-    #[cfg(feature = "default-plugins")]
-    BuiltinPlugin {
-        manifest_toml: include_str!("../../plugins/aoe-attention/aoe-plugin.toml"),
     },
     // The web dashboard's management marker only exists when the dashboard
     // is compiled in at all.

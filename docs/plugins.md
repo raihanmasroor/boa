@@ -31,8 +31,11 @@ back when re-enabled.
 | Plugin | What it does | Disabled behavior |
 |---|---|---|
 | `aoe.status` | Agent status detection: declarative rules plus a worker for complex parsers (codex). Also gives custom `--cmd` agents basic running/waiting detection. | Falls back to the builtin in-core detectors; custom agents show idle. |
-| `aoe.attention` | Attention-sort metadata (extraction in progress). | Attention sort keeps working from core. |
 | `aoe.web` | The web dashboard management marker. Included and enabled by default; absent only from `--no-default-features` source builds. | `aoe serve` refuses to start until re-enabled. |
+
+The attention sort is currently a core feature. An `aoe.attention` plugin will
+bundle once the attention-sort logic is extracted into it; until then it is not
+shipped (a toggle would be a no-op), though its manifest lives in `plugins/`.
 
 ## Discovering plugins
 
