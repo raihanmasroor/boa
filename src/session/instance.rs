@@ -350,6 +350,22 @@ impl ResumeIntent {
     }
 }
 
+/// A semantic status an agent (or the operator) attaches to a session to
+/// signal what it needs, rendered as a colored dot in the web sidebar. This
+/// is deliberately a meaning, not a raw color: `blocked`/`working`/`done`
+/// can drive future sorting, filtering, or notifications, whereas a stored
+/// color string could not. `None` means idle / no explicit signal. See #2383.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum SessionSignal {
+    /// Needs attention / blocked. Renders red/rose.
+    Blocked,
+    /// Actively working / in progress. Renders amber.
+    Working,
+    /// Ready for review / done. Renders green/teal.
+    Done,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Instance {
     pub id: String,
@@ -539,6 +555,11 @@ pub struct Instance {
     /// `get_commit_from_ref` resolves both forms.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub base_branch_override: Option<String>,
+
+    /// Per-session status signal set via `aoe session signal` or the web
+    /// context menu. `None` means idle / no signal. See #2383.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signal: Option<SessionSignal>,
 
     /// How this session is rendered: `Structured` (ACP native rendering) or
     /// `Terminal` (raw tmux pane). When `Structured`, aoe spawns an ACP agent
@@ -854,6 +875,7 @@ impl Instance {
             notify_on_idle: None,
             notify_on_error: None,
             base_branch_override: None,
+            signal: None,
             #[cfg(feature = "serve")]
             view: View::Terminal,
             #[cfg(feature = "serve")]
@@ -8157,5 +8179,28 @@ Esc to cancel \u{b7} Tab to amend \u{b7} ctrl+e to explain\n\
             Status::Waiting,
             "Claude blocked on an approval prompt must reconcile Running -> Waiting (#1913)"
         );
+    }
+
+    #[test]
+    fn signal_round_trips_and_is_omitted_when_none() {
+        // A None signal must be skipped entirely: this is exactly the shape of
+        // a sessions.json written before #2383, so deserializing it back proves
+        // backward compatibility (no `signal` key -> serde default None).
+        let inst = Instance::new("t", "/tmp/p");
+        let none_json = serde_json::to_string(&inst).unwrap();
+        assert!(
+            !none_json.contains("signal"),
+            "None signal must not serialize"
+        );
+        let back: Instance = serde_json::from_str(&none_json).unwrap();
+        assert_eq!(back.signal, None);
+
+        // Some(_) round-trips as the kebab-case meaning, not a color.
+        let mut inst = inst;
+        inst.signal = Some(SessionSignal::Blocked);
+        let json = serde_json::to_string(&inst).unwrap();
+        assert!(json.contains("\"signal\":\"blocked\""));
+        let back: Instance = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.signal, Some(SessionSignal::Blocked));
     }
 }
