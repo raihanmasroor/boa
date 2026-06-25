@@ -135,6 +135,10 @@ Surface AoE session info inside your existing tmux status bar. Useful when you s
 
 [tmux Status Bar guide](guides/tmux-status-bar.md)
 
+### Session signals
+
+Attach a status signal (`blocked`, `working`, `done`) to a session; it shows as a colored dot in the web sidebar, turning the session list into a scannable fleet status board. Set it from the sidebar context menu, or via `aoe session signal <state> [session]`. The session argument defaults to the session owning the current tmux pane, so a running agent can self-signal with a bare `aoe session signal working` (and clear it with `aoe session signal clear`) to flag itself for attention without the operator opening it.
+
 ## Notifications
 
 ### Sound effects

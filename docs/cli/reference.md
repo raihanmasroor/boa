@@ -33,6 +33,7 @@ This document contains the help content for the `aoe` command-line program.
 * [`aoe session unfavorite`↴](#aoe-session-unfavorite)
 * [`aoe session archive`↴](#aoe-session-archive)
 * [`aoe session unarchive`↴](#aoe-session-unarchive)
+* [`aoe session signal`↴](#aoe-session-signal)
 * [`aoe group`↴](#aoe-group)
 * [`aoe group list`↴](#aoe-group-list)
 * [`aoe group create`↴](#aoe-group-create)
@@ -337,6 +338,7 @@ Manage session lifecycle (start, stop, attach, etc.)
 * `unfavorite` — Clear the favorite flag on a session
 * `archive` — Archive a session: sink it in the Attention sort and tear down its tmux sessions. Worktree, branch, container preserved. `--no-kill` skips tmux teardown. See #1868
 * `unarchive` — Unarchive a session (restores it to its tier in the Attention sort)
+* `signal` — Set or clear a session's status signal (a colored sidebar dot). An agent can signal its own state with no session id: it defaults to the session owning the current tmux pane. See #2383
 
 
 
@@ -586,6 +588,19 @@ Unarchive a session (restores it to its tier in the Attention sort)
 ###### **Arguments:**
 
 * `<IDENTIFIER>` — Session ID or title
+
+
+
+## `aoe session signal`
+
+Set or clear a session's status signal (a colored sidebar dot). An agent can signal its own state with no session id: it defaults to the session owning the current tmux pane. See #2383
+
+**Usage:** `aoe session signal <STATE> [SESSION]`
+
+###### **Arguments:**
+
+* `<STATE>` — Signal to set: `blocked`, `working`, or `done` (input aliases `red`, `amber`, `green`), or `clear` / `none` to remove it
+* `<SESSION>` — Session ID or title. Defaults to the session owning the current tmux pane, so a running agent can self-signal with `aoe session signal working`
 
 
 
