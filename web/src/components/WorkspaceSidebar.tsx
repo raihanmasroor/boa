@@ -62,10 +62,13 @@ import { TOUR_ANCHORS, tourAnchor } from "../lib/tourSteps";
 import {
   renameSession,
   setSessionNotifications,
+  setSessionSignal,
   setWorktreeName,
   smartRenameSession,
   updateSessionGroup,
 } from "../lib/api";
+import type { SessionSignal } from "../lib/types";
+import { SESSION_SIGNALS, signalColor, signalLabel } from "../lib/sessionSignal";
 import { useServerDown, OFFLINE_TITLE } from "../lib/connectionState";
 import { requestOpenSession } from "../lib/sessionRoute";
 import { requestSwitchAgent } from "../lib/switchAgentTrigger";
@@ -736,6 +739,7 @@ export const SessionRow = memo(function SessionRow({
   // and the auto-mark only ever lands on Idle anyway.
   const showUnreadGlyph = isUnread && (sessionStatus === "Idle" || sessionStatus === "Unknown");
   const sessionId = firstSession?.id;
+  const sessionSignal = firstSession?.signal ?? null;
   const navigationSessionId = runningSession?.id ?? firstSession?.id ?? null;
   const sessionPath = navigationSessionId ? `/session/${encodeURIComponent(navigationSessionId)}` : "/";
   const isDeleting = sessionStatus === "Deleting";
@@ -773,6 +777,12 @@ export const SessionRow = memo(function SessionRow({
     setContextMenu(null);
     if (!sessionId || preset === notifyPreset) return;
     await setSessionNotifications(sessionId, preset);
+  };
+
+  const setSignal = async (signal: SessionSignal | null) => {
+    setContextMenu(null);
+    if (!sessionId || signal === sessionSignal) return;
+    await setSessionSignal(sessionId, signal);
   };
 
   // Triage actions (pin / archive / snooze). The optimistic overlay and the
@@ -1099,6 +1109,15 @@ export const SessionRow = memo(function SessionRow({
               <StatusGlyph status={sessionStatus} createdAt={createdAt} idleEnteredAt={idleEnteredAt} />
             )}
           </span>
+          {sessionSignal && (
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: signalColor(sessionSignal) }}
+              title={`Signal: ${signalLabel(sessionSignal)}`}
+              aria-label={`Signal: ${signalLabel(sessionSignal)}`}
+              data-testid="sidebar-signal-dot"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <span
               className={`flex items-center gap-1.5 text-[13px] md:text-[14px] ${showUnreadGlyph ? "text-status-unread font-semibold" : isSessionActive({ status: sessionStatus, idle_entered_at: idleEnteredAt }, idleDecayWindowMs) ? textClass : isActive ? "text-text-primary" : "text-text-secondary"} ${isFavorited || effectivePinned ? "font-semibold" : ""} ${effectiveArchived || effectiveSnoozed ? "italic opacity-70" : ""}`}
@@ -1351,6 +1370,42 @@ export const SessionRow = memo(function SessionRow({
                     </button>
                   );
                 })}
+                {!readOnly && (
+                  <>
+                    <div className="border-t border-surface-700/20 my-1" />
+                    <div className="px-3 py-1 text-[11px] font-mono uppercase tracking-widest text-text-muted">
+                      Signal
+                    </div>
+                    {SESSION_SIGNALS.map((sig) => {
+                      const selected = sessionSignal === sig;
+                      return (
+                        <button
+                          key={sig}
+                          onClick={() => void setSignal(sig)}
+                          data-testid={`sidebar-context-menu-signal-${sig}`}
+                          className={`w-full text-left pl-6 pr-3 py-2 md:py-2 max-md:py-3 text-sm hover:bg-surface-700/50 cursor-pointer transition-colors flex items-center gap-2 ${
+                            selected ? "text-text-primary" : "text-text-secondary"
+                          }`}
+                        >
+                          <span className="w-3 text-brand-500">{selected ? "✓" : ""}</span>
+                          <span
+                            className="h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: signalColor(sig) }}
+                          />
+                          {signalLabel(sig)}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => void setSignal(null)}
+                      data-testid="sidebar-context-menu-signal-clear"
+                      className="w-full text-left pl-6 pr-3 py-2 md:py-2 max-md:py-3 text-sm text-text-secondary hover:bg-surface-700/50 cursor-pointer transition-colors flex items-center gap-2"
+                    >
+                      <span className="w-3 text-brand-500">{sessionSignal === null ? "✓" : ""}</span>
+                      Clear
+                    </button>
+                  </>
+                )}
                 {!readOnly && (
                   <>
                     <div className="border-t border-surface-700/20 my-1" />

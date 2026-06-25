@@ -654,4 +654,68 @@ describe("SessionRow unread", () => {
     fireEvent.contextMenu(screen.getByTestId("sidebar-session-row"));
     expect(screen.queryByTestId("sidebar-context-menu-unread")).toBeNull();
   });
+
+  it("renders the signal dot when the first session has a signal", () => {
+    const ws = workspace("w-signal", [session({ signal: "blocked" })]);
+    render(
+      <Wrap>
+        <Row ws={ws} />
+      </Wrap>,
+    );
+    expect(screen.queryByTestId("sidebar-signal-dot")).not.toBeNull();
+    expect(screen.getByLabelText("Signal: Blocked")).not.toBeNull();
+  });
+
+  it("renders no signal dot when the session has no signal", () => {
+    const ws = workspace("w-no-signal", [session()]);
+    render(
+      <Wrap>
+        <Row ws={ws} />
+      </Wrap>,
+    );
+    expect(screen.queryByTestId("sidebar-signal-dot")).toBeNull();
+  });
+
+  it("Signal click fires PATCH /api/sessions/:id/signal with { signal: 'working' }", async () => {
+    const ws = workspace("w-live", [session({ id: "sess-sig-it" })]);
+    render(
+      <Wrap>
+        <Row ws={ws} />
+      </Wrap>,
+    );
+    fireEvent.contextMenu(screen.getByTestId("sidebar-session-row"));
+    fireEvent.click(screen.getByTestId("sidebar-context-menu-signal-working"));
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const [url, init] = fetchSpy.mock.calls[0]!;
+    expect(url).toBe("/api/sessions/sess-sig-it/signal");
+    expect(init?.method).toBe("PATCH");
+    expect(JSON.parse(init!.body as string)).toEqual({ signal: "working" });
+  });
+
+  it("Signal Clear fires PATCH /api/sessions/:id/signal with { signal: null }", async () => {
+    const ws = workspace("w-live", [session({ id: "sess-sig-clr", signal: "done" })]);
+    render(
+      <Wrap>
+        <Row ws={ws} />
+      </Wrap>,
+    );
+    fireEvent.contextMenu(screen.getByTestId("sidebar-session-row"));
+    fireEvent.click(screen.getByTestId("sidebar-context-menu-signal-clear"));
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const [url, init] = fetchSpy.mock.calls[0]!;
+    expect(url).toBe("/api/sessions/sess-sig-clr/signal");
+    expect(JSON.parse(init!.body as string)).toEqual({ signal: null });
+  });
+
+  it("does not fire PATCH when the chosen signal is already set", async () => {
+    const ws = workspace("w-live", [session({ id: "sess-sig-noop", signal: "blocked" })]);
+    render(
+      <Wrap>
+        <Row ws={ws} />
+      </Wrap>,
+    );
+    fireEvent.contextMenu(screen.getByTestId("sidebar-session-row"));
+    fireEvent.click(screen.getByTestId("sidebar-context-menu-signal-blocked"));
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });

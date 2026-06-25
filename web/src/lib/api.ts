@@ -1,6 +1,7 @@
 import { clientFormFactor } from "./formFactor";
 import type {
   SessionResponse,
+  SessionSignal,
   RichDiffFilesResponse,
   RichFileContentsResponse,
   AgentInfo,
@@ -1467,6 +1468,22 @@ export async function setSessionPin(id: string, pinned: boolean): Promise<Sessio
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pinned }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as SessionResponse;
+  } catch {
+    return null;
+  }
+}
+
+/** Set or clear a session's status signal (the colored sidebar dot). Pass
+ *  null to clear. See #2383. */
+export async function setSessionSignal(id: string, signal: SessionSignal | null): Promise<SessionResponse | null> {
+  try {
+    const res = await fetch(`/api/sessions/${id}/signal`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signal }),
     });
     if (!res.ok) return null;
     return (await res.json()) as SessionResponse;

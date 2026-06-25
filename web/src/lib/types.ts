@@ -1,5 +1,10 @@
 import type { RepoColor } from "./repoAppearance";
 
+/** A semantic per-session status signal, set by an agent or the operator and
+ *  rendered as a colored sidebar dot. Matches the Rust `SessionSignal` enum
+ *  (kebab-case). See #2383. */
+export type SessionSignal = "blocked" | "working" | "done";
+
 /** Session data returned by the API */
 export interface SessionResponse {
   id: string;
@@ -28,6 +33,10 @@ export interface SessionResponse {
    *  auto-detected default. Edited via the `vs <ref>` chip in the
    *  diff header. See #970. */
   base_branch_override?: string | null;
+  /** Per-session status signal set via `aoe session signal` or the sidebar
+   *  context menu. Drives the colored signal dot. Absent for idle. See
+   *  #2383. */
+  signal?: SessionSignal | null;
   is_sandboxed: boolean;
   /** True when the session was created in scratch mode (`aoe add
    *  --scratch` or the wizard toggle). The `project_path` points
