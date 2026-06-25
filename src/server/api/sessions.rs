@@ -11,7 +11,9 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::git::error::GitError;
-use crate::session::{EnsureReadyError, EnsureReadyOutcome, Instance, Status, Storage};
+use crate::session::{
+    EnsureReadyError, EnsureReadyOutcome, Instance, SessionSignal, Status, Storage,
+};
 
 use super::validate_no_shell_injection;
 use super::AppState;
@@ -46,6 +48,11 @@ pub struct SessionResponse {
     /// default, and auto-detection. See #970.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub base_branch_override: Option<String>,
+    /// Per-session status signal set via `aoe session signal` or the sidebar
+    /// context menu. `blocked`/`working`/`done`, or absent for idle. Drives
+    /// the colored sidebar dot. See #2383.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signal: Option<SessionSignal>,
     pub is_sandboxed: bool,
     /// True when the session was created with `--scratch`; the
     /// `project_path` points at an auto-provisioned directory under
@@ -285,6 +292,7 @@ impl SessionResponse {
                 .as_ref()
                 .and_then(|w| w.base_branch.clone()),
             base_branch_override: inst.base_branch_override.clone(),
+            signal: inst.signal,
             is_sandboxed: inst.is_sandboxed(),
             scratch: inst.scratch,
             favorited: inst.is_favorited(),
@@ -1860,6 +1868,13 @@ pub struct UpdatePinBody {
 }
 
 #[derive(Deserialize)]
+pub struct UpdateSignalBody {
+    /// `Some(_)` sets the signal; `null` (or a missing field) clears it.
+    #[serde(default)]
+    pub signal: Option<SessionSignal>,
+}
+
+#[derive(Deserialize)]
 pub struct UpdateArchiveBody {
     pub archived: bool,
     /// On archive, tear down every tmux session this instance owns. `false`
@@ -1967,6 +1982,77 @@ pub async fn update_session_pin(
     } else {
         inst.unpin();
     }
+
+    let response =
+        SessionResponse::from_instance(&*inst, crate::claude_settings::read_tui_fullscreen());
+    (StatusCode::OK, Json(serde_json::json!(response))).into_response()
+}
+
+pub async fn update_session_signal(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    body: Result<Json<UpdateSignalBody>, axum::extract::rejection::JsonRejection>,
+) -> impl IntoResponse {
+    if state.read_only {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({
+                "error": "read_only",
+                "message": "Server is in read-only mode"
+            })),
+        )
+            .into_response();
+    }
+    let Json(body) = match body {
+        Ok(b) => b,
+        Err(rej) => return rej.into_response(),
+    };
+
+    let lock = state.instance_lock(&id).await;
+    let _guard = lock.lock().await;
+
+    let profile = {
+        let instances = state.instances.read().await;
+        let Some(inst) = instances.iter().find(|i| i.id == id) else {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "message": "Session not found" })),
+            )
+                .into_response();
+        };
+        inst.source_profile.clone()
+    };
+
+    let signal = body.signal;
+
+    // Persist first; only mutate memory once disk is durable. See #1589.
+    let persist_id = id.clone();
+    if persist_session_update(
+        profile,
+        "signal update",
+        state.file_watch.clone(),
+        move |instances| {
+            if let Some(inst) = instances.iter_mut().find(|i| i.id == persist_id) {
+                inst.signal = signal;
+            }
+        },
+    )
+    .await
+    .is_err()
+    {
+        return persist_failed_response();
+    }
+
+    let mut instances = state.instances.write().await;
+    let Some(inst) = instances.iter_mut().find(|i| i.id == id) else {
+        tracing::error!(
+            target: "http.api.sessions",
+            session = %id,
+            "signal update: instance vanished after persist"
+        );
+        return persist_failed_response();
+    };
+    inst.signal = signal;
 
     let response =
         SessionResponse::from_instance(&*inst, crate::claude_settings::read_tui_fullscreen());
@@ -7163,6 +7249,7 @@ mod workspace_ordering_tests {
             main_repo_path: None,
             base_branch: None,
             base_branch_override: None,
+            signal: None,
             is_sandboxed: false,
             scratch: false,
             has_managed_worktree: false,

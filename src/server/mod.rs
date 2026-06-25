@@ -1390,6 +1390,10 @@ fn build_router(state: Arc<AppState>) -> Router {
         )
         .route("/api/sessions/{id}/pin", patch(api::update_session_pin))
         .route(
+            "/api/sessions/{id}/signal",
+            patch(api::update_session_signal),
+        )
+        .route(
             "/api/sessions/{id}/archive",
             patch(api::update_session_archive),
         )
