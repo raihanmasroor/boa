@@ -38,6 +38,7 @@ import { usePaneLayout, dockTabs, dockGroups, dockOf, isActiveTab } from "./lib/
 import { isPluginPaneId, usePluginPanes, type PluginPane } from "./lib/pluginPanes";
 import { PluginPaneBody } from "./components/plugin/PluginSlots";
 import { TOUR_ANCHORS, tourAnchor } from "./lib/tourSteps";
+import { restoreSessions, trashSessions } from "./lib/trashActions";
 import {
   loginStatus,
   logout,
@@ -269,6 +270,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
     loaded: sessionsLoaded,
     injectSession,
     setSessionStatus,
+    applySession,
   } = useSessions();
   const workspaces = useWorkspaces(sessions);
 
@@ -872,6 +874,39 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
     [deletingSession, activeSessionId, setSessionStatus, navigate],
   );
 
+  // Move-to-trash path (#2489): the safe default. Unlike permanent delete it
+  // deliberately KEEPS the per-session acp cache, draft, and stored comments
+  // so a restore is faithful; only purge clears them. Trashes every session
+  // in the workspace so a multi-session workspace sinks as a whole.
+  const handleConfirmTrash = useCallback(async () => {
+    if (!deletingWorkspace) return;
+    const ids = deletingWorkspace.sessions.map((s) => s.id);
+    if (ids.length === 0) return;
+    const wasActive = activeSessionId != null && ids.includes(activeSessionId);
+
+    setDeletingWorkspaceId(null);
+    for (const id of ids) setSessionStatus(id, "Stopped");
+    if (wasActive) {
+      navigate("/");
+    }
+
+    // The returned snapshot re-buckets each row into Trash immediately
+    // instead of on the next poll. See trashSessions.
+    await trashSessions(ids, {
+      applySession,
+      onError: (id) => setSessionStatus(id, "Error"),
+      notify: toastBus.handler,
+    });
+  }, [deletingWorkspace, activeSessionId, setSessionStatus, applySession, navigate]);
+
+  // Restore a trashed workspace from the sidebar Trash section (#2489).
+  // Restores every session in the workspace (a workspace only lands in Trash
+  // when all of its sessions are trashed), not just the first.
+  const handleRestoreSession = useCallback(
+    (sessionIds: string[]) => restoreSessions(sessionIds, { applySession, notify: toastBus.handler }),
+    [applySession],
+  );
+
   const stoppingWorkspace = stoppingWorkspaceId ? workspaces.find((w) => w.id === stoppingWorkspaceId) : null;
   const stoppingSession = stoppingWorkspace?.sessions[0] ?? null;
 
@@ -1440,6 +1475,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
                         tool={activeSession.tool}
                         archivedAt={activeSession.archived_at ?? null}
                         snoozedUntil={activeSession.snoozed_until ?? null}
+                        trashedAt={activeSession.trashed_at ?? null}
                         onOpenFileRef={handleOpenFileRef}
                         fileRefSession={activeSession}
                         onOpenAgentsPane={openAgentsPane}
@@ -1723,6 +1759,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
               onRemoveProject={handleRemoveProject}
               onSettings={handleOpenSettings}
               onDeleteSession={handleDeleteSession}
+              onRestoreSession={handleRestoreSession}
               onStopSession={handleStopSession}
               onStartSession={handleStartSession}
               readOnly={serverAbout?.read_only}
@@ -1793,7 +1830,9 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
             isSandboxed={deletingSession.is_sandboxed}
             isScratch={deletingSession.scratch}
             cleanupDefaults={deletingSession.cleanup_defaults}
+            defaultToTrash={!deletingSession.trashed_at && deletingSession.cleanup_defaults.delete_to_trash}
             onConfirm={handleConfirmDelete}
+            onTrash={handleConfirmTrash}
             onCancel={() => setDeletingWorkspaceId(null)}
           />
         )}
