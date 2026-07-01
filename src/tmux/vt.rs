@@ -21,6 +21,8 @@ use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, Ordering};
 use std::sync::{Arc, LazyLock, Mutex, Weak};
 use std::time::{Duration, Instant};
 
+use unicode_width::UnicodeWidthChar;
+
 use crate::tmux::PaneCursor;
 
 /// `aoe __vt-pipe <socket>`: the bidirectional `pipe-pane -IO` forwarder. tmux
@@ -187,6 +189,200 @@ fn lf_to_crlf(raw: &[u8]) -> Vec<u8> {
     out
 }
 
+/// Rewrites a pane byte stream so `<base> + U+FE0F` (emoji variation selector
+/// 16) reserves two columns in the vt100 grid.
+///
+/// tmux and real terminals lay such a grapheme out as two cells, but vt100
+/// measures width per codepoint: the base is width 1 and VS16 is a width-0
+/// combining mark, so the grapheme occupies one cell and the pane's cursor ends
+/// one column short of what the producing app assumed. Under relative redraws
+/// the app then writes onto the trailing column and the row shifts left,
+/// intermittently, as the app mixes absolute and relative moves (issue #2590).
+/// vt100's per-codepoint width can't be hooked, so we nudge its cursor instead:
+/// after a VS16 that follows a width-1 base, inject a cursor-forward (`ESC[C`) so
+/// the grapheme reserves its second column. An absolute reposition from the app
+/// overrides the nudge harmlessly; a relative write then lands in the right
+/// column. [`row_to_ansi`] owns the reserved blank so it is not serialised as a
+/// stray space.
+///
+/// The nudge is skipped when the base sits on the last column: there vt100
+/// already wraps the following char to the next row (like a real wide char), and
+/// a cursor-forward would instead clear the pending wrap and let the next char
+/// overwrite the emoji. That gate needs the cursor column, so the widener tracks
+/// it across the standard horizontal moves (CR, BS, HT, CUP/CHA/CUF/CUB),
+/// clamping at the right margin: on an over-long wrapped line the column pins to
+/// the last column, biasing toward NOT nudging (the original, non-destructive
+/// behaviour) rather than risking an overwrite.
+///
+/// The state persists across `process` chunks so a base/VS16 pair (or a cursor
+/// escape, or a UTF-8 sequence) split across two socket reads is still handled.
+struct Vs16Widener {
+    cols: u16,
+    /// Cursor column, tracked to gate the last-column case.
+    col: u16,
+    /// Previous scalar and the column it was written at, for VS16 pairing.
+    last: Option<char>,
+    last_col: u16,
+    /// Trailing partial UTF-8 bytes held for the next chunk.
+    incomplete: Vec<u8>,
+    /// Bytes of an in-flight escape sequence spanning a chunk boundary.
+    esc: Vec<u8>,
+}
+
+impl Vs16Widener {
+    fn new(cols: u16) -> Self {
+        Self {
+            cols: cols.max(1),
+            col: 0,
+            last: None,
+            last_col: 0,
+            incomplete: Vec::new(),
+            esc: Vec::new(),
+        }
+    }
+
+    fn process(&mut self, input: &[u8]) -> Vec<u8> {
+        let mut data = std::mem::take(&mut self.incomplete);
+        data.extend_from_slice(input);
+        let mut out = Vec::with_capacity(data.len() + 8);
+        let mut i = 0;
+        while i < data.len() {
+            match std::str::from_utf8(&data[i..]) {
+                Ok(s) => {
+                    self.push_run(s, &mut out);
+                    break;
+                }
+                Err(e) => {
+                    let valid_end = i + e.valid_up_to();
+                    if e.valid_up_to() > 0 {
+                        let s = std::str::from_utf8(&data[i..valid_end]).unwrap();
+                        self.push_run(s, &mut out);
+                    }
+                    match e.error_len() {
+                        // Trailing partial sequence: hold it for the next chunk.
+                        None => {
+                            self.incomplete.extend_from_slice(&data[valid_end..]);
+                            break;
+                        }
+                        // Invalid byte(s): pass through (vt100 renders U+FFFD).
+                        Some(bad) => {
+                            out.extend_from_slice(&data[valid_end..valid_end + bad]);
+                            self.last = None;
+                            i = valid_end + bad;
+                        }
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    fn push_run(&mut self, s: &str, out: &mut Vec<u8>) {
+        let mut buf = [0u8; 4];
+        for c in s.chars() {
+            out.extend_from_slice(c.encode_utf8(&mut buf).as_bytes());
+            // Feed an in-flight escape sequence until its final byte, tracking
+            // only horizontal cursor moves; everything else leaves the column
+            // untouched.
+            if !self.esc.is_empty() {
+                self.feed_escape(c);
+                continue;
+            }
+            match c {
+                '\u{1b}' => self.esc.push(0x1b),
+                '\r' => self.col = 0,
+                '\u{08}' => self.col = self.col.saturating_sub(1),
+                '\t' => self.col = ((self.col / 8 + 1) * 8).min(self.cols - 1),
+                '\u{fe0f}' => {
+                    if matches!(self.last, Some(p) if UnicodeWidthChar::width(p) == Some(1))
+                        && self.last_col < self.cols - 1
+                    {
+                        out.extend_from_slice(b"\x1b[C");
+                        self.col = (self.last_col + 2).min(self.cols - 1);
+                    }
+                    self.last = Some(c);
+                }
+                c if (c as u32) < 0x20 => {}
+                c => {
+                    self.last = Some(c);
+                    self.last_col = self.col;
+                    let w = UnicodeWidthChar::width(c).unwrap_or(0) as u16;
+                    self.col = (self.col + w).min(self.cols - 1);
+                }
+            }
+        }
+    }
+
+    /// Consume one byte of an escape sequence begun with ESC. Recognises the CSI
+    /// horizontal-move finals (H/f/G set the column, C/D shift it) and treats
+    /// every other terminator as column-neutral. `esc` accumulates the numeric
+    /// params so the sequence can span a chunk boundary.
+    fn feed_escape(&mut self, c: char) {
+        // Non-ASCII cannot appear in an escape sequence; abort and re-scan it as
+        // text next iteration would be ideal, but such input is malformed, so we
+        // simply drop the tracking and treat the char as neutral.
+        let b = c as u32;
+        if b > 0x7f {
+            self.esc.clear();
+            return;
+        }
+        let b = b as u8;
+        if self.esc.len() == 1 {
+            // Byte right after ESC. Only CSI (`[`) carries cursor moves; any
+            // other introducer is column-neutral and ends the sequence here
+            // (single-char escapes) or is ignored.
+            if b == b'[' {
+                self.esc.push(b);
+            } else {
+                self.esc.clear();
+            }
+            return;
+        }
+        // Inside a CSI: final byte is 0x40..=0x7e.
+        if (0x40..=0x7e).contains(&b) {
+            let params = &self.esc[2..];
+            let first = ascii_num(params, 0);
+            match b {
+                b'H' | b'f' => {
+                    // CUP: row;col (1-based). Column is the second param.
+                    let col = ascii_semi_second(params).unwrap_or(1).max(1);
+                    self.col = (col - 1).min(self.cols - 1);
+                }
+                b'G' => self.col = (first.max(1) - 1).min(self.cols - 1),
+                b'C' => self.col = (self.col + first.max(1)).min(self.cols - 1),
+                b'D' => self.col = self.col.saturating_sub(first.max(1)),
+                _ => {}
+            }
+            self.esc.clear();
+        } else {
+            self.esc.push(b);
+        }
+    }
+}
+
+/// Parse the first `;`-separated decimal parameter of a CSI body.
+fn ascii_num(params: &[u8], default: u16) -> u16 {
+    let end = params
+        .iter()
+        .position(|&b| b == b';')
+        .unwrap_or(params.len());
+    std::str::from_utf8(&params[..end])
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(default)
+}
+
+/// Parse the second `;`-separated decimal parameter of a CSI body (for CUP col).
+fn ascii_semi_second(params: &[u8]) -> Option<u16> {
+    let rest = params.split(|&b| b == b';').nth(1)?;
+    std::str::from_utf8(rest).ok()?.parse().ok()
+}
+
+/// One-shot VS16 widening for a complete buffer (the `capture-pane` seed).
+fn widen_vs16_oneshot(input: &[u8], cols: u16) -> Vec<u8> {
+    Vs16Widener::new(cols).process(input)
+}
+
 /// (Re)build `parser` from tmux's authoritative `capture-pane` at `cols`x`rows`,
 /// resetting any prior content. `pipe-pane` carries only the app's incremental
 /// output, never tmux's reflow, so on a resize a grid that merely `set_size`d
@@ -239,7 +435,7 @@ fn seed_parser(
         if !prefix.is_empty() {
             p.process(&prefix);
         }
-        p.process(&lf_to_crlf(body));
+        p.process(&widen_vs16_oneshot(&lf_to_crlf(body), cols));
         app_cursor.store(p.screen().application_cursor(), Ordering::Relaxed);
     }
 }
@@ -419,12 +615,20 @@ fn row_to_ansi(screen: &vt100::Screen, row: u16, cols: u16) -> String {
             out.push_str(&sgr);
             cur_sgr = Some(sgr);
         }
+        let mut advance = if cell.is_wide() { 2 } else { 1 };
         if cell.has_contents() {
             out.push_str(cell.contents());
+            // `widen_vs16` reserves a trailing blank column for a base+VS16
+            // emoji (width 1 to vt100, two cells on a real terminal). Own both
+            // columns so that reserved blank is not serialised as a stray space
+            // and the following cell keeps its column.
+            if advance == 1 && cell.contents().ends_with('\u{fe0f}') {
+                advance = 2;
+            }
         } else {
             out.push(' ');
         }
-        col += if cell.is_wide() { 2 } else { 1 };
+        col += advance;
     }
     out
 }
@@ -605,6 +809,8 @@ impl VtChannel {
                 let mut conn = conn;
                 let _ = conn.set_read_timeout(Some(Duration::from_millis(200)));
                 let mut buf = [0u8; 8192];
+                // Cross-chunk state for VS16 widening (see `Vs16Widener`).
+                let mut vs16 = Vs16Widener::new(cols);
                 while !stop.load(Ordering::Relaxed) {
                     match conn.read(&mut buf) {
                         Ok(0) => break,
@@ -614,8 +820,9 @@ impl VtChannel {
                             while !seeded.load(Ordering::Relaxed) && !stop.load(Ordering::Relaxed) {
                                 std::thread::sleep(Duration::from_millis(1));
                             }
+                            let widened = vs16.process(&buf[..n]);
                             if let Ok(mut p) = parser.lock() {
-                                p.process(&buf[..n]);
+                                p.process(&widened);
                                 app_cursor
                                     .store(p.screen().application_cursor(), Ordering::Relaxed);
                             }
@@ -856,6 +1063,89 @@ mod tests {
         assert!(
             !content.contains("\x1b[10C") && !content.contains("\x1b[C"),
             "cursor-forward escape leaked:\n{content:?}"
+        );
+    }
+
+    #[test]
+    fn vs16_reserves_second_column() {
+        // "[A]" heart+vs16 "[B]": the emoji must occupy two columns so the
+        // trailing bracket keeps its position (issue #2590).
+        let mut p = vt100::Parser::new(3, 20, 0);
+        p.process(&widen_vs16_oneshot("[A]\u{2764}\u{fe0f}[B]".as_bytes(), 20));
+        let s = p.screen();
+        assert_eq!(s.cell(0, 3).map(|c| c.contents()), Some("\u{2764}\u{fe0f}"));
+        assert!(
+            s.cell(0, 4).is_some_and(|c| !c.has_contents()),
+            "column after the emoji must be the reserved blank"
+        );
+        assert_eq!(s.cell(0, 5).map(|c| c.contents()), Some("["));
+        // The serialised row glues the emoji to the next cell, no stray space.
+        let (content, _) = grid_content(&mut p, 3, 20, 3);
+        assert!(
+            content.contains("[A]\u{2764}\u{fe0f}[B]"),
+            "row: {content:?}"
+        );
+        assert!(
+            !content.contains("\u{2764}\u{fe0f} ["),
+            "reserved blank leaked as a space: {content:?}"
+        );
+    }
+
+    #[test]
+    fn vs16_relative_write_does_not_shift_left() {
+        // A redrawing app advances two columns past the emoji, then writes the
+        // next run relatively. Pre-fix, vt100 advanced one and the run
+        // overwrote the emoji's second column, shifting the row left; the nudge
+        // prevents it (the "flip" in issue #2590).
+        let mut p = vt100::Parser::new(3, 20, 0);
+        p.process(&widen_vs16_oneshot("\u{2764}\u{fe0f}[B]".as_bytes(), 20));
+        let s = p.screen();
+        assert_eq!(s.cell(0, 0).map(|c| c.contents()), Some("\u{2764}\u{fe0f}"));
+        assert_eq!(
+            s.cell(0, 2).map(|c| c.contents()),
+            Some("["),
+            "bracket must sit at column 2, not column 1"
+        );
+    }
+
+    #[test]
+    fn vs16_pairs_across_chunk_boundary() {
+        // base in one read, VS16 in the next: carried state still pairs them,
+        // so the widening never intermittently misses.
+        let mut p = vt100::Parser::new(3, 20, 0);
+        let mut w = Vs16Widener::new(20);
+        p.process(&w.process("[A]\u{2764}".as_bytes()));
+        p.process(&w.process("\u{fe0f}[B]".as_bytes()));
+        let s = p.screen();
+        assert_eq!(s.cell(0, 3).map(|c| c.contents()), Some("\u{2764}\u{fe0f}"));
+        assert_eq!(
+            s.cell(0, 5).map(|c| c.contents()),
+            Some("["),
+            "bracket must sit at column 5 across the split"
+        );
+    }
+
+    #[test]
+    fn vs16_already_wide_base_is_not_nudged() {
+        // A width-2 base carrying a redundant VS16 must not gain a third
+        // column: only width-1 bases are nudged.
+        let mut p = vt100::Parser::new(3, 20, 0);
+        p.process(&widen_vs16_oneshot("\u{1f600}\u{fe0f}[B]".as_bytes(), 20));
+        let s = p.screen();
+        // 😀 occupies cols 0-1 (wide), the bracket follows at col 2.
+        assert_eq!(s.cell(0, 2).map(|c| c.contents()), Some("["));
+    }
+
+    #[test]
+    fn vs16_at_right_margin_does_not_corrupt() {
+        // base+VS16 as the last content of a narrow row: no panic, nothing lost.
+        let mut p = vt100::Parser::new(3, 6, 0);
+        p.process(&widen_vs16_oneshot("ABCDE\u{2764}\u{fe0f}X".as_bytes(), 6));
+        let (content, _) = grid_content(&mut p, 3, 6, 3);
+        assert!(content.contains('X'), "trailing char lost: {content:?}");
+        assert!(
+            content.contains("\u{2764}\u{fe0f}"),
+            "emoji lost: {content:?}"
         );
     }
 
