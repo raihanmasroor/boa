@@ -333,7 +333,7 @@ impl TunnelHandle {
                         anyhow::anyhow!(
                             "tailscale funnel timed out after {}s; your node may not have \
                              HTTPS certs enabled or Funnel may not be enabled in your tailnet \
-                             ACL. Run `AGENT_OF_EMPIRES_DEBUG=1 aoe serve --remote` and \
+                             ACL. Run `AGENT_OF_EMPIRES_DEBUG=1 boa serve --remote` and \
                              check debug.log for the live output, or try \
                              `tailscale funnel --bg --yes {}` manually, or pass \
                              --no-tailscale to skip.",
@@ -458,7 +458,7 @@ impl TunnelHandle {
                     error!(
                         "Cloudflare tunnel exited again ({}). \
                          Remote access is unavailable. \
-                         Restart with `aoe serve --remote`.",
+                         Restart with `boa serve --remote`.",
                         status
                     );
                     return;

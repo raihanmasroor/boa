@@ -1,6 +1,6 @@
 //! Age of Empires cheat-code easter eggs for the TUI command palette.
 //!
-//! A wink at the "Agent of Empires" name. Mirrors the web registry
+//! A hidden easter egg. Mirrors the web registry
 //! (`web/src/lib/cheats.ts`); the two are hand-kept parallel since Rust and
 //! TypeScript can't share a literal. The TUI surfaces only the toast message
 //! (via `Action::SetTransientStatus`), not the web's visual flourishes.

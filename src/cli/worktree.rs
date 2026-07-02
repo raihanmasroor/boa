@@ -91,7 +91,7 @@ async fn show_info(profile: &str, identifier: &str) -> Result<()> {
         println!("  Worktree Path: {}", session.project_path);
         println!("  Main Repo:     {}", wt_info.main_repo_path);
         println!(
-            "  Managed by aoe: {}",
+            "  Managed by BOA: {}",
             if wt_info.managed_by_aoe { "Yes" } else { "No" }
         );
         println!(
@@ -105,7 +105,7 @@ async fn show_info(profile: &str, identifier: &str) -> Result<()> {
             println!("\n  Status:        ✓ Worktree exists");
         } else {
             println!("\n  Status:        ✗ Worktree missing (orphaned session)");
-            println!("  Tip:           Run 'aoe worktree cleanup' to remove orphaned sessions");
+            println!("  Tip:           Run 'boa worktree cleanup' to remove orphaned sessions");
         }
     } else if let Some(ws_info) = &session.workspace_info {
         println!("Workspace Information:\n");
@@ -239,7 +239,7 @@ async fn cleanup_orphaned(profile: &str, force: bool) -> Result<()> {
     use std::io::{self, Write};
 
     print!("\nProceed with cleanup? This will:\n");
-    println!("  - Remove {} sessions from aoe", orphaned_sessions.len());
+    println!("  - Remove {} sessions from BOA", orphaned_sessions.len());
     println!(
         "  - Delete {} worktree directories",
         orphaned_worktrees.len()

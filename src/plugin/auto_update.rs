@@ -88,7 +88,7 @@ pub async fn sweep(notifier: Option<&Arc<dyn UpdateNotifier>>) -> SweepSummary {
                     target: "plugin.auto_update",
                     plugin = %id,
                     %reason,
-                    "skipped plugin auto-update; run `aoe plugin update` to review",
+                    "skipped plugin auto-update; run `boa plugin update` to review",
                 );
                 if let Some(notifier) = notifier {
                     if !already_dismissed(&id, &fingerprint) {

@@ -4,9 +4,9 @@
 
 Docker sandboxing runs your AI coding agents (Claude Code, OpenCode, Mistral Vibe, Hermes, Codex CLI, Gemini CLI, Antigravity CLI, Cursor CLI, Copilot CLI, Pi, Kiro CLI, Qwen Code) inside isolated Docker containers while maintaining access to your project files and credentials.
 
-> **Linux users:** AoE also supports [Podman](podman.md) as a daemonless, rootless-friendly alternative to Docker.
+> **Linux users:** BOA also supports [Podman](podman.md) as a daemonless, rootless-friendly alternative to Docker.
 >
-> **macOS users:** AoE also supports [Apple Containers](apple-containers.md) as a native alternative to Docker Desktop.
+> **macOS users:** BOA also supports [Apple Containers](apple-containers.md) as a native alternative to Docker Desktop.
 
 **Key Features:**
 - One container per session
@@ -29,19 +29,19 @@ Agent credentials are shared into containers automatically, so agents authentica
 
 ```bash
 # Create sandboxed session
-aoe add --sandbox .
+boa add --sandbox .
 
 # Create sandboxed session with custom image
-aoe add --sandbox-image myregistry/custom:v1 .
+boa add --sandbox-image myregistry/custom:v1 .
 
 # Create and launch sandboxed session
-aoe add --sandbox -l .
+boa add --sandbox -l .
 
 # Remove session (auto-cleans container)
-aoe remove <session>
+boa remove <session>
 
 # Remove session but keep container
-aoe remove <session> --keep-container
+boa remove <session> --keep-container
 ```
 
 
@@ -133,7 +133,7 @@ environment = [
 ]
 ```
 
-For `KEY=VALUE` entries, values starting with `$` read from a host env var. This lets you store secrets in your shell profile rather than in the AOE config file:
+For `KEY=VALUE` entries, values starting with `$` read from a host env var. This lets you store secrets in your shell profile rather than in the BOA config file:
 
 ```bash
 # In your .bashrc / .zshrc
@@ -146,7 +146,7 @@ To use a literal value starting with `$`, double it: `$$LITERAL` is injected as 
 
 ## Available Images
 
-AOE provides two official sandbox images:
+BOA provides two official sandbox images:
 
 | Image | Description |
 |-------|-------------|
@@ -166,7 +166,7 @@ To use the dev sandbox:
 
 ```bash
 # Per-session
-aoe add --sandbox-image ghcr.io/agent-of-empires/aoe-dev-sandbox:latest .
+boa add --sandbox-image ghcr.io/agent-of-empires/aoe-dev-sandbox:latest .
 
 # Or set as default in ~/.agent-of-empires/config.toml
 [sandbox]
@@ -209,7 +209,7 @@ docker build -t ghcr.io/yourusername/my-sandbox:latest .
 docker push ghcr.io/yourusername/my-sandbox:latest
 ```
 
-### Step 3: Configure AOE to Use Your Image
+### Step 3: Configure BOA to Use Your Image
 
 **Option A: Set as default for all sessions**
 
@@ -225,7 +225,7 @@ default_image = "my-sandbox:latest"
 **Option B: Use per-session via CLI**
 
 ```bash
-aoe add --sandbox-image my-sandbox:latest .
+boa add --sandbox-image my-sandbox:latest .
 ```
 
 > Building a custom image and using structured view? Install the ACP adapters too, or the handshake fails. See [Sandbox internals](../development/internals/sandbox.md).
@@ -247,7 +247,7 @@ Git worktrees need the bare repo pattern so the container can reach the repo's g
 1. **Increase Docker Desktop VM memory:**
    Open Docker Desktop, go to **Settings > Resources > Advanced**, increase the **Memory** slider (8 GB+ recommended for AI coding agents), then click **Apply & Restart**.
 
-2. **Set a per-container memory limit** in your AOE config (`~/.agent-of-empires/config.toml`) so containers have an explicit allocation rather than competing for the VM's total memory:
+2. **Set a per-container memory limit** in your BOA config (`~/.agent-of-empires/config.toml`) so containers have an explicit allocation rather than competing for the VM's total memory:
 
    ```toml
    [sandbox]

@@ -7,9 +7,9 @@ sends it. What to say is decided by the `aoe-build-in-public` Claude skill (see
 
 ## Why this exists
 
-aoe's happiest user is a multi-agent power user who lives in X dev circles. That
+BOA's happiest user is a multi-agent power user who lives in X dev circles. That
 person adopts tools they see respected builders *using*, not tools that get
-advertised at them. So the play is build-in-public: show aoe shipping aoe. This
+advertised at them. So the play is build-in-public: show BOA shipping BOA. This
 script is the last 5% that turns an approved draft into a posted tweet.
 
 ## Safety model
@@ -72,7 +72,7 @@ sourced the template (`exports.example.sh`) without filling in the values.
 Preview a post (no creds, no network):
 ```bash
 python3 marketing/x/post_to_x.py \
-  --text "9 PRs merged this week across 4 parallel agents in aoe."
+  --text "9 PRs merged this week across 4 parallel agents in boa."
 ```
 
 Preview with media and a link reply (the link goes in the reply, not the post):
@@ -111,4 +111,4 @@ link shows up in the main post.
 - No hashtag spam. One tasteful tag at most, usually zero.
 - Show, do not tell: a 15-second clip of the dashboard beats three sentences of
   adjectives.
-- Lead with the user's pain, not aoe's features.
+- Lead with the user's pain, not BOA's features.

@@ -1,4 +1,4 @@
-# Design System -- Agent of Empires
+# Design System -- Band of Agents
 
 > **Scope note (2026-05-17):** Color is unified across the TUI and the web dashboard via the canonical theme TOML model. The TUI renders directly from a `Theme`; the web dashboard renders from a server-side projection (`ResolvedTheme`) of the same `Theme`. Surfaces (TUI vs web vs marketing) still differ on typography, density, and motion, but the color palette follows the user's chosen theme on both code surfaces. See the [Theme system](#theme-system) and [Web Dashboard subset](#web-dashboard-subset) sections below.
 
@@ -29,7 +29,7 @@
 ## Color
 
 ### Approach: Refined Copper + Muted Teal
-Most dev tools are cold (blue, purple, teal-only). AoE is warm. The amber/copper primary against slate/navy surfaces reads "professional terminal tool with a point of view." The muted teal accent ties directly to the agent nodes in the logo and creates complementary tension with the amber.
+Most dev tools are cold (blue, purple, teal-only). BOA is warm. The amber/copper primary against slate/navy surfaces reads "professional terminal tool with a point of view." The muted teal accent ties directly to the agent nodes in the logo and creates complementary tension with the amber.
 
 ### Brand -- Amber/Copper
 | Token     | Hex     | Usage |
@@ -110,7 +110,7 @@ Inverted surfaces (#f8fafc to #ffffff), dark text (#0f172a to #334155), brand sh
 - **Full mark:** Two stacked terminal windows (back window darker, front window in brand amber with title bar dots and `$` prompt + cursor). Used for all contexts.
 - **Circular mark:** Same stacked windows centered on a surface-900 (#0f172a) circle. Used for YouTube, social avatars.
 - **Colors:** Front window uses brand amber gradient (#fbbf24 to #d97706). Back window uses brand-700/800 (#92400e to #78350f). Title bar dots use brand-700 (#b45309). Prompt and cursor use brand-50 (#fef3c7).
-- **Social preview:** Dark navy gradient background with subtle grid, icon + "aoe" text + "AGENT OF EMPIRES" subtitle, tagline "Conquer your codebase.", decorative scattered terminal shapes in corners.
+- **Social preview:** Dark navy gradient background with subtle grid, icon + "boa" text + "BAND OF AGENTS" subtitle, tagline "Conquer your codebase.", decorative scattered terminal shapes in corners.
 
 ## TUI (ratatui)
 
@@ -186,7 +186,7 @@ This makes the two panels feel like one cohesive surface with a divider rather t
 ### What to Leave Alone
 
 - **Status icons** (●◐○✕■◌✗) -- clean, universally readable, not "hacky"
-- **Information density** in the session list -- AoE is a dashboard, density is correct
+- **Information density** in the session list -- BOA is a dashboard, density is correct
 - **Dialog structure** -- functional, well-proportioned, dialogs should be boxed
 - **Status bar layout** -- the key/description/separator pattern is learnable and functional
 - **The other 5 themes** -- keep them all as options for users who prefer them
@@ -195,7 +195,7 @@ This makes the two panels feel like one cohesive surface with a divider rather t
 | Date       | Decision | Rationale |
 |------------|----------|-----------|
 | 2026-03-22 | Initial design system created | Created by /design-consultation based on product context, competitive research (Warp, Zed, Railway, Ghostty, Cursor, Linear), and analysis of existing website |
-| 2026-03-22 | Satoshi over Inter for display | Inter is the default for every dev tool since 2020. Satoshi has the same geometric clarity with distinctive letterforms that give AoE typographic personality. |
+| 2026-03-22 | Satoshi over Inter for display | Inter is the default for every dev tool since 2020. Satoshi has the same geometric clarity with distinctive letterforms that give BOA typographic personality. |
 | 2026-03-22 | DM Sans for body over Inter | Clean, great tabular numerals, not overused. Pairs naturally with Satoshi's geometry. |
 | 2026-03-22 | Teal accent replaces sky blue | Sky blue (#0ea5e9) was Tailwind's default. Teal (#0d9488) ties directly to the logo's agent nodes and creates better complementary tension with amber. |
 | 2026-03-22 | Left-aligned editorial hero layout | Breaks from the centered-everything pattern that makes dev tool sites interchangeable. Reads as authoritative and intentional. |
@@ -219,7 +219,7 @@ The user's chosen theme is the source of truth for color on both the TUI and the
 - **TUI** renders directly from the `Theme` struct via `src/tui/styles/themes.rs`. Every ratatui widget reads from the named fields (`background`, `border`, `text`, `accent`, `running`, ...).
 - **Web dashboard** renders from a server-side projection (`ResolvedTheme` in `src/tui/styles/resolved.rs`) of the same `Theme`. The projection maps named TUI fields onto the Tailwind CSS variables the dashboard consumes (`--color-surface-900`, `--color-text-primary`, `--color-status-running`, etc.) and derives a few shades (surface-950/850, brand ramp, ANSI 16 for the embedded terminal) from background luminance and the appearance flag. Light themes (Catppuccin Latte) invert the ramp direction so the dashboard reads correctly on light surfaces.
 - **Embedded terminal** (`web/src/hooks/useTerminal.ts`) inherits `--term-*` CSS variables (background, foreground, cursor, ANSI 16) from the same projection. wterm reads CSS variables at draw time; the hook fires `term.resize(...)` on theme change so the live terminal repaints under the new palette without waiting for the next PTY byte.
-- **Syntax highlighting** (Shiki) selects a bundled Shiki theme per AoE theme via `[syntax].shiki_theme`. Built-ins map to closely matching upstream Shiki themes (`empire` → `github-dark`, `dracula` → `dracula`, `catppuccin-latte` → `catppuccin-latte`, etc.); user themes default to `github-dark` / `github-light` by appearance.
+- **Syntax highlighting** (Shiki) selects a bundled Shiki theme per BOA theme via `[syntax].shiki_theme`. Built-ins map to closely matching upstream Shiki themes (`empire` → `github-dark`, `dracula` → `dracula`, `catppuccin-latte` → `catppuccin-latte`, etc.); user themes default to `github-dark` / `github-light` by appearance.
 
 ### Compatibility
 

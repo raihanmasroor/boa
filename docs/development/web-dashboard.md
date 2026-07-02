@@ -2,7 +2,7 @@
 
 Contributor notes for hacking on the web dashboard. End users do not need any of this; the dashboard ships in every release binary. See the [Web Dashboard guide](../guides/web-dashboard.md) for launching and using it.
 
-Build, run, and the `cargo xtask dev` inner loop (Vite + `aoe serve` with HMR, `--watch` auto-rebuild) are covered in [Development](../development.md). The dashboard needs the `serve` Cargo feature plus Node.js/npm; the build runs `npm install && npm run build` in `web/` and embeds the output in the binary, so there is nothing separate to deploy. A plain `cargo build` (no `serve`) needs no JS tooling.
+Build, run, and the `cargo xtask dev` inner loop (Vite + `boa serve` with HMR, `--watch` auto-rebuild) are covered in [Development](../development.md). The dashboard needs the `serve` Cargo feature plus Node.js/npm; the build runs `npm install && npm run build` in `web/` and embeds the output in the binary, so there is nothing separate to deploy. A plain `cargo build` (no `serve`) needs no JS tooling.
 
 ## Manual frontend loop
 
@@ -13,7 +13,7 @@ cd web && npm install && npm run dev    # Vite + HMR on :5173
 cargo run --features serve -- serve     # backend, separate shell
 ```
 
-To develop the frontend against an already-running "production" backend (e.g. a non-cargo install on a custom port), point `VITE_PROXY` (shell env or `web/.env`) at that `aoe serve` origin; the dev server forwards `/api` and `/sessions/*/ws` (terminal + structured view) there. HMR is unaffected either way.
+To develop the frontend against an already-running "production" backend (e.g. a non-cargo install on a custom port), point `VITE_PROXY` (shell env or `web/.env`) at that `boa serve` origin; the dev server forwards `/api` and `/sessions/*/ws` (terminal + structured view) there. HMR is unaffected either way.
 
 ```bash
 VITE_PROXY=http://localhost:50106 npm run dev

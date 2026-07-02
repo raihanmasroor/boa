@@ -2980,7 +2980,7 @@ impl HomeView {
         {
             self.info_dialog = Some(InfoDialog::new(
                 "Serve unavailable",
-                "This `aoe` binary was built without the web dashboard \
+                "This `boa` binary was built without the web dashboard \
                  (a `--no-default-features` source build), so local network \
                  serving and Cloudflare Tunnel integration are not included.\n\n\
                  To serve to your phone (LAN / Tailscale / tunnel):\n\
@@ -3034,7 +3034,7 @@ impl HomeView {
                             "Cargo install: run `cargo install --git https://github.com/agent-of-empires/agent-of-empires aoe`".to_string()
                         }
                         InstallMethod::Unknown { .. } => {
-                            "Unknown install method: run `aoe update` in a terminal for instructions".to_string()
+                            "Unknown install method: run `boa update` in a terminal for instructions".to_string()
                         }
                         _ => unreachable!(),
                     };
@@ -3081,7 +3081,7 @@ impl HomeView {
         // add it here, still routed through the shared action dispatch.
         entries.push(PaletteCommand {
             id: bindings::palette_id(ActionId::Quit),
-            title: "Quit Agent of Empires".to_string(),
+            title: "Quit Band of Agents".to_string(),
             group: PaletteGroup::Settings,
             keywords: vec!["exit", "close"],
             hotkey: bindings::label(ActionId::Quit, self.strict_hotkeys),
@@ -4381,8 +4381,8 @@ impl HomeView {
         };
         if !wt.managed_by_aoe {
             self.info_dialog = Some(InfoDialog::new(
-                "Worktree Not Managed by AoE",
-                "This worktree was attached rather than created by AoE, so its workdir name cannot be edited.",
+                "Worktree Not Managed by BOA",
+                "This worktree was attached rather than created by BOA, so its workdir name cannot be edited.",
             ));
             return;
         }

@@ -175,7 +175,7 @@ impl HooksInstallDialog {
         lines.push(Line::from(
             "Hooks are guarded by $AOE_INSTANCE_ID and are a",
         ));
-        lines.push(Line::from("no-op outside of AoE sessions."));
+        lines.push(Line::from("no-op outside of BOA sessions."));
 
         if self.needs_codex_trust_note {
             lines.push(Line::from(""));
@@ -183,7 +183,7 @@ impl HooksInstallDialog {
                 "Codex may ask you to review and trust these hooks in /hooks.",
             ));
             lines.push(Line::from(
-                "Until then, AoE falls back to pane-based status detection.",
+                "Until then, BOA falls back to pane-based status detection.",
             ));
         }
 
@@ -221,7 +221,7 @@ impl HooksInstallDialog {
 
         // Header
         let header = Paragraph::new(
-            "AoE needs to install hooks into your agent's settings\nto detect session status (running/waiting/idle).",
+            "BOA needs to install hooks into your agent's settings\nto detect session status (running/waiting/idle).",
         )
         .style(Style::default().fg(theme.text))
         .wrap(Wrap { trim: true });

@@ -1,6 +1,6 @@
 # MCP Servers
 
-Agent of Empires forwards your configured [MCP](https://modelcontextprotocol.io)
+Band of Agents forwards your configured [MCP](https://modelcontextprotocol.io)
 servers to structured-view agents (Claude, Gemini, Codex) when a session
 starts, so the agent can call those servers' tools. Without this, structured-view
 sessions reach no MCP servers at all.
@@ -10,7 +10,7 @@ agent's own CLI, which loads MCP config through that tool's normal mechanism.
 
 ## Configuration
 
-Create `mcp.json` in your AoE app directory:
+Create `mcp.json` in your BOA app directory:
 
 - **Linux**: `$XDG_CONFIG_HOME/agent-of-empires/mcp.json` (defaults to
   `~/.config/agent-of-empires/mcp.json`)
@@ -57,27 +57,27 @@ one. Create it in the profile's directory:
 - `<app_dir>/profiles/<profile-name>/mcp.json`
 
 It uses the exact same `mcpServers` shape as the global file. When a
-structured-view session runs under a profile, AoE reads that profile's
+structured-view session runs under a profile, BOA reads that profile's
 `mcp.json` and merges it on top of the global file: a server name defined in
 both is taken from the per-profile file (see Precedence below). A missing
 per-profile file is normal and simply forwards nothing extra.
 
-Per-profile entries are AoE state only. AoE never writes them back into any
-agent's native config; the sync direction is native into AoE, never the
+Per-profile entries are BOA state only. BOA never writes them back into any
+agent's native config; the sync direction is native into BOA, never the
 reverse.
 
 ## Project-local servers (trusted repos)
 
 A repository can ship its own MCP servers in a `.mcp.json` at its root, the same
-ecosystem-standard file other tools read. AoE forwards these as the
+ecosystem-standard file other tools read. BOA forwards these as the
 highest-precedence layer, but only after you have trusted the repository, because
 a project-local stdio server would otherwise launch its `command` the moment a
 session starts: opening a cloned, untrusted repo would be a zero-click way to run
-its code. This is the same trust gate AoE already applies to repository lifecycle
+its code. This is the same trust gate BOA already applies to repository lifecycle
 hooks.
 
 When you create a session for a repo whose `.mcp.json` (or hooks) you have not
-yet approved, AoE shows a trust prompt listing the servers it found: each
+yet approved, BOA shows a trust prompt listing the servers it found: each
 server's name, transport, command and arguments or URL, and the NAMES of its env
 vars and headers. Values are never shown. Approving records the trust; declining
 creates the session without forwarding the project servers.
@@ -85,12 +85,12 @@ creates the session without forwarding the project servers.
 The file is read from the repository root (for a worktree session, the main
 repository the worktree was created from), so the servers you reviewed in the
 prompt are exactly the servers forwarded. The trust is re-checked on every
-session start: if `.mcp.json` changes, AoE re-prompts the next time you create a
+session start: if `.mcp.json` changes, BOA re-prompts the next time you create a
 session for that repo, and in the meantime the changed servers are skipped.
 
 Two current limitations:
 
-- The trust prompt exists in the TUI and the `aoe add` CLI only. Sessions created
+- The trust prompt exists in the TUI and the `boa add` CLI only. Sessions created
   from the web dashboard cannot approve project MCP yet, so their project-local
   `.mcp.json` is skipped (with a log notice) until you approve the repo from the
   TUI or CLI. A web trust surface is tracked separately.
@@ -100,7 +100,7 @@ Two current limitations:
 
 ## Native agent config
 
-If you already declared MCP servers in your agent's own config, AoE reads them
+If you already declared MCP servers in your agent's own config, BOA reads them
 too (read-only), so you do not have to copy them into `mcp.json`. The native
 config read per agent:
 
@@ -127,7 +127,7 @@ the repository is trusted (see Project-local servers above).
 
 ## Inspecting the effective set
 
-Because the effective set is merged from up to four layers, AoE gives you one
+Because the effective set is merged from up to four layers, BOA gives you one
 surface to see exactly which servers an agent will reach and where each came
 from. Every value is redacted: you see a server's command, args, or URL, and the
 names of its env vars and headers, but never their secret values.
@@ -135,9 +135,9 @@ names of its env vars and headers, but never their secret values.
 ### CLI
 
 ```text
-aoe mcp list                 # effective set for the default tool
-aoe mcp list --agent gemini  # for a specific agent
-aoe mcp list --json          # machine-readable, same redaction
+boa mcp list                 # effective set for the default tool
+boa mcp list --agent gemini  # for a specific agent
+boa mcp list --json          # machine-readable, same redaction
 ```
 
 Each row shows the server name, transport, its winning provenance
@@ -147,20 +147,20 @@ lower layers it shadowed on a name collision.
 ### Web dashboard
 
 The dashboard has an **MCP servers** tab under Settings (when running
-`aoe serve`). It shows the same merged set with provenance, plus two things the
+`boa serve`). It shows the same merged set with provenance, plus two things the
 CLI surfaces read-only:
 
-- **Conflicts.** AoE remembers the last definition it saw for each server in an
+- **Conflicts.** BOA remembers the last definition it saw for each server in an
   agent's native config. If that file changes on disk, the next time you open the
   surface the changed server is flagged as a conflict, and you choose which side
-  wins. Keeping AoE's version stores it in the global `mcp.json` (which outranks
+  wins. Keeping BOA's version stores it in the global `mcp.json` (which outranks
   the native layer); choosing the native version simply accepts the new
-  definition. AoE never writes back to an agent-native config.
-- **Kept after removal.** If a server disappears from a native config, AoE keeps
+  definition. BOA never writes back to an agent-native config.
+- **Kept after removal.** If a server disappears from a native config, BOA keeps
   it in view and warns rather than silently dropping it. You can **keep** it
   (promoting it into the global `mcp.json` so it keeps forwarding) or **drop** it.
 
-AoE remembers this last-seen state in `mcp_state.json` in the app directory,
+BOA remembers this last-seen state in `mcp_state.json` in the app directory,
 written owner-only. The stored definitions keep their secret values (so a kept
 server still works) but those values are redacted everywhere they are displayed.
 
@@ -172,7 +172,7 @@ separately and are not part of this surface yet.
 Not every agent supports every transport. `stdio` works everywhere. `http` and
 `sse` servers are forwarded only when the agent advertises support for them in
 its handshake; otherwise that server is dropped (with a warning in the log) so
-AoE never sends a request the agent would reject.
+BOA never sends a request the agent would reject.
 
 ## Errors
 
@@ -201,7 +201,7 @@ resolution can reconstruct a working server; treat it with the same care as
 A project-local `.mcp.json` is repository-provided, so unlike the files above it
 is NOT implicitly trusted: a cloned, untrusted repo could otherwise launch its
 `command` the moment you open a session. It sits behind the same repo-trust gate
-AoE uses for lifecycle hooks, forwarded only after you approve the repo, and
+BOA uses for lifecycle hooks, forwarded only after you approve the repo, and
 re-checked on every session start so a changed file re-prompts. See Project-local
 servers above. The trust fingerprint includes env and header values, so rotating
 a secret in a project `.mcp.json` re-prompts; the prompt itself never displays

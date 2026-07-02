@@ -149,7 +149,7 @@ fn badge_repos(
                 DiscoveryBadge::Unvetted
             };
             Some(DiscoveryResult {
-                install_command: format!("aoe plugin install {slug}"),
+                install_command: format!("boa plugin install {slug}"),
                 slug,
                 html_url: repo.html_url,
                 featured: is_featured,
@@ -540,6 +540,6 @@ alt = "good"
     #[test]
     fn install_command_uses_the_slug() {
         let out = badge_repos(vec![repo("acme/widget", 1)], &FeaturedIndex::default(), &[]);
-        assert_eq!(out[0].install_command, "aoe plugin install gh:acme/widget");
+        assert_eq!(out[0].install_command, "boa plugin install gh:acme/widget");
     }
 }

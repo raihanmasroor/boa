@@ -87,8 +87,8 @@ forked from, then `diff.default_branch`, then auto-detection.
 - **Web dashboard**: click the `vs <ref>` chip in the diff header, pick a branch
   from the typeahead, or reset to clear the override.
 - **TUI diff view**: press `b`, pick a branch.
-- **CLI**: `aoe session set-base <session> <branch>` to set,
-  `aoe session set-base <session> --clear` to clear.
+- **CLI**: `boa session set-base <session> <branch>` to set,
+  `boa session set-base <session> --clear` to clear.
 
 ## Configuration
 

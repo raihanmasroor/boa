@@ -19,19 +19,9 @@ interface LinkRow {
 
 const LINKS: LinkRow[] = [
   {
-    label: "Website",
-    href: "https://agent-of-empires.com",
-    display: "agent-of-empires.com",
-  },
-  {
-    label: "GitHub",
+    label: "Source",
     href: "https://github.com/agent-of-empires/agent-of-empires",
-    display: "github.com/agent-of-empires/agent-of-empires",
-  },
-  {
-    label: "Twitter",
-    href: "https://x.com/agentofempires",
-    display: "@agentofempires",
+    display: "Fork of agent-of-empires (MIT)",
   },
 ];
 
@@ -84,7 +74,7 @@ export function AboutModal({ onClose, sessionId }: Props) {
           <div className="flex items-center gap-2 min-w-0">
             <img src="/icon-192.png" alt="" width="24" height="24" className="rounded-sm shrink-0" />
             <h2 id="about-modal-title" className="text-sm font-semibold text-text-bright truncate">
-              Agent of Empires
+              Band of Agents
             </h2>
             {version && (
               <span className="font-mono text-[11px] text-text-muted shrink-0" aria-label={`Version ${version}`}>

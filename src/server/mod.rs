@@ -837,13 +837,13 @@ pub async fn start_server(config: ServerConfig<'_>) -> anyhow::Result<()> {
                 .map_err(|e| {
                     anyhow::anyhow!(
                         "Tailscale Funnel setup failed: {e}\n\n\
-                         aoe detected a logged-in Tailscale on this host and did not \
+                         BOA detected a logged-in Tailscale on this host and did not \
                          fall back to Cloudflare, because doing so silently would \
                          give you a rotating URL that breaks installed PWAs (the \
                          reason Tailscale is the preferred transport).\n\n\
                          Ways to move forward:\n  \
-                         - Fix the Tailscale issue above and re-run `aoe serve --remote`.\n  \
-                         - Re-run with `aoe serve --remote --no-tailscale` to use \
+                         - Fix the Tailscale issue above and re-run `boa serve --remote`.\n  \
+                         - Re-run with `boa serve --remote --no-tailscale` to use \
                          Cloudflare intentionally (quick-tunnel URL rotates on restart).\n  \
                          - Re-run with `--tunnel-name <name> --tunnel-url <host>` \
                          to use a named Cloudflare tunnel."
@@ -880,7 +880,7 @@ pub async fn start_server(config: ServerConfig<'_>) -> anyhow::Result<()> {
                     "\nNote: this Cloudflare quick tunnel URL changes on every restart.\n\
                      Installed PWAs (home-screen apps) break when the URL changes.\n\
                      For a stable installable dashboard, install Tailscale and run\n\
-                     `tailscale up` on this host before `aoe serve --remote`, or use\n\
+                     `tailscale up` on this host before `boa serve --remote`, or use\n\
                      a named Cloudflare tunnel via --tunnel-name/--tunnel-url.\n"
                 );
             }
@@ -928,7 +928,7 @@ pub async fn start_server(config: ServerConfig<'_>) -> anyhow::Result<()> {
             vec![(IpKind::Loopback, make_url(host))]
         };
 
-        println!("aoe web dashboard running at:");
+        println!("BOA web dashboard running at:");
         for (_, u) in &labeled_urls {
             println!("  {}", u);
         }

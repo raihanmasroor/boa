@@ -1,20 +1,20 @@
 # Sound Effects
 
-Agent of Empires plays sound effects when agent sessions change state (start, running, waiting, idle, error). The structured view also plays a browser-side chime when a pending approval lands.
+Band of Agents plays sound effects when agent sessions change state (start, running, waiting, idle, error). The structured view also plays a browser-side chime when a pending approval lands.
 
 ## Quick Start
 
 1. Install sounds:
    ```bash
-   aoe sounds install
+   boa sounds install
    ```
    This downloads CC0 (public domain) fantasy/RPG sounds to your config directory. Requires internet for the initial download.
-2. Enable sounds: launch `aoe`, press `s` for Settings, select the Sound category, enable sounds.
+2. Enable sounds: launch `boa`, press `s` for Settings, select the Sound category, enable sounds.
 3. Start an agent session and listen for the transition sounds.
 
 ## Available Sounds
 
-`aoe sounds install` ships ~10 CC0 RPG sound effects (from the [80 CC0 RPG SFX](https://opengameart.org/content/80-cc0-rpg-sfx) pack by SubspaceAudio) into:
+`boa sounds install` ships ~10 CC0 RPG sound effects (from the [80 CC0 RPG SFX](https://opengameart.org/content/80-cc0-rpg-sfx) pack by SubspaceAudio) into:
 
 - Linux: `~/.config/agent-of-empires/sounds/`
 - macOS: `~/.agent-of-empires/sounds/`
@@ -24,8 +24,8 @@ Defaults cover `start`, `running`, `waiting`, `idle`, and `error`, plus extra va
 ### Useful Commands
 
 ```bash
-aoe sounds list          # check installed sounds
-aoe sounds test start    # test a sound
+boa sounds list          # check installed sounds
+boa sounds test start    # test a sound
 ```
 
 ## Sound Modes
@@ -96,7 +96,7 @@ sudo pacman -S alsa-utils pulseaudio
 - Check that sound files exist in `~/.config/agent-of-empires/sounds/`.
 - Verify sounds are enabled in Settings.
 - Test audio directly: `aplay ~/.config/agent-of-empires/sounds/start.wav` (Linux).
-- Check logs: `AGENT_OF_EMPIRES_DEBUG=1 aoe`, then `aoe logs`.
+- Check logs: `AGENT_OF_EMPIRES_DEBUG=1 boa`, then `boa logs`.
 
 **Custom sounds aren't listed?**
 - Ensure files have a `.wav` or `.ogg` extension and are readable.

@@ -57,7 +57,7 @@ pub fn apply_status_bar(
 
     // Format: "aoe: Title | branch | [container] | 14:30"
     let status_format = format!(
-        " #[fg={accent},bold]aoe#[fg={fg},nobold]: \
+        " #[fg={accent},bold]BOA#[fg={fg},nobold]: \
          #{{@aoe_title}}\
          #{{?#{{@aoe_branch}}, #[fg={branch_color}]| #{{@aoe_branch}}#[fg={fg}],}}\
          #{{?#{{@aoe_sandbox}}, #[fg={sandbox_color}]\u{2b21} #{{@aoe_sandbox}}#[fg={fg}],}}\
@@ -212,7 +212,7 @@ pub fn get_session_info_for_current() -> Option<SessionInfo> {
 pub fn get_status_for_current_session() -> Option<String> {
     let info = get_session_info_for_current()?;
 
-    let mut result = format!("aoe: {}", info.title);
+    let mut result = format!("BOA: {}", info.title);
 
     if let Some(b) = &info.branch {
         result.push_str(" | ");

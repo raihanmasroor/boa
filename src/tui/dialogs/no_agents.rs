@@ -90,7 +90,7 @@ impl NoAgentsDialog {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(theme.accent))
-            .title(" Welcome to Agent of Empires ")
+            .title(" Welcome to Band of Agents ")
             .title_style(Style::default().fg(theme.accent).bold());
 
         let inner = block.inner(dialog_area);
@@ -113,7 +113,7 @@ impl NoAgentsDialog {
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
-                "AI coding agent. AoE manages and orchestrates them.",
+                "AI coding agent. BOA manages and orchestrates them.",
                 Style::default().fg(theme.text),
             )),
             Line::from(""),
@@ -145,7 +145,7 @@ impl NoAgentsDialog {
             ]),
             Line::from(""),
             Line::from(Span::styled(
-                "Run `aoe agents` for a full list with install commands.",
+                "Run `boa agents` for a full list with install commands.",
                 Style::default().fg(theme.dimmed),
             )),
         ];

@@ -1823,7 +1823,7 @@ impl App {
             tracing::info!(
                 target: "update.dedup",
                 version = %info.latest_version,
-                "skipping: already installed this version this session, restart aoe to use it"
+                "skipping: already installed this version this session, restart BOA to use it"
             );
             self.update_info = None;
             return false;
@@ -2055,7 +2055,7 @@ impl App {
                 // the periodic re-check (#1471) stops surfacing this release.
                 self.last_installed_version_in_session = self.pending_install_version.take();
                 self.update_status = Some(UpdateStatus::persistent(
-                    "update complete. Restart aoe to use the new version.".into(),
+                    "update complete. Restart BOA to use the new version.".into(),
                 ));
                 true
             }
@@ -2114,7 +2114,7 @@ impl App {
                     // re-check (#1471) stops re-surfacing this release.
                     self.last_installed_version_in_session = Some(version.clone());
                     self.update_status = Some(UpdateStatus::persistent(
-                        "update complete. Restart aoe to use the new version.".into(),
+                        "update complete. Restart BOA to use the new version.".into(),
                     ));
                 }
                 Err(e) => {

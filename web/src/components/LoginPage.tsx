@@ -41,7 +41,7 @@ export function LoginPage({ onSuccess }: Props) {
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <img src="/icon-192.png" alt="" width="28" height="28" className="rounded-sm" />
-            <span className="font-mono text-lg text-text-primary tracking-tight">aoe</span>
+            <span className="font-mono text-lg text-text-primary tracking-tight">BOA</span>
           </div>
 
           {/* Passphrase input */}

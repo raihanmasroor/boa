@@ -279,5 +279,11 @@ path = "tests/e2e/main.rs"
 required-features = ["e2e-tests"]
 
 [[bin]]
+name = "boa"
+path = "src/main.rs"
+
+# Compatibility alias: existing scripts that invoke `aoe` keep working.
+# Same source as the primary `boa` binary.
+[[bin]]
 name = "aoe"
 path = "src/main.rs"

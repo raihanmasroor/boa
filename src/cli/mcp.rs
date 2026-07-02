@@ -105,10 +105,10 @@ fn print_table(agent: &str, view: &McpSurfaceView) {
     }
 
     if !view.conflicts.is_empty() {
-        println!("\nConflicts (native config changed since AoE last saw it):");
+        println!("\nConflicts (native config changed since BOA last saw it):");
         for c in &view.conflicts {
             println!("  {}", c.current.name);
-            println!("    AoE:    {}", c.previous.redacted_summary());
+            println!("    BOA:    {}", c.previous.redacted_summary());
             println!("    native: {}", c.current.redacted_summary());
         }
     }

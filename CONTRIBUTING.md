@@ -1,6 +1,6 @@
-# Contributing to aoe
+# Contributing to BOA
 
-Thanks for your interest in contributing to aoe (Agent of Empires)! This document provides guidelines for contributing to the project.
+Thanks for your interest in contributing to BOA (Band of Agents)! This document provides guidelines for contributing to the project.
 
 ## Before You Start
 

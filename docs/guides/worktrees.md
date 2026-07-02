@@ -1,6 +1,6 @@
 # Worktrees Reference
 
-Reference documentation for git worktree commands and configuration in `aoe`.
+Reference documentation for git worktree commands and configuration in `boa`.
 
 For workflow guidance, see the [Workflow Guide](workflow.md).
 
@@ -17,30 +17,30 @@ For workflow guidance, see the [Workflow Guide](workflow.md).
 
 ```bash
 # Create worktree session (new branch, branched off the repo default)
-aoe add . -w feat/my-feature -b
+boa add . -w feat/my-feature -b
 
 # Create worktree session (new branch, branched off a specific base)
-aoe add . -w hotfix-1 -b --base-branch release-1.2
+boa add . -w hotfix-1 -b --base-branch release-1.2
 
 # Attach to an existing branch + worktree (or check out the branch into a
 # new worktree if no worktree exists yet). The `-b` flag is what flips
 # between "create a new branch" and "attach"; omitting it = attach.
-aoe add . -w feat/my-feature
+boa add . -w feat/my-feature
 
 # List all worktrees
-aoe worktree list
+boa worktree list
 
 # Show session info
-aoe worktree info <session>
+boa worktree info <session>
 
 # Find orphaned worktrees
-aoe worktree cleanup
+boa worktree cleanup
 
 # Remove session (prompts for worktree cleanup)
-aoe remove <session>
+boa remove <session>
 
 # Remove session and delete worktree
-aoe remove <session> --delete-worktree
+boa remove <session> --delete-worktree
 ```
 
 `--base-branch` only matters with `--new-branch` / `-b`. The base is
@@ -52,7 +52,7 @@ on the repository's default branch (`main`/`master`).
 Remote selection scores every configured remote (not just `origin`),
 for both the autodetected default branch (issue \#1029) and an
 explicit `--base-branch` (issue \#1511). In a fork plus `upstream`
-layout where `upstream/main` is ahead of `origin/main`, aoe fetches
+layout where `upstream/main` is ahead of `origin/main`, BOA fetches
 and branches off `upstream/main` even when you typed `main` into the
 wizard's base-branch field. Ties break in favor of `origin` so the
 historical single-remote behavior still applies when there is no
@@ -83,8 +83,8 @@ tie_workdir_to_name = true
 
 When tied:
 
-- Renaming a session (TUI rename, web inline rename, `aoe session rename`, or `PATCH /api/sessions/{id}`) moves the worktree directory to the title's path-safe slug first, then sets the title only if the move succeeds, so the two cannot drift on a partial failure.
-- The git branch is never swept in by a title rename by default. To rename it too, check "Also rename git branch" in the TUI rename dialog, pass `--rename-branch` to `aoe session rename`, or send `rename_branch: true` to the PATCH. It stays opt-in because a branch may carry an upstream or an open PR; the TUI toggle warns when the branch tracks a remote, since the remote branch (and any open PR) won't follow the local rename.
+- Renaming a session (TUI rename, web inline rename, `boa session rename`, or `PATCH /api/sessions/{id}`) moves the worktree directory to the title's path-safe slug first, then sets the title only if the move succeeds, so the two cannot drift on a partial failure.
+- The git branch is never swept in by a title rename by default. To rename it too, check "Also rename git branch" in the TUI rename dialog, pass `--rename-branch` to `boa session rename`, or send `rename_branch: true` to the PATCH. It stays opt-in because a branch may carry an upstream or an open PR; the TUI toggle warns when the branch tracks a remote, since the remote branch (and any open PR) won't follow the local rename.
 - The session must be stopped first. Moving the directory of a running worktree is unsafe, so a tied rename of a running session is refused with a clear message. Stop the session, or disable the setting, to relabel it freely.
 - Naming collapses into the single rename action: the standalone "edit workdir name" affordance is hidden (TUI and web) and the standalone CLI / REST workdir-name edit is rejected, since the directory now follows the title.
 
@@ -98,7 +98,7 @@ This supports only sessions whose worktree is aoe-managed (`worktree_info.manage
 
 | Surface | How |
 |---------|-----|
-| CLI | `aoe session set-worktree-name <session> --name <new-name>` (add `--rename-branch` to also rename the git branch) |
+| CLI | `boa session set-worktree-name <session> --name <new-name>` (add `--rename-branch` to also rename the git branch) |
 | TUI | Select the session, press `W` (or open the command palette and pick "Edit worktree workdir name"). Toggle "Also rename git branch" in the dialog. |
 | Web | Right-click the session row, choose "Edit workdir name", enter a name, and optionally check "Also rename git branch". |
 | REST | `PATCH /api/sessions/{id}/worktree-name` with `{ "name": "<new-name>", "rename_branch": <bool> }` |
@@ -120,9 +120,9 @@ init_submodules = true
 
 ### Skipping submodule init
 
-`init_submodules = false` skips the `git submodule update --init --recursive` step that runs after `git worktree add` when the checkout contains a `.gitmodules` file. Useful for repos that vendor deep submodule trees (e.g. OpenROAD-flow-scripts, llvm-project, chromium) where every new session would otherwise sit in `Creating…` for minutes while submodules clone. Per-invocation override on the CLI: `aoe add --worktree <branch> --no-submodules`.
+`init_submodules = false` skips the `git submodule update --init --recursive` step that runs after `git worktree add` when the checkout contains a `.gitmodules` file. Useful for repos that vendor deep submodule trees (e.g. OpenROAD-flow-scripts, llvm-project, chromium) where every new session would otherwise sit in `Creating…` for minutes while submodules clone. Per-invocation override on the CLI: `boa add --worktree <branch> --no-submodules`.
 
-On the delete side, aoe runs `git submodule deinit -f --all` before `git worktree remove` for any worktree with `.gitmodules`, so the panic-button `Force` checkbox is not required just because the worktree has submodules. If git still refuses (e.g. a partially-broken submodule), aoe falls back to clearing `<main>/.git/worktrees/<name>/modules/` and pruning the stale entry manually.
+On the delete side, BOA runs `git submodule deinit -f --all` before `git worktree remove` for any worktree with `.gitmodules`, so the panic-button `Force` checkbox is not required just because the worktree has submodules. If git still refuses (e.g. a partially-broken submodule), BOA falls back to clearing `<main>/.git/worktrees/<name>/modules/` and pruning the stale entry manually.
 
 ### Trashing relocates the worktree
 
@@ -151,11 +151,11 @@ path_template = "../wt/{branch}-{session-id}"
 
 ## Worktree Warnings
 
-Two classes of non-fatal failures surface through the same warning channel during session create. AOE does not abort the session; instead it captures the failure and surfaces it so you know what to investigate.
+Two classes of non-fatal failures surface through the same warning channel during session create. BOA does not abort the session; instead it captures the failure and surfaces it so you know what to investigate.
 
 | Surface | Where warnings appear |
 |---|---|
-| CLI (`aoe add`) | `⚠ <message>` line on stderr after `✓ Worktree created successfully` |
+| CLI (`boa add`) | `⚠ <message>` line on stderr after `✓ Worktree created successfully` |
 | TUI | `Worktree warnings` info dialog opens after the session is added |
 | Web | Toast per warning, plus `warnings: string[]` on the `POST /api/sessions` response body |
 
@@ -163,11 +163,11 @@ Two classes of non-fatal failures surface through the same warning channel durin
 
 Some repos install pre-commit hooks at the `post-checkout` stage (`uv-sync`, `npm install`, LFS smudge, etc.) that fire when `git worktree add` checks out the new branch. If such a hook fails, the worktree directory and its `.git` pointer have already been created, and the worktree is usable.
 
-Common cause: the hook calls a tool (uv, npm, pip) that needs network access or credentials the new worktree does not yet have. Re-run the hook manually inside the worktree once the environment is set up, or disable it for AOE-created worktrees by configuring `core.hooksPath` per checkout.
+Common cause: the hook calls a tool (uv, npm, pip) that needs network access or credentials the new worktree does not yet have. Re-run the hook manually inside the worktree once the environment is set up, or disable it for BOA-created worktrees by configuring `core.hooksPath` per checkout.
 
 ### Fetch failures
 
-Before checking out the new branch, AOE runs `git fetch <remote> <branch>` so the worktree starts from the latest remote state. Network errors, missing remotes, SSH key issues, and 10s timeouts no longer pass silently; they surface as warnings shaped like:
+Before checking out the new branch, BOA runs `git fetch <remote> <branch>` so the worktree starts from the latest remote state. Network errors, missing remotes, SSH key issues, and 10s timeouts no longer pass silently; they surface as warnings shaped like:
 
 ```text
 git fetch <remote> <branch> failed for <repo>: <stderr>
@@ -186,7 +186,7 @@ The session is still created when the fetch fails. The worktree branches off wha
 
 ## Bare Repos
 
-AOE auto-detects bare repos and uses `bare_repo_path_template` (default `./{branch}`) instead of `path_template`, creating worktrees as siblings within the project directory. See [Workflow](workflow.md) for the bare-repo setup.
+BOA auto-detects bare repos and uses `bare_repo_path_template` (default `./{branch}`) instead of `path_template`, creating worktrees as siblings within the project directory. See [Workflow](workflow.md) for the bare-repo setup.
 
 ## File Locations
 

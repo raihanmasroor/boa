@@ -1,8 +1,7 @@
 // Fun status messages for the structured view working indicator. Themed around
-// Agent of Empires' civilization-building flavor (see
-// src/session/civilizations.rs and the random-title generator). The
-// spinner glyph rattles through braille frames at terminal speed; the
-// verb cycles every few seconds so long turns stay alive.
+// coordinating a band of agents. The spinner glyph rattles through braille
+// frames at terminal speed; the verb cycles every few seconds so long turns
+// stay alive.
 //
 // Inspired by Claude Code's "ruminating" / "noodling" / "spelunking"
 // verbs and the Rust `rattles` crate the TUI side uses for ratatui
@@ -29,67 +28,62 @@ export const TOOL_LABEL_MAX = 24;
 
 /**
  * General "agent is working" pool. Used when there's no thinking/tool
- * sub-state to be more specific. Themed around empire building and
- * statecraft — conscripting, mining, forging, scouting, etc.
+ * sub-state to be more specific. Themed around coordinating a band of
+ * agents — rallying, wiring up, dispatching, orchestrating, etc.
  */
 export const WORKING_VERBS: readonly string[] = [
-  "Conscripting villagers",
-  "Marshalling forces",
-  "Forging banners",
-  "Mining gold",
-  "Felling cedars",
-  "Quarrying granite",
-  "Hunting deer",
-  "Founding outposts",
-  "Recruiting heroes",
-  "Drilling troops",
-  "Sharpening swords",
-  "Smelting iron",
-  "Charting waters",
-  "Provisioning ships",
-  "Inscribing scrolls",
-  "Tilling fields",
-  "Stoking forges",
-  "Hoisting banners",
-  "Mustering armies",
-  "Plotting strategy",
-  "Brewing schemes",
-  "Levying tribute",
-  "Storming gates",
-  "Scouting frontiers",
-  "Trading at the wharf",
-  "Erecting wonders",
-  "Convening the council",
-  "Plundering archives",
-  "Decoding glyphs",
-  "Annexing territory",
-  "Calibrating trebuchets",
-  "Negotiating treaties",
-  "Surveying ruins",
-  "Anointing scribes",
-  "Hatching gambits",
+  "Rallying agents",
+  "Assembling the band",
+  "Wiring up sessions",
+  "Spawning workers",
+  "Gathering context",
+  "Warming up",
+  "Coordinating agents",
+  "Dispatching tasks",
+  "Syncing worktrees",
+  "Queuing work",
+  "Wrangling branches",
+  "Herding processes",
+  "Threading the needle",
+  "Crunching tokens",
+  "Shuffling context",
+  "Lining up the set",
+  "Tuning the ensemble",
+  "Setting the tempo",
+  "Cueing the next agent",
+  "Keeping time",
+  "Passing the baton",
+  "Orchestrating agents",
+  "Wiring the pipeline",
+  "Marshalling the workers",
+  "Staging changes",
+  "Chasing down loose ends",
+  "Lining up the pieces",
+  "Making moves",
+  "Getting into the groove",
+  "Hitting the marks",
 ] as const;
 
 /**
  * Thinking/reasoning pool. Drawn from when the agent emits
- * AgentThoughtChunk. More mystical/divinatory flavor since the agent
+ * AgentThoughtChunk. A more deliberative flavor since the agent
  * is "considering" rather than "doing".
  */
 export const THINKING_VERBS: readonly string[] = [
-  "Consulting auguries",
-  "Reading entrails",
-  "Pondering the map",
-  "Whispering with elders",
-  "Decoding prophecies",
-  "Casting bones",
-  "Conferring with sages",
-  "Studying the stars",
-  "Plotting on the war table",
-  "Brewing wisdom",
-  "Divining strategy",
-  "Reciting from scrolls",
-  "Communing with chronicles",
-  "Polishing arguments",
+  "Mulling it over",
+  "Weighing options",
+  "Sketching a plan",
+  "Reading the room",
+  "Connecting the dots",
+  "Thinking it through",
+  "Sizing up the problem",
+  "Charting a course",
+  "Considering angles",
+  "Reasoning it out",
+  "Puzzling it out",
+  "Lining up the logic",
+  "Drafting an approach",
+  "Turning it over",
 ] as const;
 
 /**
@@ -123,9 +117,9 @@ export function pickIndex(len: number, seed: number): number {
  */
 export function chooseVerb(state: "thinking" | "tool" | "working", seed: number, toolName?: string | null): string {
   if (state === "tool" && toolName) {
-    // Keep the actual tool name but dress it up with an empire verb so
+    // Keep the actual tool name but dress it up with an action verb so
     // tool runs feel of-a-piece with the rest of the spinner.
-    const verbs = ["Dispatching", "Commanding", "Marshalling", "Operating", "Wielding"];
+    const verbs = ["Dispatching", "Running", "Invoking", "Operating", "Calling"];
     const v = verbs[pickIndex(verbs.length, seed)];
     const label = toolName.length > TOOL_LABEL_MAX ? toolName.slice(0, TOOL_LABEL_MAX).trimEnd() : toolName;
     return `${v} ${label}…`;

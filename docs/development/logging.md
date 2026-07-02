@@ -1,6 +1,6 @@
 # Logging
 
-Agent of Empires uses the [`tracing`](https://docs.rs/tracing) crate. The TUI, the `aoe serve` daemon, the structured view runner subprocesses, and env-overridden one-shot CLI invocations all share `src/logging.rs` so they agree on env-var resolution, default filter construction, the reloadable subscriber handle, and the sink resolver. Every process appends to the same configured log file (`~/.agent-of-empires/debug.log` by default) so a single tail covers an entire session.
+Band of Agents uses the [`tracing`](https://docs.rs/tracing) crate. The TUI, the `boa serve` daemon, the structured view runner subprocesses, and env-overridden one-shot CLI invocations all share `src/logging.rs` so they agree on env-var resolution, default filter construction, the reloadable subscriber handle, and the sink resolver. Every process appends to the same configured log file (`~/.agent-of-empires/debug.log` by default) so a single tail covers an entire session.
 
 ## Targets
 
@@ -25,7 +25,7 @@ Top-level roots:
 | `session` | Session/profile/group CRUD, terminal capture, heartbeat, storage IO. |
 | `tmux` | tmux invocations, cache refresh, status detection, pane CRUD. |
 | `http` | Axum request span (`request_id`/`method`/`path`/`status`/`latency_ms`) + per-route events. |
-| `serve` | `aoe serve` startup, PID/URL file IO, tunnel up/down, signal shutdown. |
+| `serve` | `boa serve` startup, PID/URL file IO, tunnel up/down, signal shutdown. |
 | `hooks` | Agent hook install/uninstall, status-file lifecycle, hook command + watcher failures. |
 | `sound` | Notification sound download/install and per-event playback. |
 | `telemetry` | Opt-in usage telemetry (all `debug`); consent route emits under `http.api.telemetry`. |
@@ -57,10 +57,10 @@ One sink resolver (`logging::resolve_sink`) picks where each process writes base
 
 | Invocation | Context | `output = "stdout"` honored? | Default sink |
 |---|---|---:|---|
-| Any `aoe` with env var set, single-command | `OneShotCli` | yes | configured file (default `debug.log`) |
-| `aoe serve` (foreground) | `ServeForeground` | yes | configured file |
-| `aoe serve --daemon` child | `ServeDaemonChild` | no (coerced to file) | configured file |
-| TUI (`aoe` with no subcommand) | `Tui` | no (coerced to file) | configured file |
+| Any `boa` with env var set, single-command | `OneShotCli` | yes | configured file (default `debug.log`) |
+| `boa serve` (foreground) | `ServeForeground` | yes | configured file |
+| `boa serve --daemon` child | `ServeDaemonChild` | no (coerced to file) | configured file |
+| TUI (`boa` with no subcommand) | `Tui` | no (coerced to file) | configured file |
 | Structured view runner subprocess | `Runner` | no (coerced to file) | configured file |
 | Other one-shot CLI, no env | — | n/a | no subscriber |
 
@@ -98,7 +98,7 @@ show_spans = false
 
 `default_level` is the baseline; entries in `targets` override per target. The list of targets surfaced as dropdowns mirrors `KNOWN_SUB_TARGETS` in `src/logging.rs`. Anything else can still be set via raw EnvFilter syntax through the runtime endpoint or CLI.
 
-**Hot-swap vs restart:** `default_level` and `targets` hot-swap through the same `FilterController` that powers `aoe log-level`, including propagation to structured view runners via the `runtime_filter` notify watcher. No daemon restart needed for filter changes. The sink-shape fields (`output`, `file_path`, `rotation`, `max_size_mib`, `keep_count`) are set once at process startup and require a restart to take effect; the settings UI labels them accordingly.
+**Hot-swap vs restart:** `default_level` and `targets` hot-swap through the same `FilterController` that powers `boa log-level`, including propagation to structured view runners via the `runtime_filter` notify watcher. No daemon restart needed for filter changes. The sink-shape fields (`output`, `file_path`, `rotation`, `max_size_mib`, `keep_count`) are set once at process startup and require a restart to take effect; the settings UI labels them accordingly.
 
 ## Rotation
 
@@ -115,12 +115,12 @@ TUI, daemon, runners, and env-overridden CLI may all append concurrently. Three 
 `init_subscriber` writes a raw line to the sink before tracing takes ownership:
 
 ```
-2025-08-15T... INFO log.runtime [AOE_START_MARKER] version=1.7.0 pid=12345 exe=/usr/local/bin/aoe
+2025-08-15T... INFO log.runtime [AOE_START_MARKER] version=1.7.0 pid=12345 exe=/usr/local/bin/boa
 ```
 
-This is filter-immune (it bypasses the tracing subscriber entirely) so it survives any `default_level` setting and gives forensic readers a hard boundary between process runs. A parallel `tracing::info!(target: "log.runtime", "aoe started")` is also emitted once the subscriber is live; it respects the user's filter.
+This is filter-immune (it bypasses the tracing subscriber entirely) so it survives any `default_level` setting and gives forensic readers a hard boundary between process runs. A parallel `tracing::info!(target: "log.runtime", "boa started")` is also emitted once the subscriber is live; it respects the user's filter.
 
-When the sink is stdout (foreground `aoe serve` with `output = "stdout"`, or env-overridden one-shot CLI), the marker is written to stdout too. Any tool piping or capturing the output will see the line before any structured event. That is intentional, so a captured stream is grep-compatible with a captured log file.
+When the sink is stdout (foreground `boa serve` with `output = "stdout"`, or env-overridden one-shot CLI), the marker is written to stdout too. Any tool piping or capturing the output will see the line before any structured event. That is intentional, so a captured stream is grep-compatible with a captured log file.
 
 The TUI serve dialog uses captured file-offset-before-spawn (not the marker) to bound its tail pane, so the marker is a forensic / `grep` convenience rather than UI-load-bearing.
 
@@ -142,21 +142,21 @@ Responses include `previous` and `current` directives. Changes are ephemeral; re
 ### CLI
 
 ```
-aoe log-level <level>             # safe expansion across known roots
-aoe log-level --filter <expr>     # raw EnvFilter
-aoe log-level --get               # print current
+boa log-level <level>             # safe expansion across known roots
+boa log-level --filter <expr>     # raw EnvFilter
+boa log-level --get               # print current
 ```
 
 Examples:
 
 ```sh
-aoe log-level debug
-aoe log-level --filter acp.protocol=trace,info
-aoe log-level --filter auth.rate_limit=debug,warn
-aoe log-level --get
+boa log-level debug
+boa log-level --filter acp.protocol=trace,info
+boa log-level --filter auth.rate_limit=debug,warn
+boa log-level --get
 ```
 
-The CLI reads the daemon URL from `serve.url` and authenticates via the token in the query string. Works against a foreground `aoe serve` too; it does not require daemon mode.
+The CLI reads the daemon URL from `serve.url` and authenticates via the token in the query string. Works against a foreground `boa serve` too; it does not require daemon mode.
 
 ## Runner propagation
 
@@ -164,7 +164,7 @@ The CLI reads the daemon URL from `serve.url` and authenticates via the token in
 
 ## Per-session tee
 
-To make `aoe acp logs --session <id>` useful, the daemon's `SessionTeeLayer` (`src/acp/session_tee.rs`) mirrors each session-scoped event into `acp-workers/<id>.log` in addition to the shared `debug.log` (a copy, not a redirect). Events are attributed by their `session` field, inherited through the `acp_session` span scope when not set explicitly. Per-session writes use the same `SizeRotatingWriter` (10 MiB, keep 2); open writers are LRU-bounded (64) so the daemon doesn't leak fds. Daemon-only (the runner is single-session); `acp.tee`-target events are skipped to avoid re-entrancy; the tee sits below the same `EnvFilter`, so `aoe log-level` applies to per-session files too.
+To make `boa acp logs --session <id>` useful, the daemon's `SessionTeeLayer` (`src/acp/session_tee.rs`) mirrors each session-scoped event into `acp-workers/<id>.log` in addition to the shared `debug.log` (a copy, not a redirect). Events are attributed by their `session` field, inherited through the `acp_session` span scope when not set explicitly. Per-session writes use the same `SizeRotatingWriter` (10 MiB, keep 2); open writers are LRU-bounded (64) so the daemon doesn't leak fds. Daemon-only (the runner is single-session); `acp.tee`-target events are skipped to avoid re-entrancy; the tee sits below the same `EnvFilter`, so `boa log-level` applies to per-session files too.
 
 ## Web client relay
 
@@ -180,16 +180,16 @@ Not captured (intentional, v1): `console.error`. Wrapping it produces noisy dupl
 
 | Path | When it's written |
 |------|-------------------|
-| `<configured file_path>` (default `~/.agent-of-empires/debug.log`) | Every process that installs a tracing subscriber (TUI, foreground / daemon `aoe serve`, structured view runner, env-overridden CLI). The daemon's stdout/stderr is also redirected here at the OS level for panic backtrace capture. |
+| `<configured file_path>` (default `~/.agent-of-empires/debug.log`) | Every process that installs a tracing subscriber (TUI, foreground / daemon `boa serve`, structured view runner, env-overridden CLI). The daemon's stdout/stderr is also redirected here at the OS level for panic backtrace capture. |
 | `<configured>.1` ... `<configured>.<keep_count>` | Rotated files, oldest at the highest number. |
-| `<configured>.lock` | Idle `fs2` advisory lock file used to serialize rotation across processes. Always present after the first rotation; do not delete while any aoe process is running. |
-| `~/.agent-of-empires/runtime_filter` | Atomically written on every successful `aoe log-level` swap; consumed by runner watchers. |
-| `~/.agent-of-empires/acp-workers/<session-id>.log` | Per-session diagnostics surfaced by `aoe acp logs --session <id>`. The runner writes its startup marker and the agent's stderr here directly; the daemon additionally tees every session-scoped tracing event into it (see Per-session tee above). Size-rotated at 10 MiB, keep 2. |
+| `<configured>.lock` | Idle `fs2` advisory lock file used to serialize rotation across processes. Always present after the first rotation; do not delete while any BOA process is running. |
+| `~/.agent-of-empires/runtime_filter` | Atomically written on every successful `boa log-level` swap; consumed by runner watchers. |
+| `~/.agent-of-empires/acp-workers/<session-id>.log` | Per-session diagnostics surfaced by `boa acp logs --session <id>`. The runner writes its startup marker and the agent's stderr here directly; the daemon additionally tees every session-scoped tracing event into it (see Per-session tee above). Size-rotated at 10 MiB, keep 2. |
 | `~/.agent-of-empires/serve.log.legacy` | One-shot rename of the pre-consolidation `serve.log` by migration v007. Safe to delete once you've extracted any data you needed. |
 
 On Linux, replace `~/.agent-of-empires` with `$XDG_CONFIG_HOME/agent-of-empires`. Debug builds use `~/.agent-of-empires-dev` to avoid colliding with an installed release.
 
-The `aoe logs` viewer and the TUI serve dialog both call `logging::resolve_log_path` so the configured `file_path` is the single source of truth. `aoe logs --serve` and `aoe logs --all` were removed when `serve.log` was retired; the current default `debug.log` carries everything.
+The `boa logs` viewer and the TUI serve dialog both call `logging::resolve_log_path` so the configured `file_path` is the single source of truth. `boa logs --serve` and `boa logs --all` were removed when `serve.log` was retired; the current default `debug.log` carries everything.
 
 ## Conventions
 

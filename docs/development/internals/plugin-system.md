@@ -13,11 +13,11 @@ are intentionally deferred to follow-up PRs and are not present in the tree yet.
 `aoe-plugin-api` is the standalone crate that defines the manifest a plugin
 ships in `aoe-plugin.toml`. The core schema is just identity:
 
-- `id` (`PluginId`, a validated dotted-lowercase namespace, e.g. `aoe.web`),
+- `id` (`PluginId`, a validated dotted-lowercase namespace, e.g. `boa.web`),
 - `name`, `version`, `api_version`, and an optional `description`.
 
 `PluginManifest::from_toml_str` pre-checks `api_version` permissively (so a
-manifest targeting a newer host reports "upgrade aoe" rather than a confusing
+manifest targeting a newer host reports "upgrade BOA" rather than a confusing
 unknown-field error), then parses strictly (`deny_unknown_fields`, so a
 contribution section from a future schema is a hard error today) and validates
 (`api_version` in range, non-empty `name`/`version`). `API_VERSION` is the
@@ -39,7 +39,7 @@ caption = "Live status card."  # optional, shown beneath the image
 absolute URLs, absolute or `..`-traversing paths, and other extensions are
 rejected. The plugin detail endpoint resolves each path against the source
 repo's `raw.githubusercontent.com` (honoring the installed ref, else `HEAD`),
-so the browser fetches the asset directly; AoE never proxies image bytes. The
+so the browser fetches the asset directly; BOA never proxies image bytes. The
 endpoint silently drops any screenshot whose path or alt text fails validation
 rather than failing the whole detail response, so one bad entry omits only that
 image. The assets must be committed and pushed to the source repo before they
@@ -51,7 +51,7 @@ render; local plugins do not support screenshots yet (future work beyond
 `src/plugin/registry.rs` owns the in-process registry.
 
 - `BUILTINS` is a static slice of `BuiltinPlugin`, each embedding its manifest
-  TOML via `include_str!`. The `aoe.web` marker is gated on the `serve` cargo
+  TOML via `include_str!`. The `boa.web` marker is gated on the `serve` cargo
   feature, so it is present in every dashboard/release build and absent from a
   TUI-only build. `default-plugins` (on by default) reserves the on-by-default
   slot for bundled plugins that do not require the dashboard. CI runs a
@@ -82,15 +82,15 @@ view, so plugin fields are never re-derived per surface.
 registry, writes `[plugins."<id>"].enabled` through the normal `save_config`
 path, and reloads the registry. The three surfaces are thin twins over it:
 
-- CLI: `aoe plugin enable|disable` (`src/cli/plugin.rs`).
+- CLI: `boa plugin enable|disable` (`src/cli/plugin.rs`).
 - TUI: the command-palette / settings-tab plugin manager
   (`src/tui/dialogs/plugin_manager.rs`); the settings tab stages the change and
   persists it on the normal settings save.
 - Web: `POST /api/plugins/{id}/enabled`, gated on read-write mode and (when
   login is enabled) an elevated session (`src/server/api/plugins.rs`).
 
-The one behavior wired to a plugin's state today: `aoe serve` refuses to start
-while `aoe.web` is disabled (`src/cli/serve.rs`).
+The one behavior wired to a plugin's state today: `boa serve` refuses to start
+while `boa.web` is disabled (`src/cli/serve.rs`).
 
 ## Persisted plugin state (#2091)
 
@@ -154,16 +154,16 @@ the status reference plugin (#2096). `panes` is not a manifest section: panes
 ship as a `ui` slot of kind `pane` (#2432), so `[[panes]]` stays a hard parse
 error. `status` and `aoe_version` (below) require `api_version >= 4`: under
 `deny_unknown_fields` a pre-4 host would otherwise report a bare "unknown
-field" instead of the "upgrade aoe" message, so the host gates them behind the
+field" instead of the "upgrade BOA" message, so the host gates them behind the
 bump.
 
 `aoe_version` is an optional semver requirement (`">=0.10, <0.12"`) naming
-which aoe (host app) versions this plugin version supports. It is distinct from
+which BOA (host app) versions this plugin version supports. It is distinct from
 `api_version`: `api_version` gates the manifest schema shape, `aoe_version`
 gates the host's app behaviour. The host refuses to install or update a plugin
-whose range excludes the running aoe, and skips loading one (into the
-registry's load errors) rather than bailing, so an aoe upgrade cannot brick
-startup. Builtins are exempt (they ship with aoe). An absent range means no
+whose range excludes the running BOA, and skips loading one (into the
+registry's load errors) rather than bailing, so a BOA upgrade cannot brick
+startup. Builtins are exempt (they ship with BOA). An absent range means no
 constraint.
 
 The `runtime` section is one of two kinds: `command` (an argv launched from the
@@ -208,7 +208,7 @@ restricts it to matching hosts. Builds run with cwd set to the plugin dir, with
 stdin closed and stdout/stderr going to the operation log: the user's terminal
 for a CLI install, or a per-job log file for a dashboard install (see below).
 
-Why install time and the final dir, not launch or staging: `aoe plugin
+Why install time and the final dir, not launch or staging: `BOA plugin
 install` runs in the user's interactive shell, where `python3` / `node` / `uv`
 are reliably on PATH; the daemon that later launches the worker is not. And a
 Python venv is not relocatable (console-script shebangs and `pyvenv.cfg` embed
@@ -233,7 +233,7 @@ lifecycle mutation runs at a time (config and lockfile writes are not
 concurrency-safe; a second start is rejected). One PATH caveat: a dashboard
 build runs with the daemon's environment, not the user's interactive shell, so a
 build step that names a bare PATH program present only in the interactive shell
-can succeed from `aoe plugin install` yet fail from a dashboard install. Local
+can succeed from `boa plugin install` yet fail from a dashboard install. Local
 (non-`gh:`) installs stay CLI-only.
 
 The worker entrypoint (`command`'s `argv[0]`) must be plugin-relative: a path
@@ -285,7 +285,7 @@ other-plugin config.
 Capabilities are open strings (`CapabilityId`), so a follow-up can add one
 without an `api_version` bump. An unknown capability still parses (forward
 compatibility) but is rejected at install (`unsupported capability; upgrade
-aoe`), never silently granted.
+BOA`), never silently granted.
 
 A grant (`PluginConfig.grant`, in `config.toml`) records the capabilities the
 user approved and is pinned to the `sha256` of the installed manifest bytes
@@ -293,13 +293,13 @@ user approved and is pinned to the `sha256` of the installed manifest bytes
 active only when enabled AND the grant covers the installed manifest (same hash,
 all declared capabilities present). A changed manifest, hence a changed hash or
 capability set, invalidates the grant: the plugin stays installed but inactive
-(`needs_reapproval`) until `aoe plugin update` re-prompts and re-approves.
+(`needs_reapproval`) until `boa plugin update` re-prompts and re-approves.
 Builtins are first-party, auto-granted, and never store a grant.
 
 ## External install, trust, and the lockfile (#2093)
 
-`aoe plugin install <source>` installs an external plugin under
-`<app_dir>/plugins/<id>/`; `aoe plugin` stays reserved for management (D4), so
+`boa plugin install <source>` installs an external plugin under
+`<app_dir>/plugins/<id>/`; `boa plugin` stays reserved for management (D4), so
 there is no web install path. A source is a `gh:owner/repo[@ref]` slug or a
 local directory (`src/plugin/source.rs`).
 
@@ -317,7 +317,7 @@ atomic same-filesystem rename.
 
 Trust is host-assigned (`TrustLevel`): `builtin` (compiled in, auto-granted) or
 `community` (external, capabilities gated). An external plugin whose id sits in
-a reserved namespace (`aoe.*` / `agent-of-empires.*`, lifted only by featured
+a reserved namespace (`boa.*` / `agent-of-empires.*`, lifted only by featured
 verification in #2364) or collides with a builtin is rejected at install and
 skipped at load.
 
@@ -339,14 +339,14 @@ build steps and is not part of the source); a symlink or non-UTF-8 path outside
 those is a hard error so nothing installed escapes the hash. Skipping
 `.aoe-build` is what lets a build-mutating plugin (a venv holds ~thousands of
 files and a `python3` symlink) re-derive the same hash at load that the author's
-`aoe plugin hash` of a clean checkout produced; a fixed reserved name keeps the
+`boa plugin hash` of a clean checkout produced; a fixed reserved name keeps the
 exclusion out of attacker control, where a manifest-declared list a tampered
 manifest could widen would not. A source that ships `.aoe-build` is refused at
 fetch, so the excluded subtree can never hide vetted source. File
 mode is excluded for cross-platform determinism, and `git clone` runs with
 `core.autocrlf=false` so line endings never differ by platform. The hash is
 computed over the staged source **before** any release-binary worker is
-injected, so an author's `aoe plugin hash <checkout>` reproduces the
+injected, so an author's `boa plugin hash <checkout>` reproduces the
 install-time value; the downloaded worker stays pinned separately by the lock's
 `asset_sha256`.
 
@@ -363,15 +363,15 @@ an unvetted version, not a tamper-refuse: it installs as a non-featured plugin
 appending its hash without un-verifying older ones. The reserved-namespace gate
 is unchanged, so an unvetted version of a reserved-namespace plugin is still
 refused (only a vetted release lifts that gate). A featured-verified install is
-the one case allowed to claim a reserved (`aoe.*` / `agent-of-empires.*`)
+the one case allowed to claim a reserved (`boa.*` / `agent-of-empires.*`)
 namespace; a builtin-id collision is always rejected. To ship a new release, run
-`aoe plugin hash` against the new tag and add a `"<version>" = "sha256:..."`
+`boa plugin hash` against the new tag and add a `"<version>" = "sha256:..."`
 entry inside the entry's `versions` map alongside the existing ones. In debug
 builds `AOE_FEATURED_INDEX_PATH` overrides the embedded
 index for tests; a release binary always uses the compiled-in index, since the
 curated set is a root of trust and must not be redefinable by the environment.
 
-Every surface (CLI `aoe plugin list` / `info`, the TUI plugin manager, the web
+Every surface (CLI `boa plugin list` / `info`, the TUI plugin manager, the web
 Plugins panel) shows a `ValidationState`: `builtin`, `featured`, `community` (an
 unvetted GitHub install), or `local` (a local-directory install). `featured` is
 re-derived live at load (the id is in the embedded index and the on-disk tree
@@ -389,7 +389,7 @@ vetted hash for a tampered tree, so the verified decision always re-hashes
 content. The manifest-hash grant check still catches a community plugin tampered
 after install.
 
-`aoe plugin hash <dir>` prints the tree hash for a plugin directory so an author
+`boa plugin hash <dir>` prints the tree hash for a plugin directory so an author
 can produce the value a maintainer pins. Run it on a clean checkout.
 
 ## Tier 0 contribution registries (#2094)
@@ -411,12 +411,12 @@ flat `plugin:<id>.<key>` shape; only the merge boundary translates to the on-dis
 storage path `plugins.<id>.settings.<key>` (`settings_schema::plugin`). Plugin
 settings are global-only at Tier 0 (not profile-overridable). In the TUI they
 render read-only under the Plugins tab; edit them from the web dashboard or
-`aoe settings`.
+`boa settings`.
 
 A manifest may also declare a *default* override for a core setting via
 `[setting_defaults]` (keyed by the core `section.field`).
 `settings_schema::resolve` returns the effective value, its source, and the full
-candidate chain; `aoe settings explain <key>` and `GET /api/settings/resolved`
+candidate chain; `boa settings explain <key>` and `GET /api/settings/resolved`
 surface it.
 
 The effective value of a core key at Tier 0 is the user's value (when it differs
@@ -443,21 +443,21 @@ A plugin's `[[keybinds]]` resolve through a merged resolver
 (`tui::home::bindings::resolve_action`): the static core table is tried first and
 always shadows a plugin binding on the same chord; active plugins' keybinds are
 consulted only after. A resolved plugin keybind is inspectable but not runnable
-at Tier 0 (it shows a "needs the plugin runtime" notice); `aoe plugin info` lists
+at Tier 0 (it shows a "needs the plugin runtime" notice); `boa plugin info` lists
 a plugin's keybinds and flags any chord core shadows. Execution lands with #2095.
 
 ### CLI grafting
 
 Active plugins' `[[commands]]` are grafted onto the derived clap tree at runtime
-(`cli::graft`), so they appear in `aoe --help` and parse. Core commands always
+(`cli::graft`), so they appear in `boa --help` and parse. Core commands always
 win a name conflict. Dispatch tries the core derive first; a grafted command
 falls through to the plugin dispatcher, which at Tier 0 reports that running it
 needs the runtime (#2095).
 
 ## Tier 1 worker host (#2095)
 
-The worker host runs inside the `aoe serve` daemon (it is `serve`-gated, like
-`aoe.web`), because the host API it exposes reads and writes the event store and
+The worker host runs inside the `boa serve` daemon (it is `serve`-gated, like
+`boa.web`), because the host API it exposes reads and writes the event store and
 session storage the daemon owns. A TUI-only build has no host. The daemon builds
 one `PluginHost` at startup, launches a worker for every active plugin that
 declares a `[runtime]`, and reaps them all on shutdown
@@ -487,7 +487,7 @@ Filesystem and `PATH` probing go through a `LaunchResolver` trait so the
 resolution policy is unit-tested with no real filesystem.
 
 Builtins do not declare a `[runtime]` in this release, so `resolve_launch`
-returns `Err(LaunchError::NoRuntime)` for them. The `aoe __plugin-worker`
+returns `Err(LaunchError::NoRuntime)` for them. The `boa __plugin-worker`
 self-exec path for a builtin worker, and the worker-side SDK, arrive with the
 first builtin worker that needs them; shipping them now would be unused code.
 
@@ -577,8 +577,8 @@ slot is a hard parse error (the host must know how to render each).
 
 A UI contribution is not a capability and needs no grant, but the slots a
 plugin declares are disclosed so the user knows it modifies the dashboard
-before trusting it: the `aoe plugin install` prompt lists them alongside the
-requested capabilities, and they show in `aoe plugin info`, the TUI plugin
+before trusting it: the `boa plugin install` prompt lists them alongside the
+requested capabilities, and they show in `boa plugin info`, the TUI plugin
 manager, and the web Plugins panel (via `PluginView.ui_contributions`).
 
 ### RPCs (`src/plugin/host_api.rs`)
@@ -690,7 +690,7 @@ client-side and ephemeral: they read the already-fetched scalars, run no plugin
 code, and are not persisted, so a daemon restart falls back to the built-in
 sort.
 
-The native **structured-view** TUI (`aoe acp attach`, the remote-home picker)
+The native **structured-view** TUI (`boa acp attach`, the remote-home picker)
 polls the same endpoint on a 3-second cadence and renders the slots a terminal
 can show: global `status-bar` segments and the open session's `detail-badge`
 entries, tone-colored, in its status line, plus `notification`s as toasts
@@ -709,22 +709,22 @@ and reuse the existing install trust model rather than weakening it.
 
 ### Discovery
 
-`plugin::discover::discover(query)` runs one GitHub search over the `aoe-plugin`
-topic (`topic:aoe-plugin fork:false archived:false`, plus an optional free-text
+`plugin::discover::discover(query)` runs one GitHub search over the `boa-plugin`
+topic (`topic:boa-plugin fork:false archived:false`, plus an optional free-text
 term) and badges each result by matching the repo slug against the featured
 index source slugs and the installed plugins' sources (case-insensitive). It does
 **not** fetch each repo's `aoe-plugin.toml`: cloning N search results to read a
 manifest would be an N+1 blowup against the unauthenticated search rate limit. So
-a result is "a GitHub repository tagged `aoe-plugin`", and a `featured` badge
+a result is "a GitHub repository tagged `boa-plugin`", and a `featured` badge
 means "a curated source slug", not "the current tree matches the pin". Results
 rank featured-first then by stars (#2105 will add popularity ranking). Install
-stays the trust boundary: `aoe plugin install` fetches the manifest, prompts for
+stays the trust boundary: `boa plugin install` fetches the manifest, prompts for
 capabilities, and enforces the featured pin.
 
-Surfaces: `aoe plugin discover [query]`, the TUI plugin manager `d` key, and the
+Surfaces: `boa plugin discover [query]`, the TUI plugin manager `d` key, and the
 dashboard "Search GitHub" button (`GET /api/plugins/discover?q=`). The dashboard
 has no install path (capability approval needs a terminal), so each result shows
-a copyable `aoe plugin install gh:owner/repo` command instead of an install
+a copyable `boa plugin install gh:owner/repo` command instead of an install
 button.
 
 Unauthenticated GitHub search is rate limited (about 10 requests/minute/IP); the
@@ -753,7 +753,7 @@ commit-pinned install is never "outdated". Limitation: a `release-binary` plugin
 whose release asset is replaced without a source-commit change is not detected
 (ls-remote only sees the source tree).
 
-Surfaces: `aoe plugin outdated`, the TUI plugin manager `c` key, and
+Surfaces: `boa plugin outdated`, the TUI plugin manager `c` key, and
 `GET /api/plugins/updates`. The web endpoint is separate from the always-on
 `GET /api/plugins` list so a settings render never blocks on git or the network;
 the dashboard paints update-available badges only after the user clicks "Check
@@ -762,10 +762,10 @@ for updates".
 ### Auto-update sweep
 
 The opt-in `updates.auto_update_plugins` setting (off by default) runs a sweep at
-TUI and `aoe serve` startup (`plugin::auto_update::spawn_if_enabled`), spawned
+TUI and `boa serve` startup (`plugin::auto_update::spawn_if_enabled`), spawned
 non-blocking so a slow remote never delays startup. It applies only **clean**
 updates, those that need no new consent; any version that changes the capability
-set, build steps, or UI slots is skipped and left for a manual `aoe plugin
+set, build steps, or UI slots is skipped and left for a manual `BOA plugin
 update` so the new grant is reviewed (`install::ConsentMode::CleanOnlyNonInteractive`).
 A background sweep therefore never grants new capabilities, runs a changed build
 step unattended, or deactivates a working plugin. Applied updates take effect on

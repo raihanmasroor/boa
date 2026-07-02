@@ -118,7 +118,7 @@ export function TopBar({
           aria-label="Go to dashboard"
         >
           <img src="/icon-192.png" alt="" width="18" height="18" className="rounded-sm" />
-          <span className="font-mono text-xs leading-none">aoe</span>
+          <span className="font-mono text-xs leading-none">BOA</span>
         </button>
       </div>
 

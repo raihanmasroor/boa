@@ -25,8 +25,8 @@ pub struct UrlArgs {
 pub fn run(args: UrlArgs) -> Result<()> {
     if daemon_pid().is_none() {
         bail!(
-            "No aoe serve daemon is running.\n\
-             Start one with: aoe serve --daemon"
+            "No boa serve daemon is running.\n\
+             Start one with: boa serve --daemon"
         );
     }
 

@@ -1,8 +1,8 @@
 ---
-name: aoe
-description: Use when launching, monitoring, or controlling AI coding agents (Claude Code, Codex, OpenCode, etc.) in tmux via Agent of Empires (aoe). Covers creating sessions, capturing agent output, running parallel worktree agents, and organizing work into groups and profiles. Prefer aoe over raw tmux for agent management.
+name: boa
+description: Use when launching, monitoring, or controlling AI coding agents (Claude Code, Codex, OpenCode, etc.) in tmux via Band of Agents (boa). Covers creating sessions, capturing agent output, running parallel worktree agents, and organizing work into groups and profiles. Prefer boa over raw tmux for agent management.
 version: 1.0.0
-author: njbrake (Agent of Empires)
+author: njbrake (Band of Agents)
 license: MIT
 metadata:
   hermes:
@@ -10,11 +10,11 @@ metadata:
     related_skills: [subagent-driven-development]
 ---
 
-# Agent of Empires (aoe)
+# Band of Agents (boa)
 
 ## Overview
 
-`aoe` creates, manages, and monitors AI coding agent sessions (Claude Code, Codex, OpenCode, and others) inside tmux. Each session is an agent process with an ID, title, tool, project path, and live status. Use `aoe` instead of raw `tmux` commands whenever the work is about coding agents: it tracks status, captures output, manages git worktrees for parallel branches, and organizes sessions into groups and profiles.
+`boa` creates, manages, and monitors AI coding agent sessions (Claude Code, Codex, OpenCode, and others) inside tmux. Each session is an agent process with an ID, title, tool, project path, and live status. Use `boa` instead of raw `tmux` commands whenever the work is about coding agents: it tracks status, captures output, manages git worktrees for parallel branches, and organizes sessions into groups and profiles.
 
 ## When to Use
 
@@ -28,7 +28,7 @@ metadata:
 
 ## Requirements
 
-The `aoe` and `tmux` binaries must be on `PATH`, and commands run through a shell. Install aoe from https://github.com/agent-of-empires/agent-of-empires.
+The `boa` and `tmux` binaries must be on `PATH`, and commands run through a shell. Install boa from https://github.com/agent-of-empires/agent-of-empires.
 
 ## Core Concepts
 
@@ -41,36 +41,36 @@ The `aoe` and `tmux` binaries must be on `PATH`, and commands run through a shel
 
 ```bash
 # Add a session for the current directory
-aoe add . -t "my feature"
+boa add . -t "my feature"
 
 # Add with group, launch immediately
-aoe add /path/to/repo -t "API work" -g backend -l
+boa add /path/to/repo -t "API work" -g backend -l
 
 # Add with specific tool
-aoe add . -t "codex session" -c codex
+boa add . -t "codex session" -c codex
 
 # Add in a git worktree (parallel branch)
-aoe add . -t "fix-123" -w fix/issue-123 -l
+boa add . -t "fix-123" -w fix/issue-123 -l
 
 # Add in Docker sandbox
-aoe add . -t "sandboxed" -s -l
+boa add . -t "sandboxed" -s -l
 
 # Add as sub-session of another
-aoe add . -t "sub task" -P <parent-id>
+boa add . -t "sub task" -P <parent-id>
 
 # Enable YOLO mode (skip permission prompts)
-aoe add . -t "yolo" -y -l
+boa add . -t "yolo" -y -l
 ```
 
 ## Listing Sessions
 
 ```bash
-aoe list              # human-readable
-aoe list --json       # JSON for parsing
-aoe list --all        # across all profiles
+boa list              # human-readable
+boa list --json       # JSON for parsing
+boa list --all        # across all profiles
 ```
 
-**JSON shape** (`aoe list --json`):
+**JSON shape** (`boa list --json`):
 ```json
 [
   {
@@ -87,34 +87,34 @@ aoe list --all        # across all profiles
 ]
 ```
 
-`command` is omitted when empty; `worktree` appears only for worktree-backed sessions. `list --json` does not include live status: use `aoe status --json` or `aoe session capture --json` for that.
+`command` is omitted when empty; `worktree` appears only for worktree-backed sessions. `list --json` does not include live status: use `boa status --json` or `boa session capture --json` for that.
 
 ## Session Lifecycle
 
 ```bash
-aoe session start <id-or-title>
-aoe session stop <id-or-title>
-aoe session restart <id-or-title>
-aoe session attach <id-or-title>   # interactive attach
+boa session start <id-or-title>
+boa session stop <id-or-title>
+boa session restart <id-or-title>
+boa session attach <id-or-title>   # interactive attach
 ```
 
 ## Inspecting Sessions
 
 ```bash
 # Session metadata
-aoe session show <id-or-title> --json
+boa session show <id-or-title> --json
 
 # Capture tmux pane content (key for monitoring)
-aoe session capture <id-or-title> --json
-aoe session capture <id-or-title> -n 100 --strip-ansi
-aoe session capture <id-or-title>   # plain text, good for piping
+boa session capture <id-or-title> --json
+boa session capture <id-or-title> -n 100 --strip-ansi
+boa session capture <id-or-title>   # plain text, good for piping
 
 # Quick status summary
-aoe status --json
-aoe status -q   # just the waiting count (for scripting)
+boa status --json
+boa status -q   # just the waiting count (for scripting)
 ```
 
-**JSON shape** (`aoe session capture --json`):
+**JSON shape** (`boa session capture --json`):
 ```json
 {
   "id": "a1b2c3d4-...",
@@ -126,7 +126,7 @@ aoe status -q   # just the waiting count (for scripting)
 }
 ```
 
-**JSON shape** (`aoe session show --json`):
+**JSON shape** (`boa session show --json`):
 ```json
 {
   "id": "a1b2c3d4-...",
@@ -142,7 +142,7 @@ aoe status -q   # just the waiting count (for scripting)
 
 `parent_session_id` is included only for sub-sessions.
 
-**JSON shape** (`aoe status --json`):
+**JSON shape** (`boa status --json`):
 ```json
 {
   "waiting": 1,
@@ -156,49 +156,49 @@ aoe status -q   # just the waiting count (for scripting)
 
 ### Auto-detection (inside a tmux pane)
 
-When called from within an aoe-managed tmux session, the identifier can be omitted:
+When called from within a boa-managed tmux session, the identifier can be omitted:
 
 ```bash
-aoe session show          # auto-detects current session
-aoe session capture       # auto-detects current session
-aoe session current --json
+boa session show          # auto-detects current session
+boa session capture       # auto-detects current session
+boa session current --json
 ```
 
 ## Renaming and Organizing
 
 ```bash
-aoe session rename <id> -t "new title"
-aoe session rename <id> -g "new/group"
+boa session rename <id> -t "new title"
+boa session rename <id> -g "new/group"
 
-aoe group create mygroup
-aoe group move <id-or-title> mygroup
-aoe group list --json
-aoe group delete mygroup --force
+boa group create mygroup
+boa group move <id-or-title> mygroup
+boa group list --json
+boa group delete mygroup --force
 ```
 
 ## Profiles
 
 ```bash
-aoe profile list
-aoe profile create staging
-aoe profile delete staging
-aoe profile default staging   # set default
-aoe -p staging list           # use inline
+boa profile list
+boa profile create staging
+boa profile delete staging
+boa profile default staging   # set default
+boa -p staging list           # use inline
 ```
 
 ## Worktrees
 
 ```bash
-aoe worktree list
-aoe worktree info <id-or-title>
-aoe worktree cleanup -f
+boa worktree list
+boa worktree info <id-or-title>
+boa worktree cleanup -f
 ```
 
 ## Removing Sessions
 
 ```bash
-aoe remove <id-or-title>
-aoe remove <id-or-title> --delete-worktree --force
+boa remove <id-or-title>
+boa remove <id-or-title> --delete-worktree --force
 ```
 
 ## Workflow Patterns
@@ -206,18 +206,18 @@ aoe remove <id-or-title> --delete-worktree --force
 ### Single agent
 
 ```bash
-aoe add /path/to/repo -t "feature X" -l
+boa add /path/to/repo -t "feature X" -l
 # ... wait ...
-aoe session capture "feature X" --json
+boa session capture "feature X" --json
 ```
 
 ### Parallel worktree agents
 
 ```bash
-aoe add . -t "issue-100" -w fix/issue-100 -l
-aoe add . -t "issue-101" -w fix/issue-101 -l
-aoe add . -t "issue-102" -w fix/issue-102 -l
-aoe status --json   # check all at once
+boa add . -t "issue-100" -w fix/issue-100 -l
+boa add . -t "issue-101" -w fix/issue-101 -l
+boa add . -t "issue-102" -w fix/issue-102 -l
+boa status --json   # check all at once
 ```
 
 ### Monitoring loop
@@ -226,7 +226,7 @@ Poll all sessions until none are running or waiting:
 
 ```bash
 while true; do
-  status=$(aoe status --json)
+  status=$(boa status --json)
   waiting=$(echo "$status" | jq '.waiting')
   running=$(echo "$status" | jq '.running')
   if [ "$running" -eq 0 ] && [ "$waiting" -eq 0 ]; then
@@ -241,23 +241,23 @@ done
 ### Capture and review
 
 ```bash
-for id in $(aoe list --json | jq -r '.[].id'); do
+for id in $(boa list --json | jq -r '.[].id'); do
   echo "=== $id ==="
-  aoe session capture "$id" -n 100 --strip-ansi
+  boa session capture "$id" -n 100 --strip-ansi
   echo
 done
 ```
 
 ## Common Pitfalls
 
-1. **Expecting `aoe list --json` to carry live status.** It does not. The fields are static session metadata (`path`, `group`, `tool`, `command`, etc.). For status, call `aoe status --json` or `aoe session capture --json`.
-2. **Using raw `tmux` to start or stop agents.** That bypasses aoe's tracking; the session's status and metadata go stale. Always use `aoe session start/stop/restart`.
-3. **Forgetting `-l`/`--launch`.** `aoe add` creates a session but does not start it unless you pass `-l`.
-4. **Running across the wrong profile.** Sessions are profile-scoped; use `-p <name>` or set `AGENT_OF_EMPIRES_PROFILE` when scripting, and `aoe list --all` to see everything.
+1. **Expecting `boa list --json` to carry live status.** It does not. The fields are static session metadata (`path`, `group`, `tool`, `command`, etc.). For status, call `boa status --json` or `boa session capture --json`.
+2. **Using raw `tmux` to start or stop agents.** That bypasses boa's tracking; the session's status and metadata go stale. Always use `boa session start/stop/restart`.
+3. **Forgetting `-l`/`--launch`.** `boa add` creates a session but does not start it unless you pass `-l`.
+4. **Running across the wrong profile.** Sessions are profile-scoped; use `-p <name>` or set `AGENT_OF_EMPIRES_PROFILE` when scripting, and `boa list --all` to see everything.
 
 ## Verification Checklist
 
-- [ ] `aoe` and `tmux` are on `PATH`.
-- [ ] `aoe add` was followed by a launch (`-l`) or an explicit `aoe session start`.
-- [ ] JSON parsing reads `path`/`group` (not `project_path`/`group_path`) and gets status from `aoe status`/`aoe session capture`, not `aoe list`.
+- [ ] `boa` and `tmux` are on `PATH`.
+- [ ] `boa add` was followed by a launch (`-l`) or an explicit `boa session start`.
+- [ ] JSON parsing reads `path`/`group` (not `project_path`/`group_path`) and gets status from `boa status`/`boa session capture`, not `boa list`.
 - [ ] Scripted polling exits when both `running` and `waiting` reach 0.

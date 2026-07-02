@@ -103,7 +103,7 @@ export function SecuritySettings() {
       </div>
 
       <p className="mt-3 text-[11px] text-text-dim">
-        Security settings are configured at launch via <code className="font-mono text-text-muted">aoe serve</code>{" "}
+        Security settings are configured at launch via <code className="font-mono text-text-muted">boa serve</code>{" "}
         flags. See the{" "}
         <a
           href="https://agent-of-empires.com/guides/web-dashboard/"

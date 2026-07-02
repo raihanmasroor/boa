@@ -8,12 +8,12 @@ failure mode and how to recover. For the day-to-day interface, see
 ## Security
 
 - Agents never touch the disk directly. They go through ACP's
-  `fs/read_text_file` / `fs/write_text_file`, and aoe reads/writes on their
+  `fs/read_text_file` / `fs/write_text_file`, and BOA reads/writes on their
   behalf, enforcing the sandbox roots (the session's worktree plus any explicit
   `--repo` paths).
 - Terminal commands run in the session's worktree, or inside the
   `aoe-sandbox-<id>` container (via `docker exec`) when sandbox is enabled.
-- Approval nonces are server-generated and single-use; aoe never reveals them
+- Approval nonces are server-generated and single-use; BOA never reveals them
   to the agent, so a compromised agent cannot synthesise approvals.
 - Auth tokens (`AOE_TOKEN`) are not forwarded to the agent subprocess.
 
@@ -33,7 +33,7 @@ handshake times out after 30s.
 
 ## Troubleshooting
 
-### `aoe acp doctor` says Node is missing
+### `boa acp doctor` says Node is missing
 
 Install Node.js 20 or newer:
 
@@ -41,20 +41,20 @@ Install Node.js 20 or newer:
 - Linux: `apt install nodejs` or `nvm install 20`
 - Windows: download from <https://nodejs.org/>
 
-Then re-run `aoe acp doctor` to verify. If you have Node installed in a
+Then re-run `boa acp doctor` to verify. If you have Node installed in a
 non-standard location, set `AOE_ACP_NODE=/path/to/node` or configure
 `acp.node_path` in `config.toml`.
 
-### `aoe acp doctor` says aoe-agent is missing
+### `boa acp doctor` says aoe-agent is missing
 
-`aoe-agent` ships with the aoe binary. If the doctor reports it missing, your
-install is incomplete. Reinstall aoe via your package manager (e.g.,
-`brew reinstall aoe`).
+`aoe-agent` ships with the BOA binary. If the doctor reports it missing, your
+install is incomplete. Reinstall BOA via your package manager (e.g.,
+`brew reinstall boa`).
 
-### `aoe acp doctor` says claude-code adapter is missing
+### `boa acp doctor` says claude-code adapter is missing
 
-aoe requires a recent `claude-agent-acp`. If your installed adapter is too old,
-aoe refuses to start the session and reports the exact required version. Install
+BOA requires a recent `claude-agent-acp`. If your installed adapter is too old,
+BOA refuses to start the session and reports the exact required version. Install
 the official adapter:
 
 ```bash
@@ -63,7 +63,7 @@ npm install -g @agentclientprotocol/claude-agent-acp@latest
 
 Then run `claude login` if you haven't already. If an older version is pinned by
 an internal mirror, ship the required floor from the mirror or run the `@latest`
-install above before starting `aoe serve`.
+install above before starting `boa serve`.
 
 ### Recovering a missing or out-of-date agent from the web dashboard
 
@@ -80,7 +80,7 @@ Two recovery controls sit on the compatibility screen:
 
 - **Restart agent** respawns the worker and re-runs the version check at the next
   handshake. Use it after you have installed or updated the adapter in a shell;
-  no full restart of `aoe serve` is needed.
+  no full restart of `boa serve` is needed.
 - **Update & restart** runs the agent's `npm install -g` on the host (as the
   user running the daemon) and then respawns. It appears only for
   npm-installable agents (`claude-agent-acp`, `codex-acp`, `gemini`) and only
@@ -95,7 +95,7 @@ from the daemon is a host-level capability that executes the package's npm
 lifecycle scripts as the daemon user. It is always blocked in `--read-only` mode,
 and the setting is `local_only`, so the web dashboard cannot turn it on (the leaf
 is stripped from every web settings write, remote or local). Enable it from the
-`aoe` TUI settings (Advanced) or in the config file; the button activates on the
+`boa` TUI settings (Advanced) or in the config file; the button activates on the
 next reload. For agents that install some other way (`opencode`, `vibe-acp`,
 `pi-acp`), the screen shows the manual command instead of an Update button.
 Inside a sandbox session, a host install would not reach the containerized agent,
@@ -103,28 +103,28 @@ so the action is refused; install the agent in the container image instead.
 
 ### "Failed to start structured view agent" while the adapter is installed
 
-`aoe serve` captures the launching shell's PATH at startup. If the adapter lives
+`boa serve` captures the launching shell's PATH at startup. If the adapter lives
 under a node-version-manager dir (nvm, fnm, mise, asdf) and the node version on
 the daemon's PATH doesn't match, the spawn fails with
 `agent spawn failed: No such file or directory`.
 
-Either restart `aoe serve` from a shell where `which claude-agent-acp`
+Either restart `boa serve` from a shell where `which claude-agent-acp`
 resolves, or symlink the binary into a standard dir (`/usr/local/bin`,
 `~/.local/bin`, etc.).
 
 ### "Project path no longer exists" banner
 
 The session's working directory was renamed, moved, or deleted out from under
-`aoe serve` (most often a `git worktree move` or a manual `mv`). Two ways to
+`boa serve` (most often a `git worktree move` or a manual `mv`). Two ways to
 recover:
 
 1. **Restore the directory at the path the banner shows** (e.g.
    `git worktree move <new> <old>`, or recreate the dir), then click **Retry**.
    Transcript continuity is preserved.
-2. **Stop `aoe serve`**, edit `project_path` for this session in
+2. **Stop `boa serve`**, edit `project_path` for this session in
    `~/.agent-of-empires/profiles/<profile>/sessions.json` to point at the new
    location (update `worktree_info.branch` too if the branch was renamed), then
-   start `aoe serve` again. History and `acp_session_id` are preserved; the
+   start `boa serve` again. History and `acp_session_id` are preserved; the
    conversation resumes against the new path.
 
 Reinstalling the adapter does not help here; the adapter is fine, the cwd is
@@ -132,7 +132,7 @@ gone.
 
 ### Agent stopped responding to cancel
 
-If the agent ignores `session/cancel` mid-tool-call, aoe restarts the worker and
+If the agent ignores `session/cancel` mid-tool-call, BOA restarts the worker and
 resumes the transcript. The structured view shows "Agent stopped responding to
 cancel. Restarting worker; your transcript will be preserved" while the respawn
 is in flight, and the banner clears once the new worker is online.
@@ -151,7 +151,7 @@ applies on reload and when the backend switches agents mid-turn.
 
 ### Rate-limit recovery
 
-When the active backend hits its rate limit, aoe parks the session rather than
+When the active backend hits its rate limit, BOA parks the session rather than
 respawning into the same limit. The dashboard shows a banner with the reset
 time and a primary **Continue in another agent** CTA. Clicking it opens a picker
 of the structured view ACP registry (claude / codex / opencode / gemini / vibe
@@ -162,7 +162,7 @@ Review and send manually; it is not auto-sent.
 
 #### Optional auto-resume after reset
 
-If you would rather stay on the same backend and have AoE pick the session back
+If you would rather stay on the same backend and have BOA pick the session back
 up automatically once the limit clears, enable the opt-in setting (off by
 default):
 
@@ -174,7 +174,7 @@ rate_limit_auto_resume_grace_secs = 15   # cushion added to the reported reset t
 
 Both keys are editable in the structured view settings (TUI and web dashboard,
 under "Advanced") and can be overridden per profile. The reset time survives an
-`aoe serve` restart. The manual "Continue in another agent" and reconnect paths
+`boa serve` restart. The manual "Continue in another agent" and reconnect paths
 stay available regardless of the setting.
 
 ### Switching agents manually
@@ -186,7 +186,7 @@ and later want to return to the original agent.
 - **Web dashboard:** right-click a structured view session in the sidebar and
   pick "Switch agent". It opens the same picker and switches on confirm. The
   composer is pre-filled with a recap; review and send manually.
-- **CLI:** `aoe acp switch-agent <session> <target>` (run `aoe acp agents` to
+- **CLI:** `boa acp switch-agent <session> <target>` (run `boa acp agents` to
   list valid target keys). Pass `--model <name>` to override the model the new
   agent starts with.
 
@@ -218,7 +218,7 @@ The common causes:
    launch in an `amd64` container and vice versa.
 
 Use **Open agent log** on the red startup banner for the verbatim adapter error,
-or run `aoe acp logs --session <id>`. To inspect the binary:
+or run `boa acp logs --session <id>`. To inspect the binary:
 
 ```sh
 docker exec <container> file /usr/lib/node_modules/@agentclientprotocol/claude-agent-acp/node_modules/@anthropic-ai/claude-agent-sdk-*/claude
@@ -231,12 +231,12 @@ container (rather than bind-mounting from the host).
 
 ### Structured view feels "stuck" with no events
 
-- Check `aoe acp logs --session <id>`, or **Open agent log** on the red
+- Check `boa acp logs --session <id>`, or **Open agent log** on the red
   startup-error banner in the dashboard.
 - Check the dashboard's connection chrome at the top of the view; it shows
   reconnect status if the WebSocket is degraded.
 - A repeatedly-failing worker is parked with a red "session parked" banner.
-  Retry from the dashboard or run `aoe acp restart <session>`.
+  Retry from the dashboard or run `boa acp restart <session>`.
 - A session that was auto-stopped for inactivity and then respawned (for
   example after a version upgrade) used to be able to keep a stale "dormant"
   marker, which made the daemon refuse to bring the worker back after it next

@@ -1,4 +1,4 @@
-# Web Dashboard Design System -- Agent of Empires
+# Web Dashboard Design System -- Band of Agents
 
 > Standalone design system for the web dashboard. The root DESIGN.md covers the TUI and marketing site; this document covers the browser-based app UI, which has its own visual direction.
 
@@ -107,7 +107,7 @@ Status uses both color AND distinct glyphs for accessibility. The glyph shape sh
 
 ```
 +------------------------------------------------------+
-| [=] [icon] aoe          3 sessions  [errors] [diff]  |  <- 48px header
+| [=] [icon] BOA          3 sessions  [errors] [diff]  |  <- 48px header
 +--------+---------------------------------------------+
 | ● Huns |  workspace/branch  ·  claude                |  <- 40px content header
 |   claude|                                             |
@@ -122,7 +122,7 @@ Status uses both color AND distinct glyphs for accessibility. The glyph shape sh
   280px                    flex-1
 ```
 
-- **Header:** 48px. Sidebar toggle, icon + "aoe" link (muted), session count, alert badges, diff toggle.
+- **Header:** 48px. Sidebar toggle, icon + "BOA" link (muted), session count, alert badges, diff toggle.
 - **Sidebar:** 280px, resizable (200-480px). Two-line session items with status glyph, title, and meta line. Active item has left border in brand-600.
 - **Content:** Flex-1. Content header (40px) + terminal (fills remaining).
 - **Right panel:** Resizable diff + paired shell terminal, toggled by D key.
@@ -147,7 +147,7 @@ Sidebar overlay. Right panel full-screen overlay. Terminal fills screen. Monitor
 
 ### Header Branding
 
-- Small icon (18px) + "aoe" in mono, linked to agent-of-empires.com
+- Small icon (18px) + "BOA" in mono, linked to agent-of-empires.com
 - Muted (text-muted), brightens on hover (text-secondary)
 - Not prominent, just identifiable
 

@@ -66,3 +66,14 @@ export const THEME_CHANGED_EVENT = "aoe:theme-changed";
 export function dispatchThemeChanged(theme: ResolvedTheme): void {
   window.dispatchEvent(new CustomEvent<ResolvedTheme>(THEME_CHANGED_EVENT, { detail: theme }));
 }
+
+// Display labels for theme ids shown in pickers. Only the visible label is
+// remapped; the id is what the server matches against the builtin/custom
+// theme files, so callers must keep saving the id, not the label.
+const THEME_LABELS: Record<string, string> = {
+  empire: "band",
+};
+
+export function themeLabel(id: string): string {
+  return THEME_LABELS[id] ?? id;
+}

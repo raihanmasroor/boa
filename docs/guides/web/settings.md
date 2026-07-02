@@ -52,8 +52,8 @@ this one). Both are step-up actions: the first click after a fresh page
 load surfaces the passphrase prompt (see Step-up elevation below).
 
 Sessions are persisted to an owner-only file under the app dir, so they
-survive an `aoe serve` restart: signed-in devices stay signed in across
-a daemon bounce (config edit, `aoe update`, crash) instead of being
+survive a `boa serve` restart: signed-in devices stay signed in across
+a daemon bounce (config edit, `boa update`, crash) instead of being
 re-prompted for the passphrase. Changing the passphrase drops every
 persisted session. To opt out and force re-authentication on every
 restart, turn off **Persist login sessions** under Web Dashboard, or set

@@ -54,10 +54,10 @@ pub enum Source {
 #[derive(Debug, Error)]
 pub enum DiscoveryError {
     #[error(
-        "no local structured view daemon is running; start one with `aoe serve` or set AOE_DAEMON_URL"
+        "no local structured view daemon is running; start one with `boa serve` or set AOE_DAEMON_URL"
     )]
     NoLocalDaemon,
-    #[error("serve.url is empty or malformed; restart `aoe serve` to refresh it")]
+    #[error("serve.url is empty or malformed; restart `boa serve` to refresh it")]
     Malformed,
 }
 

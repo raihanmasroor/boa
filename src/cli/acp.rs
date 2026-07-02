@@ -301,7 +301,7 @@ async fn doctor(json: bool, fix: bool) -> Result<()> {
     println!("======================");
     println!();
     println!("The structured view is the ACP-based structured rendering. It is the default");
-    println!("in the web dashboard; `aoe add` and the TUI default to the terminal view.");
+    println!("in the web dashboard; `boa add` and the TUI default to the terminal view.");
     println!("Pass --structured-view or --agent to opt a CLI session in (or flip a session");
     println!("from the session view).");
     println!();
@@ -509,7 +509,7 @@ async fn stop(session: Option<String>, all: bool, timeout_secs: u64) -> Result<(
         let id = match session {
             Some(s) => s,
             None => {
-                anyhow::bail!("aoe acp stop requires <session> or --all");
+                anyhow::bail!("boa acp stop requires <session> or --all");
             }
         };
         worker_registry::load(&id)?
@@ -605,7 +605,7 @@ fn logs(session: Option<String>, follow: bool) -> Result<()> {
             if records.len() == 1 {
                 records[0].session_id.clone()
             } else if records.is_empty() {
-                println!("No agent workers running. Use `aoe acp ps` to inspect.");
+                println!("No agent workers running. Use `boa acp ps` to inspect.");
                 return Ok(());
             } else {
                 println!("Multiple agent workers running; pass --session <id>:");
@@ -674,7 +674,7 @@ fn restart(session: &str) -> Result<()> {
     // leader liveness would skip the killpg and leak descendants.
     crate::process::worker::terminate_process_group(record.pid);
     println!(
-        "Stopped runner for {} (PID {}). `aoe serve` will respawn on its next reconciler tick.",
+        "Stopped runner for {} (PID {}). `boa serve` will respawn on its next reconciler tick.",
         session, record.pid
     );
     Ok(())
@@ -850,7 +850,7 @@ async fn tail(session: &str, since: u64) -> Result<()> {
                 println!("{line}");
             }
             Ok(WsMessage::Lagged) => {
-                eprintln!("warning: ring buffer lagged; some events lost. Refetch with `aoe acp history <session>`.");
+                eprintln!("warning: ring buffer lagged; some events lost. Refetch with `boa acp history <session>`.");
             }
             Err(e) => {
                 eprintln!("ws error: {e}");

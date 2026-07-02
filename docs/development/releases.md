@@ -68,7 +68,7 @@ This bypasses the staging PR. `prepare-release.yml` regenerates `CHANGELOG.md` f
 
 ## Skill hubs
 
-`aoe` ships a coding-agent management skill to two skill hubs. The skill sources live in `contrib/`, and `cargo xtask check-skill` (run in CI) validates that both reference real CLI commands and follow each hub's frontmatter rules.
+`boa` ships a coding-agent management skill to two skill hubs. The skill sources live in `contrib/`, and `cargo xtask check-skill` (run in CI) validates that both reference real CLI commands and follow each hub's frontmatter rules.
 
 - **ClawHub** (`contrib/openclaw-skill/`): published automatically by the `publish-clawhub` job in `release.yml` on every release, using `CLAWHUB_TOKEN`. ClawHub is a registry, so each release idempotently pushes the new version. The frontmatter must not carry a top-level `version:` field; ClawHub's `_meta.json` and the `--version` flag are the source of truth.
 

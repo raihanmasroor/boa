@@ -104,7 +104,7 @@ impl UpdateConfirmDialog {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(theme.waiting))
-            .title(" Update aoe ")
+            .title(" Update BOA ")
             .title_style(Style::default().fg(theme.waiting).bold());
 
         let inner = block.inner(dialog_area);

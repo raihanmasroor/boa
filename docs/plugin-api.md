@@ -1,7 +1,6 @@
 # Plugin API Reference
 
-The field-by-field reference for `aoe-plugin.toml`, the manifest every Agent of
-Empires plugin ships. The schema lives in the `aoe-plugin-api` crate
+The field-by-field reference for `aoe-plugin.toml`, the manifest every Band of Agents plugin ships. The schema lives in the `aoe-plugin-api` crate
 (`PluginManifest`) and is the source of truth; this page documents it for plugin
 authors. The host parses the manifest strictly (unknown keys are rejected), so
 every key here maps to a schema field.
@@ -52,7 +51,7 @@ capabilities = ["runtime.worker"]
 
 A dotted, lowercase ASCII identifier such as `dev.example.review-helper`. Each
 dot-separated segment starts with a lowercase letter and may contain digits and
-hyphens; the whole id is at most 64 bytes. The `aoe.*` and `agent-of-empires.*`
+hyphens; the whole id is at most 64 bytes. The `boa.*` and `agent-of-empires.*`
 namespaces are reserved for bundled and officially featured plugins; a community
 install cannot claim them.
 

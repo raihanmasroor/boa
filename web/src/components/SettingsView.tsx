@@ -541,7 +541,7 @@ export function SettingsView({
             focusRequest={focusRequest}
             values={(settings?.logging ?? {}) as Record<string, unknown>}
             onSaveField={saveSubField}
-            advancedSubtitle="Sink and rotation; some fields require restarting aoe to take effect."
+            advancedSubtitle="Sink and rotation; some fields require restarting BOA to take effect."
           />
         );
 

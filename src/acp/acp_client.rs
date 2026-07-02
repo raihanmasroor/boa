@@ -2470,7 +2470,7 @@ fn provider_env_denyreason(key: &str) -> Option<&'static str> {
         return Some("empty key");
     }
     if key == "AOE_TOKEN" {
-        return Some("aoe auth token, must not reach the agent");
+        return Some("BOA auth token, must not reach the agent");
     }
     // Infrastructure / locale keys that `always_forward` already wires
     // from the parent env. Letting `provider_env` override them lets the

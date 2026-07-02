@@ -133,7 +133,7 @@ describe("ProjectStep scratch toggle (#1324)", () => {
     expect(queryByRole("button", { name: "Browse", exact: true })).toBeNull();
     expect(queryByRole("button", { name: "Clone URL" })).toBeNull();
     // The confirmation card replaces the picker.
-    expect(queryByText(/A fresh scratch directory under your AoE app data folder/)).toBeTruthy();
+    expect(queryByText(/A fresh scratch directory under your BOA app data folder/)).toBeTruthy();
   });
 
   it("with scratch=false, the Browse tab is rendered", async () => {

@@ -17,7 +17,7 @@ A session runs in one of the modes its ACP adapter advertises. The mode picker s
 
 Other adapters report their own ids (Gemini's `auto_edit` and `yolo` map onto `acceptEdits` and `bypassPermissions`).
 
-Turning on `[session] yolo_mode_default` (or the wizard's "Auto-approve actions" toggle) asks the adapter to start in `bypassPermissions`. This is best-effort: if the adapter accepts, the picker flips and approval cards stop; if it rejects, an amber notice appears and the session keeps running in whatever mode it landed on. `claude-agent-acp` only offers `bypassPermissions` when `aoe serve` was launched with `ALLOW_BYPASS=1` in its environment; without it, use `acceptEdits` or approve as you go.
+Turning on `[session] yolo_mode_default` (or the wizard's "Auto-approve actions" toggle) asks the adapter to start in `bypassPermissions`. This is best-effort: if the adapter accepts, the picker flips and approval cards stop; if it rejects, an amber notice appears and the session keeps running in whatever mode it landed on. `claude-agent-acp` only offers `bypassPermissions` when `boa serve` was launched with `ALLOW_BYPASS=1` in its environment; without it, use `acceptEdits` or approve as you go.
 
 ## Approvals
 
@@ -53,7 +53,7 @@ The rich question form is web-only. In the native TUI the card shows the questio
 When an approval lands and you're away from the dashboard, two channels fire:
 
 - **Web push.** If the PWA is installed and notifications are enabled, the daemon sends an OS push tagged `acp-approval-<session>`; tapping it deep-links back. Unlike status-change pushes, approval pushes are not suppressed when the dashboard or TUI is active (focused clients get an in-app toast). See [Push notifications](../push-notifications.md).
-- **Browser sound.** The dashboard tab plays `[sound] on_approval` whenever pending approvals go from zero to non-zero. It plays client-side because `aoe serve` often runs on a remote box where the host speaker is on the wrong side of the wire.
+- **Browser sound.** The dashboard tab plays `[sound] on_approval` whenever pending approvals go from zero to non-zero. It plays client-side because `boa serve` often runs on a remote box where the host speaker is on the wrong side of the wire.
 
 ## Model and reasoning effort
 
@@ -65,4 +65,4 @@ How the two underlying ACP channels are normalized into one dropdown is in [Stru
 
 ## Session persistence
 
-Structured-view workers and transcripts outlive an `aoe serve` restart, a closed laptop, and a reconnect: in-flight turns continue and the next `aoe serve` reattaches. To actually terminate a worker, use `aoe acp stop <session>` (graceful) or `aoe acp kill <session>` (force). For agents that support session restoration (Claude today), the model also retains context across restarts, so a follow-up like "what did we just decide?" still works. The mechanics are in [Structured View Internals](../development/internals/structured-view.md#worker-lifecycle-and-persistence).
+Structured-view workers and transcripts outlive a `boa serve` restart, a closed laptop, and a reconnect: in-flight turns continue and the next `boa serve` reattaches. To actually terminate a worker, use `boa acp stop <session>` (graceful) or `boa acp kill <session>` (force). For agents that support session restoration (Claude today), the model also retains context across restarts, so a follow-up like "what did we just decide?" still works. The mechanics are in [Structured View Internals](../development/internals/structured-view.md#worker-lifecycle-and-persistence).

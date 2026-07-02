@@ -1,6 +1,6 @@
 // Age of Empires cheat-code easter eggs for the command palette. Type a full
 // code into the cmd+k search and a themed toast plus a one-off visual flourish
-// fires. A wink at the "Agent of Empires" name; not documented on purpose.
+// fires. Not documented on purpose.
 
 export type CheatEffectKind = "fly" | "confetti" | "flash" | "pulse";
 

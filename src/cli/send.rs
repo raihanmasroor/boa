@@ -64,7 +64,7 @@ pub async fn run(profile: &str, args: SendArgs) -> Result<()> {
     let tmux_session = crate::tmux::Session::new(&session_id, &session_title)?;
     if !tmux_session.exists() {
         bail!(
-            "Session is not running. Start it first with: aoe session start {}",
+            "Session is not running. Start it first with: boa session start {}",
             args.identifier
         );
     }

@@ -1,18 +1,18 @@
 ---
-name: aoe
-description: Manage AI coding agent sessions via Agent of Empires (aoe)
+name: boa
+description: Manage AI coding agent sessions via Band of Agents (boa)
 metadata:
   openclaw:
     requires:
       bins:
-        - aoe
+        - boa
         - tmux
     homepage: https://github.com/agent-of-empires/agent-of-empires
 ---
 
-# Agent of Empires (aoe) Skill
+# Band of Agents (boa) Skill
 
-Use `aoe` to create, manage, and monitor AI coding agent sessions (Claude Code, Codex, OpenCode, etc.) in tmux. Prefer `aoe` over raw `tmux` commands for agent management.
+Use `boa` to create, manage, and monitor AI coding agent sessions (Claude Code, Codex, OpenCode, etc.) in tmux. Prefer `boa` over raw `tmux` commands for agent management.
 
 ## When to use this skill
 
@@ -37,41 +37,41 @@ Do NOT use this skill for general tmux window/pane management unrelated to codin
 
 ```bash
 # Add a session for the current directory
-aoe add . -t "my feature"
+boa add . -t "my feature"
 
 # Add with group, launch immediately
-aoe add /path/to/repo -t "API work" -g backend -l
+boa add /path/to/repo -t "API work" -g backend -l
 
 # Add with specific tool
-aoe add . -t "codex session" -c codex
+boa add . -t "codex session" -c codex
 
 # Add in a git worktree (parallel branch)
-aoe add . -t "fix-123" -w fix/issue-123 -l
+boa add . -t "fix-123" -w fix/issue-123 -l
 
 # Add in Docker sandbox
-aoe add . -t "sandboxed" -s -l
+boa add . -t "sandboxed" -s -l
 
 # Add as sub-session of another
-aoe add . -t "sub task" -P <parent-id>
+boa add . -t "sub task" -P <parent-id>
 
 # Enable YOLO mode (skip permission prompts)
-aoe add . -t "yolo" -y -l
+boa add . -t "yolo" -y -l
 ```
 
 ### Listing sessions
 
 ```bash
 # Human-readable list
-aoe list
+boa list
 
 # JSON output for parsing
-aoe list --json
+boa list --json
 
 # List across all profiles
-aoe list --all
+boa list --all
 ```
 
-**JSON output shape** (`aoe list --json`):
+**JSON output shape** (`boa list --json`):
 ```json
 [
   {
@@ -88,34 +88,34 @@ aoe list --all
 ]
 ```
 
-`command` is omitted when empty; `worktree` appears only for worktree-backed sessions. `list --json` does not include live status; use `aoe status --json` or `aoe session capture --json` for that.
+`command` is omitted when empty; `worktree` appears only for worktree-backed sessions. `list --json` does not include live status; use `boa status --json` or `boa session capture --json` for that.
 
 ### Session lifecycle
 
 ```bash
-aoe session start <id-or-title>
-aoe session stop <id-or-title>
-aoe session restart <id-or-title>
-aoe session attach <id-or-title>   # interactive attach
+boa session start <id-or-title>
+boa session stop <id-or-title>
+boa session restart <id-or-title>
+boa session attach <id-or-title>   # interactive attach
 ```
 
 ### Inspecting sessions
 
 ```bash
 # Show session metadata
-aoe session show <id-or-title> --json
+boa session show <id-or-title> --json
 
 # Capture tmux pane content (key for monitoring)
-aoe session capture <id-or-title> --json
-aoe session capture <id-or-title> -n 100 --strip-ansi
-aoe session capture <id-or-title>   # plain text, good for piping
+boa session capture <id-or-title> --json
+boa session capture <id-or-title> -n 100 --strip-ansi
+boa session capture <id-or-title>   # plain text, good for piping
 
 # Quick status summary
-aoe status --json
-aoe status -q   # just the waiting count (for scripting)
+boa status --json
+boa status -q   # just the waiting count (for scripting)
 ```
 
-**JSON output shape** (`aoe session capture --json`):
+**JSON output shape** (`boa session capture --json`):
 ```json
 {
   "id": "a1b2c3d4-...",
@@ -127,7 +127,7 @@ aoe status -q   # just the waiting count (for scripting)
 }
 ```
 
-**JSON output shape** (`aoe session show --json`):
+**JSON output shape** (`boa session show --json`):
 ```json
 {
   "id": "a1b2c3d4-...",
@@ -141,7 +141,7 @@ aoe status -q   # just the waiting count (for scripting)
 }
 ```
 
-**JSON output shape** (`aoe status --json`):
+**JSON output shape** (`boa status --json`):
 ```json
 {
   "waiting": 1,
@@ -155,49 +155,49 @@ aoe status -q   # just the waiting count (for scripting)
 
 ### Auto-detection (inside a tmux pane)
 
-When called from within an aoe-managed tmux session, identifier can be omitted:
+When called from within a boa-managed tmux session, identifier can be omitted:
 
 ```bash
-aoe session show          # auto-detects current session
-aoe session capture       # auto-detects current session
-aoe session current --json
+boa session show          # auto-detects current session
+boa session capture       # auto-detects current session
+boa session current --json
 ```
 
 ### Renaming and organizing
 
 ```bash
-aoe session rename <id> -t "new title"
-aoe session rename <id> -g "new/group"
+boa session rename <id> -t "new title"
+boa session rename <id> -g "new/group"
 
-aoe group create mygroup
-aoe group move <id-or-title> mygroup
-aoe group list --json
-aoe group delete mygroup --force
+boa group create mygroup
+boa group move <id-or-title> mygroup
+boa group list --json
+boa group delete mygroup --force
 ```
 
 ### Profiles
 
 ```bash
-aoe profile list
-aoe profile create staging
-aoe profile delete staging
-aoe profile default staging   # set default
-aoe -p staging list            # use inline
+boa profile list
+boa profile create staging
+boa profile delete staging
+boa profile default staging   # set default
+boa -p staging list            # use inline
 ```
 
 ### Worktrees
 
 ```bash
-aoe worktree list
-aoe worktree info <id-or-title>
-aoe worktree cleanup -f
+boa worktree list
+boa worktree info <id-or-title>
+boa worktree cleanup -f
 ```
 
 ### Removing sessions
 
 ```bash
-aoe remove <id-or-title>
-aoe remove <id-or-title> --delete-worktree --force
+boa remove <id-or-title>
+boa remove <id-or-title> --delete-worktree --force
 ```
 
 ## Workflow patterns
@@ -205,18 +205,18 @@ aoe remove <id-or-title> --delete-worktree --force
 ### Single agent
 
 ```bash
-aoe add /path/to/repo -t "feature X" -l
+boa add /path/to/repo -t "feature X" -l
 # ... wait ...
-aoe session capture "feature X" --json
+boa session capture "feature X" --json
 ```
 
 ### Parallel worktree agents
 
 ```bash
-aoe add . -t "issue-100" -w fix/issue-100 -l
-aoe add . -t "issue-101" -w fix/issue-101 -l
-aoe add . -t "issue-102" -w fix/issue-102 -l
-aoe status --json   # check all at once
+boa add . -t "issue-100" -w fix/issue-100 -l
+boa add . -t "issue-101" -w fix/issue-101 -l
+boa add . -t "issue-102" -w fix/issue-102 -l
+boa status --json   # check all at once
 ```
 
 ### Monitoring loop
@@ -225,7 +225,7 @@ Poll all sessions until none are running:
 
 ```bash
 while true; do
-  status=$(aoe status --json)
+  status=$(boa status --json)
   waiting=$(echo "$status" | jq '.waiting')
   running=$(echo "$status" | jq '.running')
   if [ "$running" -eq 0 ] && [ "$waiting" -eq 0 ]; then
@@ -240,13 +240,13 @@ done
 ### Capture and review
 
 ```bash
-for id in $(aoe list --json | jq -r '.[].id'); do
+for id in $(boa list --json | jq -r '.[].id'); do
   echo "=== $id ==="
-  aoe session capture "$id" -n 100 --strip-ansi
+  boa session capture "$id" -n 100 --strip-ansi
   echo
 done
 ```
 
 ### Group operations via TUI
 
-Groups are primarily managed through the `aoe` TUI (run `aoe` with no arguments). The TUI supports bulk start/stop/restart on groups. Use CLI commands above for scripted workflows.
+Groups are primarily managed through the `boa` TUI (run `boa` with no arguments). The TUI supports bulk start/stop/restart on groups. Use CLI commands above for scripted workflows.

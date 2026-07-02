@@ -138,7 +138,7 @@ export function PluginsSettings() {
         // but the running daemon keeps serving until it restarts. Say so,
         // otherwise the toggle looks like a no-op (#2311 testing feedback).
         if (plugin.id === "aoe.web" && !enabled) {
-          reportInfo("Web dashboard stays up until aoe serve is restarted.");
+          reportInfo("Web dashboard stays up until boa serve is restarted.");
         }
       } else {
         // The toggle did not take effect; the checkbox is controlled by the
@@ -363,7 +363,7 @@ export function PluginsSettings() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void onDiscover();
               }}
-              placeholder="Search GitHub (aoe-plugin topic)…"
+              placeholder="Search GitHub for plugins…"
               className="min-w-0 flex-1 rounded border border-surface-700 bg-surface-850 px-2 py-1 text-xs"
               data-testid="plugins-discover-query"
             />
@@ -387,7 +387,7 @@ export function PluginsSettings() {
           {discoverResults && (
             <div className="space-y-2" data-testid="plugins-discover-results">
               {discoverResults.length === 0 ? (
-                <p className="text-xs text-text-dim">No plugins found on the aoe-plugin topic.</p>
+                <p className="text-xs text-text-dim">No plugins found.</p>
               ) : (
                 discoverResults.map((r) => (
                   <div
@@ -536,7 +536,7 @@ export function PluginsSettings() {
                     )}
                     {plugin.needs_reapproval && (
                       <p className="mt-1 text-[11px] text-status-warning">
-                        Installed but inactive. Re-approve with <code>aoe plugin update {plugin.id}</code>.
+                        Installed but inactive. Re-approve with <code>boa plugin update {plugin.id}</code>.
                       </p>
                     )}
                     {update?.needs_update && (

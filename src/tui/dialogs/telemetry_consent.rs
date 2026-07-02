@@ -130,12 +130,12 @@ impl TelemetryConsentDialog {
 
         let body = Paragraph::new(vec![
             Line::from(Span::styled(
-                "Help improve aoe with anonymous usage telemetry?",
+                "Help improve BOA with anonymous usage telemetry?",
                 Style::default().fg(theme.title).bold(),
             )),
             Line::from(""),
             Line::from(Span::styled(
-                "It shows us how aoe is actually used, so we can prioritize the",
+                "It shows us how BOA is actually used, so we can prioritize the",
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
@@ -144,11 +144,11 @@ impl TelemetryConsentDialog {
             )),
             Line::from(""),
             Line::from(Span::styled(
-                "When on, aoe sends anonymous counts only: sessions, agents and",
+                "When on, BOA sends anonymous counts only: sessions, agents and",
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
-                "models, your aoe version, and OS. Never prompts, paths, names,",
+                "models, your BOA version, and OS. Never prompts, paths, names,",
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
@@ -172,7 +172,7 @@ impl TelemetryConsentDialog {
         frame.render_widget(keys, chunks[3]);
 
         let hint = Paragraph::new(Span::styled(
-            "Change it any time under Settings, or with `aoe telemetry`.",
+            "Change it any time under Settings, or with `boa telemetry`.",
             Style::default().fg(theme.dimmed),
         ))
         .alignment(Alignment::Center);

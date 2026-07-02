@@ -87,7 +87,7 @@ base("startup banner: native-binary branch + agent-log disclosure", async ({ pag
     const banner = page.getByText("Structured view agent failed to start");
     await expect(banner).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Architecture mismatch/i)).toBeVisible();
-    await expect(page.getByText(/aoe acp doctor --fix/)).toHaveCount(0);
+    await expect(page.getByText(/boa acp doctor --fix/)).toHaveCount(0);
 
     const toggle = page.getByTestId("acp-agent-log-toggle");
     await expect(toggle).toBeVisible();

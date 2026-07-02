@@ -137,7 +137,7 @@ pub async fn run(profile: &str, args: RemoveArgs) -> Result<()> {
             storage.profile()
         );
         println!(
-            "  Restore with `aoe session restore {removed_id}`, or delete permanently with `aoe rm --purge {removed_id}`."
+            "  Restore with `boa session restore {removed_id}`, or delete permanently with `boa rm --purge {removed_id}`."
         );
         return Ok(());
     }

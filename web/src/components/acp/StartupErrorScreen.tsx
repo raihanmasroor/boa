@@ -131,7 +131,7 @@ export function StartupErrorScreen({ detail, sessionId }: Props) {
               type="button"
               data-testid="startup-error-update-restart-disabled"
               disabled
-              title="Enable acp.allow_agent_install in the aoe TUI settings (Advanced) to install from the dashboard"
+              title="Enable acp.allow_agent_install in the BOA TUI settings (Advanced) to install from the dashboard"
               className="cursor-not-allowed rounded-md border border-surface-700 bg-surface-800 px-3 py-1.5 text-xs font-medium text-text-dim opacity-60"
             >
               Update & restart
@@ -143,7 +143,7 @@ export function StartupErrorScreen({ detail, sessionId }: Props) {
           <div className="mt-2 text-xs text-text-dim" data-testid="startup-error-enable-hint">
             One-click install is off. Enable{" "}
             <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">acp.allow_agent_install</code> in the{" "}
-            <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">aoe</code> TUI settings (Advanced) to
+            <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">boa</code> TUI settings (Advanced) to
             run the update from here. It is blocked from the web on purpose: it runs{" "}
             <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">npm install</code> on the host.
           </div>
@@ -171,7 +171,7 @@ export function StartupErrorScreen({ detail, sessionId }: Props) {
         <div className="mt-4 text-xs text-text-dim">
           The session is paused until the adapter satisfies the required version. After installing, use{" "}
           <span className="font-medium text-text-secondary">Restart agent</span> above (no full restart of{" "}
-          <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">aoe serve</code> needed) and the check
+          <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">boa serve</code> needed) and the check
           re-runs at the next ACP <code className="rounded bg-surface-950 px-1 font-mono text-[12px]">initialize</code>{" "}
           handshake.
         </div>
@@ -198,15 +198,15 @@ function headingFor(detail: IncompatibleAgentDetail): string {
 function summaryFor(detail: IncompatibleAgentDetail): string {
   switch (detail.kind) {
     case "incompatible_agent_version":
-      return `aoe requires ${detail.package_name} version ${detail.required} or newer. The installed adapter is ${detail.installed}. Updating the adapter unblocks the session; aoe relies on behavior (memory_recall tool calls, native cancelled stop reason, others) that older versions do not emit.`;
+      return `BOA requires ${detail.package_name} version ${detail.required} or newer. The installed adapter is ${detail.installed}. Updating the adapter unblocks the session; BOA relies on behavior (memory_recall tool calls, native cancelled stop reason, others) that older versions do not emit.`;
     case "missing_agent_info":
-      return `aoe expected ${detail.expected_package} to report a package version in its ACP initialize response. The adapter returned an empty agent_info block, which usually means a stale install or a wrapper that strips metadata. Reinstall to the pinned version.`;
+      return `BOA expected ${detail.expected_package} to report a package version in its ACP initialize response. The adapter returned an empty agent_info block, which usually means a stale install or a wrapper that strips metadata. Reinstall to the pinned version.`;
     case "mismatched_agent_name":
-      return `aoe expected the adapter to identify itself as ${detail.expected} but it reported ${detail.received}. This usually means a wrapper script or a stale binary is on PATH. Reinstall the official adapter at the pinned version.`;
+      return `BOA expected the adapter to identify itself as ${detail.expected} but it reported ${detail.received}. This usually means a wrapper script or a stale binary is on PATH. Reinstall the official adapter at the pinned version.`;
     case "unparseable_agent_version":
-      return `aoe expected ${detail.package_name} to report a semver-compatible version string but received ${detail.raw_version}. Required minimum is ${detail.required}. Reinstall the official build to recover.`;
+      return `BOA expected ${detail.package_name} to report a semver-compatible version string but received ${detail.raw_version}. Required minimum is ${detail.required}. Reinstall the official build to recover.`;
     case "unsupported_protocol_version":
-      return `aoe negotiated ACP protocol ${detail.expected} but the adapter reported ${detail.received}. The session cannot proceed. This usually means an older or newer adapter generation than aoe currently supports.`;
+      return `BOA negotiated ACP protocol ${detail.expected} but the adapter reported ${detail.received}. The session cannot proceed. This usually means an older or newer adapter generation than BOA currently supports.`;
   }
 }
 

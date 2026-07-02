@@ -200,7 +200,7 @@ export function useCommandActions({
 
     actions.push({
       id: "action:about",
-      title: "About Agent of Empires",
+      title: "About Band of Agents",
       group: "Actions",
       keywords: ["info", "version", "links", "github", "website"],
       perform: onOpenAbout,

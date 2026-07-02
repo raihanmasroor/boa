@@ -45,7 +45,7 @@ When the browser fails to reach a working terminal, the disconnect banner shows 
 
 ## Read-only mode
 
-When the server runs with `aoe serve --read-only`, the terminal renders the live stream but drops keystrokes: you can watch sessions but not type into them. The session-row Delete and triage actions are hidden too.
+When the server runs with `boa serve --read-only`, the terminal renders the live stream but drops keystrokes: you can watch sessions but not type into them. The session-row Delete and triage actions are hidden too.
 
 ## On mobile
 

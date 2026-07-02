@@ -7,7 +7,7 @@ not hand-edited. They are captured by:
 scripts/dev/capture-web-screenshots.sh
 ```
 
-which drives a seeded `aoe serve` (and a scripted fake ACP agent for the
+which drives a seeded `boa serve` (and a scripted fake ACP agent for the
 structured-view shots) through the live Playwright harness
 (`web/tests/capture/screenshots.spec.ts`, run via
 `web/playwright.capture.config.ts`).

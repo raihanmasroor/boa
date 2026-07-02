@@ -372,7 +372,7 @@ impl SettingsView {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(theme.border))
-            .title(" Plugin Settings (edit via web or `aoe settings`) ")
+            .title(" Plugin Settings (edit via web or `boa settings`) ")
             .padding(Padding::horizontal(1));
         let inner = block.inner(area);
         frame.render_widget(block, area);

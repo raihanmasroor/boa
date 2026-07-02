@@ -1,6 +1,6 @@
 # Forking Sessions
 
-Forking a session starts a new, independent AoE session from an existing session's conversation context, so you can take the same history in a different direction. The original session and its transcript are left untouched.
+Forking a session starts a new, independent BOA session from an existing session's conversation context, so you can take the same history in a different direction. The original session and its transcript are left untouched.
 
 To branch a conversation into a new session rather than continuing the same one in place, fork it. (To continue the same conversation, see [Session Resume](./session-resume.md).)
 
@@ -21,7 +21,7 @@ Open a session's context menu in the sidebar and choose **Fork session**. The op
 Pass `--fork-from` with the source session's id or title:
 
 ```sh
-aoe add --fork-from <session-id-or-title>
+boa add --fork-from <session-id-or-title>
 ```
 
 This creates a terminal session that resumes the source's conversation and then runs independently.

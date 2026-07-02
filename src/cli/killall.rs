@@ -38,11 +38,11 @@ pub async fn run(args: KillallArgs) -> Result<()> {
     if !args.keep_daemon {
         if crate::cli::serve::daemon_pid().is_some() {
             match crate::cli::serve::stop_daemon().await {
-                Ok(()) => println!("Stopped aoe serve daemon."),
+                Ok(()) => println!("Stopped boa serve daemon."),
                 Err(e) => errors.push(format!("daemon: {e}")),
             }
         } else {
-            println!("No aoe serve daemon running.");
+            println!("No boa serve daemon running.");
         }
     }
 
@@ -73,10 +73,10 @@ pub async fn run(args: KillallArgs) -> Result<()> {
 /// them at the right verb and exit non-zero. Never triggers a teardown itself.
 pub fn stop_trap() -> Result<()> {
     anyhow::bail!(
-        "`aoe stop` is not a command. Did you mean:\n  \
-         aoe session stop <id>   stop one session\n  \
-         aoe acp stop [--all]    stop agent workers\n  \
-         aoe serve --stop        stop the web daemon\n  \
-         aoe killall             force-stop everything"
+        "`boa stop` is not a command. Did you mean:\n  \
+         boa session stop <id>   stop one session\n  \
+         boa acp stop [--all]    stop agent workers\n  \
+         boa serve --stop        stop the web daemon\n  \
+         boa killall             force-stop everything"
     )
 }

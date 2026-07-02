@@ -1627,7 +1627,7 @@ impl NewSessionDialog {
             .collect();
         if self.available_projects.is_empty() {
             self.error_message = Some(
-                "No registered projects available. Add one with `aoe project add <path>`.".into(),
+                "No registered projects available. Add one with `boa project add <path>`.".into(),
             );
         } else {
             let labels: Vec<String> = self

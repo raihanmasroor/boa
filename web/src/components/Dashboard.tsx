@@ -78,14 +78,14 @@ export function Dashboard({ sessions, onNewSession, onCloneFromUrl, onToggleSide
         </g>
       </svg>
       <div className="mb-1 text-center">
-        <p className="text-[11px] md:text-xs font-mono text-text-muted uppercase tracking-[0.2em]">agent of</p>
+        <p className="text-[11px] md:text-xs font-mono text-text-muted uppercase tracking-[0.2em]">band of</p>
         <h1
           className="text-3xl md:text-5xl font-mono font-semibold text-brand-500 uppercase tracking-tight"
           style={{
             textShadow: AOE_BRAND_MARK_TEXT_SHADOW,
           }}
         >
-          empires
+          agents
         </h1>
       </div>
 

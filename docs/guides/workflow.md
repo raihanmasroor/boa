@@ -1,6 +1,6 @@
 # Workflow Guide
 
-This guide covers the recommended setup and daily workflow for using `aoe` with git worktrees.
+This guide covers the recommended setup and daily workflow for using `boa` with git worktrees.
 
 ## Project Setup: Bare Git Repos
 
@@ -32,13 +32,13 @@ git fetch origin
 git worktree add main main
 ```
 
-Run `aoe` from `my-project/` and new worktrees are created as siblings (e.g. `my-project/feat-api/`) rather than in a separate directory.
+Run `boa` from `my-project/` and new worktrees are created as siblings (e.g. `my-project/feat-api/`) rather than in a separate directory.
 
 Bare repos keep all paths within the project root (required for Docker sandboxing) and let you switch branches by switching directories.
 
 ## Single-Window Workflow
 
-Run `aoe` in a single terminal and toggle between views:
+Run `boa` in a single terminal and toggle between views:
 
 | Key | View | Purpose |
 |-----|------|---------|
@@ -51,7 +51,7 @@ Run `aoe` in a single terminal and toggle between views:
 
 ```bash
 cd ~/scm/my-project
-aoe
+boa
 ```
 
 You'll see your sessions in Structured View. Keep one session on `main` for general questions and pulling updates.
@@ -99,7 +99,7 @@ To override the generated name, focus Worktree and press `Ctrl+P`, then fill in 
 ## Tips
 
 - **Keep one session on main**: Use it for codebase questions and its terminal for `git pull`
-- **One task, one session**: Each worktree maps to one aoe session. Keeps context isolated.
+- **One task, one session**: Each worktree maps to one BOA session. Keeps context isolated.
 - **Pull before creating**: Always update main before creating new sessions so branches start fresh
 - **Let agents stay focused**: Git operations happen in the paired terminal, not in agent sessions
 
@@ -113,11 +113,11 @@ To override the generated name, focus Worktree and press `Ctrl+P`, then fill in 
 | `n` | Create new session |
 | `d` | Delete session (Structured View only) |
 | `?` | Show help |
-| `Ctrl+b d` | Detach from tmux (return to aoe) |
+| `Ctrl+b d` | Detach from tmux (return to BOA) |
 
 ## Non-Bare Repos
 
-If you're not using a bare repo setup, aoe defaults to creating worktrees in a sibling directory:
+If you're not using a bare repo setup, BOA defaults to creating worktrees in a sibling directory:
 
 ```
 ~/scm/

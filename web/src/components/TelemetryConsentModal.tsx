@@ -31,15 +31,15 @@ export function TelemetryConsentModal({ onChoose }: Props) {
       >
         <div className="px-5 py-4 border-b border-surface-700">
           <h2 id="telemetry-modal-title" className="text-sm font-semibold text-text-bright">
-            Help improve aoe?
+            Help improve BOA?
           </h2>
         </div>
 
         <div className="p-5 space-y-3 text-sm text-text-secondary">
           <p>
-            Turning it on shows us how aoe is actually used, so we can prioritize the features that matter most. It is
+            Turning it on shows us how BOA is actually used, so we can prioritize the features that matter most. It is
             off by default and sends anonymous counts only: number of sessions, which agents and model families, your
-            aoe version, and OS.
+            BOA version, and OS.
           </p>
           <p className="text-text-dim">
             It never sends prompts, file paths, names, branch names, or commands. You can change this any time under

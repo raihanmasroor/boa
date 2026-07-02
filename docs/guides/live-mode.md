@@ -1,7 +1,7 @@
 # Live mode
 
 Live mode is a "feels-attached" alternative to a full tmux attach. When
-you enter it, the AoE home view stays on screen (session list, preview,
+you enter it, the BOA home view stays on screen (session list, preview,
 status bar) and every keystroke is relayed straight to the selected
 session's pane. You get the ambient awareness of the dashboard and the
 immediacy of typing directly to the agent, without tmux taking over the
@@ -25,7 +25,7 @@ relayed, including a reminder of the exit chord and the leader menu.
 
 ## The leader menu
 
-Almost every key you press in live mode goes to the agent, so AoE
+Almost every key you press in live mode goes to the agent, so BOA
 reserves a single **leader** chord (tmux-style prefix) to reach its own
 commands. The default is `Ctrl+B`, matching tmux and herdr.
 
@@ -104,7 +104,7 @@ it.
 A prefix steals exactly one chord from the agent, so the obvious
 single-key candidates like `Ctrl+K` (readline's kill-to-end-of-line)
 stay free for the shell and the agent. `Ctrl+B` is the chord tmux and
-herdr users already know as a leader. If you run AoE inside your own
+herdr users already know as a leader. If you run BOA inside your own
 tmux session that also uses `Ctrl+B`, the outer tmux will claim it
 first; rebind `live_send_leader` to something free (for example `C-a` or
 `F1`), and remember that `Ctrl+Q` always exits regardless.

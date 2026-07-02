@@ -37,7 +37,7 @@ Heuristics:
 
 ## Live harness (`web/tests/helpers/aoeServe.ts`)
 
-`spawnAoeServe()` boots a real `aoe serve` subprocess against a per-test isolated filesystem root. `liveTest.ts` wraps it in fixtures; pick one by the auth/agent mode you need, or call `spawnAoeServe()` directly for custom options.
+`spawnAoeServe()` boots a real `boa serve` subprocess against a per-test isolated filesystem root. `liveTest.ts` wraps it in fixtures; pick one by the auth/agent mode you need, or call `spawnAoeServe()` directly for custom options.
 
 ```ts
 import { test, expect, seedAuth } from "../helpers/liveTest";
@@ -56,7 +56,7 @@ Fixtures:
 - `serveReadOnly`: `--no-auth --read-only`.
 - `serveAcp`: like `serve` with the fake-ACP agent (below) on `$PATH` as `claude`, `claude-agent-acp`, and `aoe-agent`. The `claude-agent-acp` name is load-bearing: the supervisor resolves the `claude` tool key through `AgentRegistry` to command `claude-agent-acp`, so without that shim it falls through to the system adapter and fails with "Authentication required".
 
-Per-test isolation: fresh `mkdtemp` `HOME` with `XDG_CONFIG_HOME` / `TMPDIR` / `TMUX_TMPDIR` / `bin/` subdirs (`0700`); port `5200 + workerIndex*100 + parallelIndex + attempt*7` (5 bind retries); a fake `claude` shim (`exec tail -f /dev/null`, ACP fixture overrides it). `stop()` is SIGTERM (2s) then SIGKILL then `rm -rf home`, never `tmux kill-server` (would kill the dev's tmux). `restart()` respawns with the same args/port for connectivity-recovery specs; it re-reads a rotated token but does NOT re-run passphrase prelogin or structured-view enable. Binary: `AOE_E2E_BINARY` else `<repo>/target/release/aoe`; `liveGlobalSetup.ts` builds it once if missing.
+Per-test isolation: fresh `mkdtemp` `HOME` with `XDG_CONFIG_HOME` / `TMPDIR` / `TMUX_TMPDIR` / `bin/` subdirs (`0700`); port `5200 + workerIndex*100 + parallelIndex + attempt*7` (5 bind retries); a fake `claude` shim (`exec tail -f /dev/null`, ACP fixture overrides it). `stop()` is SIGTERM (2s) then SIGKILL then `rm -rf home`, never `tmux kill-server` (would kill the dev's tmux). `restart()` respawns with the same args/port for connectivity-recovery specs; it re-reads a rotated token but does NOT re-run passphrase prelogin or structured-view enable. Binary: `AOE_E2E_BINARY` else `<repo>/target/release/boa`; `liveGlobalSetup.ts` builds it once if missing.
 
 ## Fake ACP agent (`web/tests/helpers/fakeAcpAgent.mjs`)
 
@@ -156,7 +156,7 @@ Add a new surface to the matrix at the same time you add the spec. Add a new com
 
 Vitest writes `coverage/vitest/` via `@vitest/coverage-v8` (set in `web/vite.config.ts`'s `test.coverage` block).
 
-Playwright collects raw Chromium V8 coverage via `page.coverage.startJSCoverage()` / `stopJSCoverage()` (started in the `page` fixture before the test, written after) when `AOE_COVERAGE=1` is set. That env makes `web/vite.config.ts` build the bundle with inline sourcemaps (`build.sourcemap: "inline"`), which travel inside the `.js` so they survive `build.rs` embedding the bundle into the `aoe` binary. The capture strips the (identical, multi-MB) bundle `source` from each per-test file to keep them small; the merge script re-reads each script's source from `dist/` once.
+Playwright collects raw Chromium V8 coverage via `page.coverage.startJSCoverage()` / `stopJSCoverage()` (started in the `page` fixture before the test, written after) when `AOE_COVERAGE=1` is set. That env makes `web/vite.config.ts` build the bundle with inline sourcemaps (`build.sourcemap: "inline"`), which travel inside the `.js` so they survive `build.rs` embedding the bundle into the `boa` binary. The capture strips the (identical, multi-MB) bundle `source` from each per-test file to keep them small; the merge script re-reads each script's source from `dist/` once.
 
 Collecting V8 (not istanbul-on-bundle) is deliberate: both Vitest and Playwright then remap to the same `web/src` source line map. Codecov reconciles each file to one line map, so the old istanbul-bundle Playwright coverage, which numbered the bundle differently, made Codecov drop Vitest's hits and tanked patch coverage (#2157).
 
@@ -168,7 +168,7 @@ Collecting V8 (not istanbul-on-bundle) is deliberate: both Vitest and Playwright
 
 The CI `coverage` job:
 
-1. Builds aoe with `AOE_COVERAGE=1 cargo build --features serve --release`.
+1. Builds BOA with `AOE_COVERAGE=1 cargo build --features serve --release`.
 2. Runs Vitest with `--coverage`.
 3. Runs mocked + live Playwright with `AOE_COVERAGE=1`.
 4. Merges via the merge script.
@@ -179,7 +179,7 @@ Report-only in this PR. Phase-2 threshold floor and phase-3 ratchet upward are t
 
 ## Gotchas
 
-- `--no-auth`, `--passphrase`, and `--auth=token` are the supported auth modes. Token-mode specs need a debug-build `aoe` because `AOE_TEST_TOKEN_LIFETIME_SECS` and `AOE_TEST_TOKEN_GRACE_SECS` are gated behind `cfg!(debug_assertions)`; release builds keep the production 24h/4h lifetimes and 300s grace.
+- `--no-auth`, `--passphrase`, and `--auth=token` are the supported auth modes. Token-mode specs need a debug-build `boa` because `AOE_TEST_TOKEN_LIFETIME_SECS` and `AOE_TEST_TOKEN_GRACE_SECS` are gated behind `cfg!(debug_assertions)`; release builds keep the production 24h/4h lifetimes and 300s grace.
 - The fake-ACP agent does not delegate FS or terminal calls back to the supervisor. If a scripted turn emits `tool_call_started` for a tool that would normally call `fs/write`, the supervisor will not actually write anything (and the test should not assume it does).
 - Structured view replay uses the in-memory broadcast channel plus the SQLite event store. If a test asserts a specific event in the replay, give the supervisor up to a few hundred ms to flush (the included tracer specs poll for up to 6 seconds).
 - Synthetic touchmove events for mobile specs fire back-to-back with Δt≈1ms. Cap velocity and per-frame emit counts in production code, or a real device will look sane while the e2e produces runaway momentum (and vice versa).
