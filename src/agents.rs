@@ -195,6 +195,17 @@ pub struct AgentDef {
     pub name: &'static str,
     /// Binary to invoke (usually same as name).
     pub binary: &'static str,
+    /// BOA divergence from upstream: a single CLI flag appended to INTERACTIVE
+    /// terminal launches only (fresh, resume, fork, restart), so the launched
+    /// session registers with an external controller. Today only claude sets it
+    /// (`--remote-control`, registering the session with Claude Desktop /
+    /// claude.ai remote control); every other agent is `None`. Applied in the
+    /// same command builders as the yolo flag (`apply_remote_control_flag`) and
+    /// gated on `SessionConfig::claude_remote_control` (default true), so it is
+    /// never added to print/oneshot mode (`claude -p`, whose argv is built by
+    /// `crate::session::smart_rename::build_oneshot_argv`) or the ACP adapter
+    /// path (a separate spawn). See BOA.md.
+    pub remote_control_flag: Option<&'static str>,
     /// Subcommand token inserted immediately after `binary` when AoE builds the
     /// default launch command (e.g. `Some("chat")` for kiro → `kiro-cli chat`).
     /// Required for CLIs whose interactive flags (yolo, `--agent`, resume) live
@@ -442,6 +453,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "claude",
         oneshot_flag: Some("-p"),
         binary: "claude",
+        remote_control_flag: Some("--remote-control"),
         launch_subcommand: None,
         aliases: &[],
         detection: DetectionMethod::Which("claude"),
@@ -470,6 +482,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "opencode",
         oneshot_flag: Some("run"),
         binary: "opencode",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["open-code"],
         detection: DetectionMethod::Which("opencode"),
@@ -490,6 +503,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "vibe",
         oneshot_flag: None,
         binary: "vibe",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["mistral-vibe"],
         detection: DetectionMethod::RunWithArg("vibe", "--version"),
@@ -510,6 +524,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "codex",
         oneshot_flag: Some("exec"),
         binary: "codex",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &[],
         detection: DetectionMethod::Which("codex"),
@@ -542,6 +557,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "gemini",
         oneshot_flag: Some("-p"),
         binary: "gemini",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &[],
         detection: DetectionMethod::Which("gemini"),
@@ -592,6 +608,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "cursor",
         oneshot_flag: None,
         binary: "agent",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["agent"],
         detection: DetectionMethod::Which("agent"),
@@ -617,6 +634,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "copilot",
         oneshot_flag: Some("-p"),
         binary: "copilot",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["github-copilot"],
         detection: DetectionMethod::Which("copilot"),
@@ -643,6 +661,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "pi",
         oneshot_flag: None,
         binary: "pi",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &[],
         detection: DetectionMethod::Which("pi"),
@@ -664,6 +683,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "droid",
         oneshot_flag: None,
         binary: "droid",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["factory-droid"],
         detection: DetectionMethod::Which("droid"),
@@ -684,6 +704,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "settl",
         oneshot_flag: None,
         binary: "settl",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["settlers", "catan"],
         detection: DetectionMethod::Which("settl"),
@@ -715,6 +736,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "hermes",
         oneshot_flag: None,
         binary: "hermes",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &[],
         detection: DetectionMethod::Which("hermes"),
@@ -753,6 +775,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "kiro",
         oneshot_flag: None,
         binary: "kiro-cli",
+        remote_control_flag: None,
         // Kiro's interactive flags (--trust-all-tools, --agent, --resume-id)
         // are defined on the `chat` subcommand. Bare `kiro-cli --trust-all-tools`
         // fails with "unexpected argument"; `kiro-cli chat ...` parses.
@@ -797,6 +820,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "qwen",
         oneshot_flag: None,
         binary: "qwen",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &[],
         detection: DetectionMethod::Which("qwen"),
@@ -825,6 +849,7 @@ pub const AGENTS: &[AgentDef] = &[
         name: "antigravity",
         oneshot_flag: None,
         binary: "agy",
+        remote_control_flag: None,
         launch_subcommand: None,
         aliases: &["agy"],
         detection: DetectionMethod::Which("agy"),
@@ -1228,6 +1253,26 @@ mod tests {
             assert!(
                 agent.yolo.is_some(),
                 "Agent '{}' should have YOLO mode configured",
+                agent.name
+            );
+        }
+    }
+
+    #[test]
+    fn test_only_claude_has_remote_control_flag() {
+        // Lock the surface: today only claude carries an interactive
+        // remote-control flag (`--remote-control`). A new agent that adds one
+        // must update this test deliberately, keeping the "do not add it to
+        // other agents" contract explicit. See BOA.md.
+        for agent in AGENTS {
+            let expected = if agent.name == "claude" {
+                Some("--remote-control")
+            } else {
+                None
+            };
+            assert_eq!(
+                agent.remote_control_flag, expected,
+                "agent '{}' remote_control_flag drifted",
                 agent.name
             );
         }

@@ -966,6 +966,22 @@ pub struct SessionConfig {
     )]
     pub auto_resume_on_restart: bool,
 
+    /// BOA divergence from upstream: pass `--remote-control` to interactive
+    /// Claude Code terminal sessions so they register with Claude Desktop /
+    /// claude.ai remote control. On by default. Applies to fresh launches and
+    /// resume/fork/restart relaunches, never to print-mode (`claude -p`) calls
+    /// or to other agents (only claude declares the flag today; see
+    /// `AgentDef::remote_control_flag`). Turn off to launch plain `claude`. If a
+    /// future agent gains its own remote-control flag it should get its own
+    /// toggle rather than reusing this one. See BOA.md.
+    #[serde(default = "default_true")]
+    #[setting(
+        label = "Claude remote control",
+        widget = "toggle",
+        category = "Agents"
+    )]
+    pub claude_remote_control: bool,
+
     /// Request xterm mouse tracking so the TUI handles the scroll wheel
     /// (preview-pane scroll) and click-to-select rows. Disable to hand the
     /// wheel and text selection back to the terminal, e.g. iOS Mosh +
@@ -1372,6 +1388,7 @@ impl Default for SessionConfig {
             smart_rename: true,
             smart_rename_agent: String::new(),
             auto_resume_on_restart: true,
+            claude_remote_control: true,
             mouse_capture: true,
             custom_agents: HashMap::new(),
             agent_detect_as: HashMap::new(),
