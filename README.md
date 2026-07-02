@@ -108,4 +108,4 @@ Debug builds use a parallel namespace so they don't collide with an installed re
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details. BOA is a fork of the MIT-licensed [agent-of-empires](https://github.com/agent-of-empires/agent-of-empires); the upstream copyright notice is retained in `LICENSE` as the license requires.
+MIT License — see [LICENSE](LICENSE) for details.
