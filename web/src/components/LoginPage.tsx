@@ -42,7 +42,7 @@ export function LoginPage({ onSuccess }: Props) {
           <div className="mb-8 text-center">
             <span
               className="font-mono"
-              style={{ fontWeight: 600, color: "#17171B", fontSize: "2rem", lineHeight: 1, letterSpacing: "-0.03em" }}
+              style={{ fontWeight: 600, color: "var(--color-text-primary)", fontSize: "2rem", lineHeight: 1, letterSpacing: "-0.03em" }}
               aria-label="boa"
             >
               boa
@@ -66,7 +66,7 @@ export function LoginPage({ onSuccess }: Props) {
                 fontSize: "0.6rem",
                 textTransform: "uppercase",
                 letterSpacing: "3.5px",
-                color: "#a3a29a",
+                color: "var(--color-text-muted)",
               }}
             >
               band of agents

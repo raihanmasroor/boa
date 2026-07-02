@@ -59,7 +59,7 @@
   /* Semantic Text — Graphite ink on light surfaces. */
   --color-text-primary: #17171b;
   --color-text-secondary: #4a4a50;
-  --color-text-muted: #8a8880;
+  --color-text-muted: #605E58;
   /* Body text using the dim slot must stay legible against the light
      surfaces. #6c6c70 lands at ~4.6:1 vs surface-900 (#f4f4f1) and
      ~4.1:1 vs surface-800 (#ededea), clearing AA body for tertiary copy
@@ -83,7 +83,7 @@
      the breathe rattle's pulse stays visually consistent. Green = still
      "your turn" until it fades to the quiet idle grey. */
   --color-status-fresh-idle: #34c46b;
-  --color-status-idle: #9a9ba0;
+  --color-status-idle: #6E6F75;
   /* Unread accent: a finished turn the user hasn't viewed. In Operator Warm
      an unviewed finished turn IS "your turn", so it shares the green signal
      (matches boa.unread). */
@@ -102,9 +102,9 @@
   --color-terminal-active: #ff5a1f;
   --color-branch: #0e9aa1;
   --color-sandbox: #6c3fb5;
-  --color-diff-add: #1f9c52;
-  --color-diff-delete: #d84330;
-  --color-diff-modified: #c08a2e;
+  --color-diff-add: #157A3E;
+  --color-diff-delete: #C0301F;
+  --color-diff-modified: #8A651C;
   --color-diff-header: #5a2fa6;
 
   /* Embedded terminal cold-load defaults. useResolvedTheme refetches and
@@ -127,7 +127,7 @@
   --term-color-5: #ff5a1f;
   --term-color-6: #0e9aa1;
   --term-color-7: #e8e8e5;
-  --term-color-8: #8a8880;
+  --term-color-8: #605E58;
   --term-color-9: #ff7d6c;
   --term-color-10: #5dd089;
   --term-color-11: #f3b758;

@@ -2883,7 +2883,6 @@
         "web/src/components/Dashboard.tsx",
         "web/src/components/tour/TourRunner.tsx",
         "web/src/components/tour/tourRunnerStyles.ts",
-        "web/src/lib/brandMark.ts",
         "web/src/lib/tourSteps.ts",
         "web/src/hooks/useTour.tsx"
       ]

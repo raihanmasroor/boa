@@ -120,7 +120,7 @@ export function TopBar({
           {/* 2a brand wordmark — small boa + blinking cursor */}
           <span
             className="font-mono"
-            style={{ fontWeight: 600, color: "#17171B", fontSize: "0.95rem", lineHeight: 1, letterSpacing: "-0.02em" }}
+            style={{ fontWeight: 600, color: "var(--color-text-primary)", fontSize: "0.95rem", lineHeight: 1, letterSpacing: "-0.02em" }}
             aria-label="boa"
           >
             boa
