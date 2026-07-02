@@ -1,11 +1,8 @@
-import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Command, defaultFilter } from "cmdk";
 import { StatusGlyph } from "../StatusGlyph";
-import { CheatOverlay } from "./CheatOverlay";
 import { GROUP_ORDER, TAB_ORDER, type PaletteTab } from "./groups";
 import type { CommandAction, CommandActionGroup } from "./types";
-import { matchCheat, type CheatEffect } from "../../lib/cheats";
-import { reportInfo } from "../../lib/toastBus";
 
 // The cmdk item value: id plus the searchable text. Kept in one place so the
 // pre-filter that drives tab/count visibility and the <Command.Item value=...>
@@ -56,21 +53,7 @@ export function CommandPalette({ open, onClose, actions, onSearchChange, searchi
   // JetBrains "Search Everywhere"-style tabs: "All" shows every group (the
   // default flat view), a category tab scopes the list to one group.
   const [activeTab, setActiveTab] = useState<PaletteTab>("All");
-  // Active easter-egg effect plus a monotonic id so retyping the same cheat
-  // replays the animation (the id is the overlay's React key).
-  const [cheat, setCheat] = useState<{ effect: CheatEffect; id: number } | null>(null);
-
-  // A full-string match on a known Age of Empires cheat code fires a toast and
-  // a one-off visual, then clears the input. Anything else is a normal search.
   const handleSearchChange = (value: string) => {
-    const hit = matchCheat(value);
-    if (hit) {
-      reportInfo(hit.toast);
-      setCheat((prev) => ({ effect: hit.effect, id: (prev?.id ?? 0) + 1 }));
-      setSearch("");
-      onSearchChange?.("");
-      return;
-    }
     setSearch(value);
     onSearchChange?.(value);
   };
@@ -91,22 +74,16 @@ export function CommandPalette({ open, onClose, actions, onSearchChange, searchi
   }, [open]);
 
   // Controlled input keeps its value across open/close, so reset it when the
-  // palette closes; also drop any in-flight cheat so reopening does not replay
-  // the last one. Adjusting during render on the open->closed edge is the
+  // palette closes. Adjusting during render on the open->closed edge is the
   // React-recommended pattern, no effect needed.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (!open) {
       setSearch("");
-      setCheat(null);
       setActiveTab("All");
     }
   }
-
-  // Stable so the overlay's cleanup timer is not reset by unrelated re-renders
-  // (e.g. the user typing again while an effect is still on screen).
-  const clearCheat = useCallback(() => setCheat(null), []);
 
   // Group only the rows that survive cmdk's search filter, so tab visibility
   // and the footer count reflect what actually renders for the current query
@@ -297,7 +274,6 @@ export function CommandPalette({ open, onClose, actions, onSearchChange, searchi
           </span>
         </div>
       </Command>
-      {cheat && <CheatOverlay key={cheat.id} effect={cheat.effect} onDone={clearCheat} />}
     </div>
   );
 }
