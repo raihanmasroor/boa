@@ -33,6 +33,10 @@ pub struct BuiltinTheme {
 
 pub const BUILTIN_THEMES: &[BuiltinTheme] = &[
     BuiltinTheme {
+        name: "boa",
+        source: include_str!("../../../themes/builtin/boa.toml"),
+    },
+    BuiltinTheme {
         name: "zinc",
         source: include_str!("../../../themes/builtin/zinc.toml"),
     },
@@ -536,8 +540,9 @@ border = "#414868"
 
     #[test]
     fn test_builtin_themes_count() {
-        assert_eq!(BUILTIN_THEMES.len(), 8);
+        assert_eq!(BUILTIN_THEMES.len(), 9);
         let names: Vec<&str> = builtin_theme_names().collect();
+        assert!(names.contains(&"boa"));
         assert!(names.contains(&"zinc"));
         assert!(names.contains(&"empire"));
         assert!(names.contains(&"phosphor"));

@@ -1,0 +1,37 @@
+# BOA — "Operator Warm" theme (Band of Agents design system).
+# One warm light surface, one ink, one orange. Everything else is a meaning,
+# not a decoration. Palette locked to the BOA Workspace / Logo design.
+appearance = "light"
+
+background = "#F4F4F1"        # Warm Ash — app background
+border = "#EBEAE6"           # Hairline — borders / dividers
+terminal_border = "#FF5A1F"  # Signal Orange
+selection = "#EAE8E2"
+session_selection = "#E7E5DF"
+title = "#17171B"            # Graphite ink
+text = "#17171B"
+dimmed = "#8a8880"
+hint = "#a3a29a"
+# Status signals (BOA legend): busy=amber, your-turn=green, failed=red-orange,
+# done=quiet grey. Amber "working" wins on the running slot; green "needs you"
+# on the waiting/your-turn slot.
+running = "#F0A52E"          # working · busy
+waiting = "#34C46B"          # needs you · your turn
+fresh_idle = "#34C46B"
+idle = "#9A9BA0"             # done · finished · quiet
+unread = "#34C46B"           # a finished turn you haven't viewed = your turn
+error = "#FF5C47"            # failed · kill
+terminal_active = "#FF5A1F"
+group = "#26262B"
+search = "#FF5A1F"
+accent = "#FF5A1F"           # Signal Orange — brand · actions · live cursor
+diff_add = "#1f9c52"
+diff_delete = "#d84330"
+diff_modified = "#c08a2e"
+diff_header = "#5a2fa6"      # violet
+help_key = "#FF5A1F"
+branch = "#0E9AA1"           # teal
+sandbox = "#6C3FB5"          # violet
+
+[syntax]
+shiki_theme = "github-light"

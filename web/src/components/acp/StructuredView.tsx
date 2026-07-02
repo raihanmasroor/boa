@@ -1087,7 +1087,27 @@ function safeStringify(v: unknown): string {
 function EmptyState({ onPick }: { onPick: (text: string) => Promise<void> }) {
   return (
     <div className="mt-12 flex flex-col items-center gap-4 text-center">
-      <div className="text-sm text-text-muted">Ask the agent anything about this workspace.</div>
+      {/* 2a brand wordmark — big boa + blinking cursor */}
+      <span
+        className="font-mono"
+        style={{ fontWeight: 600, color: "#17171B", fontSize: "2.75rem", lineHeight: 1, letterSpacing: "-0.03em" }}
+        aria-label="boa"
+      >
+        boa
+        <span
+          className="boa-cursor"
+          aria-hidden="true"
+          style={{
+            display: "inline-block",
+            width: "0.26em",
+            height: "0.72em",
+            marginLeft: "0.16em",
+            verticalAlign: "baseline",
+            borderRadius: "3px",
+          }}
+        />
+      </span>
+      <div className="text-sm text-text-muted">Ask the band anything about this workspace.</div>
       <div className="flex flex-wrap justify-center gap-2">
         {STARTER_PROMPTS.map((p) => (
           <button

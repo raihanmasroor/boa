@@ -65,10 +65,39 @@ export function TokenEntryPage({ onSuccess }: Props) {
     <div className="h-dvh flex items-center justify-center bg-surface-900 p-4 safe-area-inset">
       <div className="w-full max-w-sm animate-slide-up">
         <form onSubmit={handleSubmit} className="bg-surface-800 border border-surface-700/40 rounded-xl p-8">
-          {/* Logo */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <img src="/icon-192.png" alt="" width="28" height="28" className="rounded-sm" />
-            <span className="font-mono text-lg text-text-primary tracking-tight">BOA</span>
+          {/* Brand wordmark — 2a "Prompt" lockup: boa + blinking cursor */}
+          <div className="mb-6 text-center">
+            <span
+              className="font-mono"
+              style={{ fontWeight: 600, color: "#17171B", fontSize: "2rem", lineHeight: 1, letterSpacing: "-0.03em" }}
+              aria-label="boa"
+            >
+              boa
+              <span
+                className="boa-cursor"
+                aria-hidden="true"
+                style={{
+                  display: "inline-block",
+                  width: "0.26em",
+                  height: "0.72em",
+                  marginLeft: "0.16em",
+                  verticalAlign: "baseline",
+                  borderRadius: "3px",
+                }}
+              />
+            </span>
+            <div
+              className="font-mono"
+              style={{
+                marginTop: "0.55rem",
+                fontSize: "0.6rem",
+                textTransform: "uppercase",
+                letterSpacing: "3.5px",
+                color: "#a3a29a",
+              }}
+            >
+              band of agents
+            </div>
           </div>
 
           {/* Explanation */}

@@ -114,11 +114,29 @@ export function TopBar({
 
         <button
           onClick={onGoDashboard}
-          className="flex items-center gap-1.5 text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+          className="flex items-center cursor-pointer"
           aria-label="Go to dashboard"
         >
-          <img src="/icon-192.png" alt="" width="18" height="18" className="rounded-sm" />
-          <span className="font-mono text-xs leading-none">BOA</span>
+          {/* 2a brand wordmark — small boa + blinking cursor */}
+          <span
+            className="font-mono"
+            style={{ fontWeight: 600, color: "#17171B", fontSize: "0.95rem", lineHeight: 1, letterSpacing: "-0.02em" }}
+            aria-label="boa"
+          >
+            boa
+            <span
+              className="boa-cursor"
+              aria-hidden="true"
+              style={{
+                display: "inline-block",
+                width: "0.26em",
+                height: "0.72em",
+                marginLeft: "0.16em",
+                verticalAlign: "baseline",
+                borderRadius: "2px",
+              }}
+            />
+          </span>
         </button>
       </div>
 
