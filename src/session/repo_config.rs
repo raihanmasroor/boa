@@ -1378,7 +1378,7 @@ pub fn execute_hooks_in_container_streamed(
 }
 
 /// Template content for `aoe init`.
-pub const INIT_TEMPLATE: &str = r#"# Agent of Empires - Repository Configuration
+pub const INIT_TEMPLATE: &str = r#"# Band of Agents - Repository Configuration
 # This file configures aoe behavior for this repository.
 # See: https://github.com/agent-of-empires/agent-of-empires
 

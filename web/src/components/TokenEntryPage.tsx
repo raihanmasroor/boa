@@ -55,7 +55,7 @@ export function TokenEntryPage({ onSuccess }: Props) {
       // The interceptor already cleared localStorage on 401. Reset the
       // dedup flags so the next submission attempt can be detected too.
       resetTokenExpired();
-      setError("Invalid token. Copy the token from your `aoe serve` output and try again.");
+      setError("Invalid token. Copy the token from your `boa serve` output and try again.");
       setLoading(false);
       inputRef.current?.focus();
     }
@@ -68,13 +68,13 @@ export function TokenEntryPage({ onSuccess }: Props) {
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-6">
             <img src="/icon-192.png" alt="" width="28" height="28" className="rounded-sm" />
-            <span className="font-mono text-lg text-text-primary tracking-tight">aoe</span>
+            <span className="font-mono text-lg text-text-primary tracking-tight">BOA</span>
           </div>
 
           {/* Explanation */}
           <p className="text-xs text-text-muted mb-6 text-center leading-relaxed">
             Your session token has expired or is missing. Paste the dashboard URL or token from{" "}
-            <code className="text-brand-500 font-mono">aoe serve</code> to reconnect.
+            <code className="text-brand-500 font-mono">boa serve</code> to reconnect.
           </p>
 
           {/* Token input */}

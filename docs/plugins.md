@@ -1,6 +1,6 @@
 # Plugins
 
-Agent of Empires keeps its core small (sessions, tmux, worktrees) and grows a
+Band of Agents keeps its core small (sessions, tmux, worktrees) and grows a
 plugin system so optional capabilities can be enabled or disabled at runtime
 instead of bloating the core. The core ships first-party plugins bundled with
 the binary and can install external community plugins from GitHub or a local
@@ -20,9 +20,9 @@ cookiecutter gh:agent-of-empires/plugin-template
 
 Three equivalent surfaces:
 
-- **CLI**: `aoe plugin list`, `aoe plugin info <id>`, `aoe plugin enable <id>`,
-  `aoe plugin disable <id>`, `aoe plugin install <source>`,
-  `aoe plugin update <id>`, `aoe plugin uninstall <id>`.
+- **CLI**: `boa plugin list`, `boa plugin info <id>`, `boa plugin enable <id>`,
+  `boa plugin disable <id>`, `boa plugin install <source>`,
+  `boa plugin update <id>`, `boa plugin uninstall <id>`.
 - **TUI**: open the command palette and run "Manage plugins", or open Settings
   and select the Plugins tab (the same manager, hosted inline). Space toggles
   enable/disable.
@@ -38,12 +38,12 @@ survives every config save.
 
 | Plugin | What it does | Disabled behavior |
 |---|---|---|
-| `aoe.web` | The web dashboard management marker. Present whenever the dashboard is compiled in (`--features serve`), so every released binary ships it, enabled by default. | `aoe serve` refuses to start until re-enabled (`aoe plugin enable aoe.web`). |
+| `boa.web` | The web dashboard management marker. Present whenever the dashboard is compiled in (`--features serve`), so every released binary ships it, enabled by default. | `boa serve` refuses to start until re-enabled (`boa plugin enable boa.web`). |
 
-`aoe.web` is the only bundled plugin today, and it rides along with the web
+`boa.web` is the only bundled plugin today, and it rides along with the web
 dashboard. So a release binary (or any `cargo build --features serve`) shows it
-in `aoe plugin list`, while a TUI-only build (`cargo build`, no `serve`) has an
-empty registry and `aoe plugin list` reports no plugins. That is expected, not a
+in `boa plugin list`, while a TUI-only build (`cargo build`, no `serve`) has an
+empty registry and `boa plugin list` reports no plugins. That is expected, not a
 bug.
 
 The bundled set is deliberately minimal while the system is proven out. More
@@ -52,17 +52,17 @@ first-party plugins land as each piece is verified.
 ## Installing external plugins
 
 External plugins are community code that you install at your own risk. Install
-and uninstall are CLI-only (`aoe plugin` is reserved for management); the TUI
+and uninstall are CLI-only (`boa plugin` is reserved for management); the TUI
 and web surfaces show the result but do not install. Updating an already
 installed plugin can be done from the CLI or approved in-app (see Trust and
 capabilities below).
 
 ```sh
-aoe plugin install gh:owner/repo          # latest release (the audited default)
-aoe plugin install gh:owner/repo@v1.2.3   # an explicit tag, branch, or commit
-aoe plugin install ./path/to/plugin       # a local directory
-aoe plugin update <id>
-aoe plugin uninstall <id>
+boa plugin install gh:owner/repo          # latest release (the audited default)
+boa plugin install gh:owner/repo@v1.2.3   # an explicit tag, branch, or commit
+boa plugin install ./path/to/plugin       # a local directory
+boa plugin update <id>
+boa plugin uninstall <id>
 ```
 
 With no `@ref`, install resolves the repo's latest stable GitHub release (the
@@ -70,7 +70,7 @@ audited default path) and installs that tag. An explicit `@ref` installs
 unverified, un-audited code and asks you to confirm first (`--yes` skips the
 prompt). If the repo has published no release, install warns and falls back to
 the default branch behind the same confirmation. The recorded source stays
-ref-less, so `aoe plugin update` keeps tracking the latest release; an `@ref`
+ref-less, so `boa plugin update` keeps tracking the latest release; an `@ref`
 install keeps following that ref.
 
 A plugin lands under `<app_dir>/plugins/<id>/`. A GitHub source is cloned and
@@ -85,22 +85,22 @@ Bundled plugins are `builtin` and fully trusted. Installed plugins are
 `community` and untrusted: their manifest declares the capabilities they need
 (network access, filesystem access, spawning processes, and so on), and install
 prompts you once to grant that exact set. Run non-interactively with `--yes` to
-grant without prompting. A capability this version of aoe does not recognize is
-rejected rather than granted; upgrade aoe.
+grant without prompting. A capability this version of BOA does not recognize is
+rejected rather than granted; upgrade BOA.
 
 A grant is pinned to the installed manifest. If an update expands what the
 plugin can do (new capabilities, changed build steps or UI slots, a runtime or
 trust change), it must be approved before the new version becomes active. You
-can approve in a terminal with `aoe plugin update <id>`, or in-app: the web
+can approve in a terminal with `boa plugin update <id>`, or in-app: the web
 dashboard's plugin settings and the TUI plugin manager show an Update action
 that opens an approval popup describing exactly what changed. Declining keeps
 the current version active and stops the prompt from reappearing until the next
 version. The approval is pinned to the exact fetched content, so an update that
-changed since you reviewed it is refused rather than applied. `aoe plugin
-install` and `aoe plugin update` report the resolved trust level (`featured`,
-`community`, or `local`) in their success output, and `aoe plugin list` and
-`aoe plugin info <id>` show each plugin's trust level and whether it is granted.
-An external plugin cannot use the reserved `aoe.*` /
+changed since you reviewed it is refused rather than applied. `BOA plugin
+install` and `BOA plugin update` report the resolved trust level (`featured`,
+`community`, or `local`) in their success output, and `boa plugin list` and
+`boa plugin info <id>` show each plugin's trust level and whether it is granted.
+An external plugin cannot use the reserved `boa.*` /
 `agent-of-empires.*` id namespace.
 
 Resolved versions live in `<app_dir>/plugins.lock` (the exact commit, manifest

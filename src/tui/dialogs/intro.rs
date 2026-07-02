@@ -451,7 +451,7 @@ impl IntroDialog {
 
         let total = Page::all().len();
         let title = format!(
-            " Welcome to Agent of Empires  ({}/{}) ",
+            " Welcome to Band of Agents  ({}/{}) ",
             self.page_idx + 1,
             total
         );
@@ -485,7 +485,7 @@ impl IntroDialog {
     fn render_welcome(&self, frame: &mut Frame, area: Rect, theme: &Theme) {
         let lines = vec![
             Line::from(Span::styled(
-                "Agent of Empires (aoe) runs many AI coding agents side by side.",
+                "Band of Agents (boa) runs many AI coding agents side by side.",
                 Style::default().fg(theme.text),
             )),
             Line::from(""),
@@ -562,16 +562,16 @@ impl IntroDialog {
 
         let intro = Paragraph::new(vec![
             Line::from(Span::styled(
-                "Help improve aoe with anonymous usage telemetry?",
+                "Help improve BOA with anonymous usage telemetry?",
                 Style::default().fg(theme.title).bold(),
             )),
             Line::from(""),
             Line::from(Span::styled(
-                "It shows us how aoe is actually used, so we can prioritize the",
+                "It shows us how BOA is actually used, so we can prioritize the",
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
-                "features that matter most. Off by default; when on, aoe sends",
+                "features that matter most. Off by default; when on, BOA sends",
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
@@ -583,7 +583,7 @@ impl IntroDialog {
                 Style::default().fg(theme.text),
             )),
             Line::from(Span::styled(
-                "Change it any time under Settings, or with `aoe telemetry`.",
+                "Change it any time under Settings, or with `boa telemetry`.",
                 Style::default().fg(theme.dimmed),
             )),
         ])
@@ -759,7 +759,7 @@ impl IntroDialog {
                 NewSessionAttachMode::LiveSend,
                 "Live mode  (recommended; works for most workflows)",
                 vec![
-                    "      aoe stays open with the agent's terminal shown next to".to_string(),
+                    "      BOA stays open with the agent's terminal shown next to".to_string(),
                     "      the session list. Type to send keys to the highlighted".to_string(),
                     "      agent. Ctrl+Q stops typing. Tab attaches into tmux.".to_string(),
                 ],

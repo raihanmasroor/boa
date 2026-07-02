@@ -6,7 +6,7 @@
 - [Docker](https://www.docker.com/) (optional, for sandboxing agents in containers)
 - [Node.js](https://nodejs.org/) (optional, only needed when building the web dashboard from source with `--features serve`)
 
-## Install Agent of Empires
+## Install Band of Agents
 
 ### Quick Install (Recommended)
 
@@ -32,7 +32,7 @@ cd agent-of-empires
 cargo build --release
 ```
 
-The binary will be at `target/release/aoe`.
+The binary will be at `target/release/boa`.
 
 To include the web dashboard (browser access):
 
@@ -45,16 +45,16 @@ This requires Node.js and npm. The web frontend is built automatically during co
 ## Verify Installation
 
 ```bash
-aoe --version
+boa --version
 ```
 
 ## Updating
 
 ```bash
-aoe update
+boa update
 ```
 
-The `aoe update` command detects how aoe was installed (Homebrew, the curl install script, Nix, or Cargo) and dispatches to the right upgrade mechanism. For Nix and Cargo it prints the manual upgrade command instead of attempting an automatic update, since those cases need external tooling.
+The `boa update` command detects how BOA was installed (Homebrew, the curl install script, Nix, or Cargo) and dispatches to the right upgrade mechanism. For Nix and Cargo it prints the manual upgrade command instead of attempting an automatic update, since those cases need external tooling.
 
 Inside the TUI, press `u` when the update bar is visible to run the same flow without leaving the app. Press `Ctrl+x` to dismiss the bar for the current session.
 
@@ -63,7 +63,7 @@ If you installed shell completions as a static file, regenerate it after an upda
 ## Uninstall
 
 ```bash
-aoe uninstall
+boa uninstall
 ```
 
 Prompts to remove the binary, configuration (the app data dir), and tmux settings.

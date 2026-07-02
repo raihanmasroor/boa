@@ -66,7 +66,7 @@ async fn list_profiles() -> Result<()> {
 
     if profiles.is_empty() {
         println!("No profiles found.");
-        println!("Run 'aoe' to create the first profile automatically.");
+        println!("Run 'boa' to create the first profile automatically.");
         return Ok(());
     }
 
@@ -88,7 +88,7 @@ async fn list_profiles() -> Result<()> {
 async fn create_profile(name: &str) -> Result<()> {
     session::create_profile(name)?;
     println!("✓ Created profile: {}", name);
-    println!("  Use with: aoe -p {}", name);
+    println!("  Use with: boa -p {}", name);
     Ok(())
 }
 

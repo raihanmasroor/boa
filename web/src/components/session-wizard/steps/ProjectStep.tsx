@@ -300,7 +300,7 @@ export function ProjectStep({ data, onChange, initialTab, agents = [] }: Props) 
         <div className="flex-1">
           <div className="text-sm font-medium text-text-primary">Skip project folder</div>
           <div className="text-xs text-text-dim mt-0.5 leading-snug">
-            Run the agent in a fresh scratch directory under your AoE app data folder. The folder is removed when you
+            Run the agent in a fresh scratch directory under your BOA app data folder. The folder is removed when you
             delete the session.
           </div>
         </div>
@@ -311,7 +311,7 @@ export function ProjectStep({ data, onChange, initialTab, agents = [] }: Props) 
         <div className="px-3 py-2.5 bg-surface-900 border border-brand-600/30 rounded-md">
           <p className="text-[10px] font-mono uppercase tracking-wider text-text-dim mb-1">Scratch session</p>
           <p className="text-sm text-text-primary">
-            A fresh scratch directory under your AoE app data folder is created when you launch this session.
+            A fresh scratch directory under your BOA app data folder is created when you launch this session.
           </p>
         </div>
       )}

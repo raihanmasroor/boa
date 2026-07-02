@@ -577,7 +577,7 @@ pub async fn install_agent(
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({
                 "error": "npm_missing",
-                "message": "`npm` is not on the daemon's PATH. Start `aoe serve` from a shell where `which npm` resolves.",
+                "message": "`npm` is not on the daemon's PATH. Start `boa serve` from a shell where `which npm` resolves.",
             })),
         )
             .into_response();

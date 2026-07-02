@@ -57,7 +57,7 @@ pub fn run_export(name: &str, output: Option<&str>) -> Result<()> {
     let all = available_themes();
     if !all.iter().any(|t| t == name) {
         bail!(
-            "Unknown theme '{}'. Run `aoe theme list` to see available themes.",
+            "Unknown theme '{}'. Run `boa theme list` to see available themes.",
             name
         );
     }

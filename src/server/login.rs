@@ -1396,7 +1396,7 @@ async fn trigger_new_login_push(state: &AppState, user_agent: &str) {
         return;
     }
     let truncated_ua = user_agent.chars().take(80).collect::<String>();
-    let title = "New aoe dashboard login".to_string();
+    let title = "New BOA dashboard login".to_string();
     let body = format!("New device signed in. UA: {truncated_ua}");
     let client = match super::push_send::build_client() {
         Ok(c) => c,

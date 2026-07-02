@@ -1746,7 +1746,7 @@ function WorkerStoppedBanner({ sessionId }: { sessionId: string }) {
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium">Structured view worker stopped</div>
           <div className="mt-1 text-xs text-status-warning/90">
-            The agent was terminated via <code className="rounded bg-status-warning/30 px-1">aoe acp stop</code> or an
+            The agent was terminated via <code className="rounded bg-status-warning/30 px-1">boa acp stop</code> or an
             equivalent external teardown. New prompts are disabled until you reconnect.
           </div>
         </div>
@@ -1922,16 +1922,16 @@ export function StartupErrorBanner({ sessionId, message }: { sessionId: string; 
           <>
             The adapter is installed but has no Claude credentials. Either set{" "}
             <code className="rounded bg-rose-900/60 px-1">ANTHROPIC_API_KEY</code> in the env that runs{" "}
-            <code className="rounded bg-rose-900/60 px-1">aoe serve</code>, or run{" "}
+            <code className="rounded bg-rose-900/60 px-1">boa serve</code>, or run{" "}
             <code className="rounded bg-rose-900/60 px-1">claude /login</code> in a terminal to write credentials to{" "}
-            <code className="rounded bg-rose-900/60 px-1">~/.claude</code>, then restart aoe.
+            <code className="rounded bg-rose-900/60 px-1">~/.claude</code>, then restart BOA.
           </>
         ) : isCapacity ? (
           <>
             All structured view worker slots are in use. Either raise{" "}
             <code className="rounded bg-rose-900/60 px-1">[acp] max_concurrent_workers</code> in{" "}
             <code className="rounded bg-rose-900/60 px-1">config.toml</code> and restart{" "}
-            <code className="rounded bg-rose-900/60 px-1">aoe serve</code>, or free a slot by deleting an existing
+            <code className="rounded bg-rose-900/60 px-1">boa serve</code>, or free a slot by deleting an existing
             structured view session or switching one to the tmux view. Reinstalling the adapter won't help; the adapter
             is fine, the cap is the limit.
           </>
@@ -1949,12 +1949,12 @@ export function StartupErrorBanner({ sessionId, message }: { sessionId: string; 
                 click <strong>Retry</strong>.
               </li>
               <li>
-                Stop <code className="rounded bg-rose-900/60 px-1">aoe serve</code>, edit{" "}
+                Stop <code className="rounded bg-rose-900/60 px-1">boa serve</code>, edit{" "}
                 <code className="rounded bg-rose-900/60 px-1">project_path</code> for this session in{" "}
                 <code className="rounded bg-rose-900/60 px-1">
                   ~/.agent-of-empires/profiles/&lt;profile&gt;/sessions.json
                 </code>{" "}
-                to point at the new location, then start <code className="rounded bg-rose-900/60 px-1">aoe serve</code>{" "}
+                to point at the new location, then start <code className="rounded bg-rose-900/60 px-1">boa serve</code>{" "}
                 again.
               </li>
             </ol>
@@ -1988,7 +1988,7 @@ export function StartupErrorBanner({ sessionId, message }: { sessionId: string; 
           </>
         ) : (
           <>
-            Run <code className="rounded bg-rose-900/60 px-1">aoe acp doctor --fix</code> from a terminal, or install
+            Run <code className="rounded bg-rose-900/60 px-1">boa acp doctor --fix</code> from a terminal, or install
             the adapter manually:
             <pre className="mt-1 whitespace-pre-wrap rounded bg-rose-900/40 p-2 text-xs">
               npm install -g @agentclientprotocol/claude-agent-acp@latest

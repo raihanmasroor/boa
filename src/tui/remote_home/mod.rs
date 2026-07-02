@@ -94,7 +94,7 @@ pub async fn run_standalone(endpoint: DaemonEndpoint) -> Result<()> {
     use std::io::IsTerminal;
 
     if !io::stdin().is_terminal() {
-        anyhow::bail!("stdin is not a terminal; `aoe` needs an interactive TTY");
+        anyhow::bail!("stdin is not a terminal; `boa` needs an interactive TTY");
     }
 
     enable_raw_mode()?;

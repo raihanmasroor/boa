@@ -251,7 +251,7 @@ pub async fn run(profile: &str, startup_warning: Option<String>) -> Result<()> {
     if !crate::tmux::is_tmux_available() {
         eprintln!("Error: tmux not found in PATH");
         eprintln!();
-        eprintln!("Agent of Empires requires tmux. Install with:");
+        eprintln!("Band of Agents requires tmux. Install with:");
         eprintln!("  brew install tmux     # macOS");
         eprintln!("  apt install tmux      # Debian/Ubuntu");
         eprintln!("  pacman -S tmux        # Arch");
@@ -285,7 +285,7 @@ pub async fn run(profile: &str, startup_warning: Option<String>) -> Result<()> {
     // Bail early if stdin is not a terminal. Running without a tty would
     // cause the event loop to busy-loop after the parent terminal dies.
     if !io::stdin().is_terminal() {
-        anyhow::bail!("stdin is not a terminal; aoe requires an interactive TTY");
+        anyhow::bail!("stdin is not a terminal; BOA requires an interactive TTY");
     }
 
     // Setup terminal. Resolve the mouse/mosh policy BEFORE entering raw mode so

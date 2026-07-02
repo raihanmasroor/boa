@@ -320,7 +320,7 @@ impl TipsDialog {
             // opening a blank box.
             frame.render_widget(
                 Paragraph::new(
-                    "No tips right now. As you use aoe, helpful tips will show up here.",
+                    "No tips right now. As you use BOA, helpful tips will show up here.",
                 )
                 .wrap(Wrap { trim: true })
                 .style(Style::default().fg(theme.dimmed)),

@@ -575,7 +575,7 @@ pub async fn run(profile: &str, args: ServeArgs) -> Result<()> {
     if let Some(plugin) = crate::plugin::registry().get("aoe.web") {
         if !plugin.enabled {
             anyhow::bail!(
-                "the web dashboard plugin is disabled; run `aoe plugin enable aoe.web` first"
+                "the web dashboard plugin is disabled; run `boa plugin enable aoe.web` first"
             );
         }
     }
@@ -593,10 +593,10 @@ pub async fn run(profile: &str, args: ServeArgs) -> Result<()> {
     if let Some(existing) = daemon_pid() {
         if existing != std::process::id() {
             bail!(
-                "aoe serve daemon already running (PID {}).\n\n  \
+                "boa serve daemon already running (PID {}).\n\n  \
                  Status:  aoe serve --status\n  \
                  Open UI: aoe url\n  \
-                 Stop:    aoe serve --stop",
+                 Stop:    boa serve --stop",
                 existing
             );
         }
@@ -677,7 +677,7 @@ pub async fn run(profile: &str, args: ServeArgs) -> Result<()> {
         eprintln!("  for remote access. Do NOT expose this to the");
         eprintln!("  public internet without TLS termination.");
         eprintln!();
-        eprintln!("  Or use: aoe serve --remote");
+        eprintln!("  Or use: boa serve --remote");
         eprintln!("  for automatic HTTPS via Tailscale Funnel");
         eprintln!("  (preferred) or Cloudflare Tunnel.");
         eprintln!();
@@ -910,8 +910,8 @@ fn start_daemon(profile: &str, args: &ServeArgs) -> Result<()> {
         tracing::warn!(target: "serve.lifecycle", error = %e, "failed to write serve.launch");
     }
 
-    println!("aoe serve started as daemon (PID {})", pid);
-    println!("Stop with: aoe serve --stop");
+    println!("boa serve started as daemon (PID {})", pid);
+    println!("Stop with: boa serve --stop");
     Ok(())
 }
 
@@ -928,8 +928,8 @@ fn start_daemon(profile: &str, args: &ServeArgs) -> Result<()> {
 pub async fn restart_daemon() -> Result<()> {
     let Some(pid) = daemon_pid() else {
         bail!(
-            "No running aoe serve daemon to restart.\n\
-             Start one with: aoe serve --daemon"
+            "No running boa serve daemon to restart.\n\
+             Start one with: boa serve --daemon"
         );
     };
 
@@ -980,7 +980,7 @@ pub async fn restart_daemon() -> Result<()> {
 
     let args = launch.to_serve_args(passphrase);
 
-    println!("Restarting aoe serve daemon (PID {pid})…");
+    println!("Restarting boa serve daemon (PID {pid})…");
     stop_daemon().await?;
     start_daemon(&launch.profile, &args)
 }
@@ -1049,7 +1049,7 @@ pub(crate) async fn stop_daemon() -> Result<()> {
                 let _ = tokio::fs::remove_file(dir.join("serve.passphrase")).await;
                 let _ = tokio::fs::remove_file(dir.join("serve.launch")).await;
             }
-            println!("Stopped aoe serve daemon (PID {})", pid);
+            println!("Stopped boa serve daemon (PID {})", pid);
         }
         Err(nix::errno::Errno::ESRCH) => {
             // Process doesn't exist; clean up stale PID file
@@ -1106,7 +1106,7 @@ async fn print_status() -> Result<()> {
 
 fn print_local_status() -> Result<()> {
     let Some(pid) = daemon_pid() else {
-        bail!("Daemon: not running\nStart one with: aoe serve --daemon");
+        bail!("Daemon: not running\nStart one with: boa serve --daemon");
     };
 
     let mode = read_serve_mode_label().unwrap_or("unknown");

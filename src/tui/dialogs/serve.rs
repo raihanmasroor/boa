@@ -719,7 +719,7 @@ impl ServeView {
                         }
                         Err(e) => {
                             self.state = ServeViewState::Error(format!(
-                                "Stop failed: {}. Daemon may still be running; retry or use `aoe serve --stop` from a shell.",
+                                "Stop failed: {}. Daemon may still be running; retry or use `boa serve --stop` from a shell.",
                                 e
                             ));
                             ServeAction::Continue
@@ -958,10 +958,10 @@ impl ServeView {
                     };
                     let prefix = match mode {
                         ServeMode::Tunnel => {
-                            "`aoe serve --remote --daemon` exited before the tunnel came up."
+                            "`boa serve --remote --daemon` exited before the tunnel came up."
                         }
                         ServeMode::Local => {
-                            "`aoe serve --daemon` exited before the server started."
+                            "`boa serve --daemon` exited before the server started."
                         }
                     };
                     self.state = ServeViewState::Error(format!("{}{}{}", prefix, hint, detail));
@@ -981,7 +981,7 @@ impl ServeView {
                         Ok(()) => "Stuck daemon stopped.".to_string(),
                         Err(e) => format!(
                             "Daemon may still be running \
-                             (tried to stop: {}). Stop manually with `aoe serve --stop`.",
+                             (tried to stop: {}). Stop manually with `boa serve --stop`.",
                             e
                         ),
                     };
@@ -1111,7 +1111,7 @@ fn spawn_daemon(
     }
 
     let exe =
-        std::env::current_exe().map_err(|e| format!("Could not resolve aoe binary path: {}", e))?;
+        std::env::current_exe().map_err(|e| format!("Could not resolve boa binary path: {}", e))?;
 
     // Delete stale serve.url / serve.mode / serve.passphrase from a
     // previous hard-killed daemon before launching. Without this,
@@ -1165,7 +1165,7 @@ fn spawn_daemon(
 
     let status = cmd
         .status()
-        .map_err(|e| format!("Failed to launch `aoe serve --daemon`: {}", e))?;
+        .map_err(|e| format!("Failed to launch `boa serve --daemon`: {}", e))?;
 
     if !status.success() {
         // If the daemon failed because the port was in use, clear the
@@ -1187,7 +1187,7 @@ fn spawn_daemon(
             ServeMode::Local => format!("Most likely port {} is in use.", port),
         };
         return Err(format!(
-            "`aoe serve --daemon` exited with {:?}. {}",
+            "`boa serve --daemon` exited with {:?}. {}",
             status.code(),
             hint
         ));
@@ -1228,12 +1228,12 @@ fn stop_daemon() -> Result<(), String> {
     use std::process::Command;
 
     let exe =
-        std::env::current_exe().map_err(|e| format!("Could not resolve aoe binary path: {}", e))?;
+        std::env::current_exe().map_err(|e| format!("Could not resolve boa binary path: {}", e))?;
 
     let output = Command::new(&exe)
         .args(["serve", "--stop"])
         .output()
-        .map_err(|e| format!("Failed to invoke `aoe serve --stop`: {}", e))?;
+        .map_err(|e| format!("Failed to invoke `boa serve --stop`: {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -2135,7 +2135,7 @@ fn render_active(
         let (pp_label, pp_style) = match passphrase {
             Some(pp) => (pp.to_string(), Style::default().fg(theme.accent).bold()),
             None => (
-                "(set when the daemon started; check the shell that ran `aoe serve`)".to_string(),
+                "(set when the daemon started; check the shell that ran `boa serve`)".to_string(),
                 Style::default().fg(theme.dimmed),
             ),
         };

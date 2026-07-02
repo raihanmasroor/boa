@@ -117,7 +117,7 @@ fn run_list() -> Result<()> {
 fn run_info(id: &str) -> Result<()> {
     let registry = crate::plugin::registry();
     let Some(plugin) = registry.get(id) else {
-        anyhow::bail!("unknown plugin {id:?}; see `aoe plugin list`");
+        anyhow::bail!("unknown plugin {id:?}; see `boa plugin list`");
     };
     let m = &plugin.manifest;
     println!("{} ({})", m.name, m.id);
@@ -233,7 +233,7 @@ async fn run_discover(query: Option<&str>) -> Result<()> {
             about
         );
     }
-    println!("\nInstall with:\n  aoe plugin install <source>");
+    println!("\nInstall with:\n  boa plugin install <source>");
     Ok(())
 }
 
@@ -256,7 +256,7 @@ async fn run_outdated() -> Result<()> {
         }
     }
     if any_outdated {
-        println!("\nUpdate with:\n  aoe plugin update <id>");
+        println!("\nUpdate with:\n  boa plugin update <id>");
     }
     Ok(())
 }

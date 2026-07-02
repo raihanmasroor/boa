@@ -481,7 +481,7 @@ fn render_composer(frame: &mut Frame, area: Rect, theme: &Theme, state: &Structu
 
 /// Gutter marking the first line of an agent message. Continuation
 /// lines align under the text with `AGENT_GUTTER_CONT`.
-const AGENT_GUTTER: &str = "aoe  ";
+const AGENT_GUTTER: &str = "BOA  ";
 const AGENT_GUTTER_CONT: &str = "     ";
 
 /// Render an agent message as markdown-styled transcript lines.

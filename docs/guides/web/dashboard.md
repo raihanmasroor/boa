@@ -9,7 +9,7 @@ The dashboard is the home screen of the web app: a workspace sidebar on the left
 - **Workspace sidebar** (left) lists every session grouped by repo, with a live status glyph per row. On phones it collapses behind a top-bar toggle. With no sessions, it shows a hint and a **New session** button.
 - **Main pane** shows the selected session: the agent terminal (or structured view), with the diff and paired terminal reachable from the top bar.
 - **Top bar** carries the command-palette trigger, the right-panel picker, and the overflow (three-dot) **More options** menu.
-- **Home screen** (no session selected) shows the AoE logo and a count of running, waiting, and error sessions.
+- **Home screen** (no session selected) shows the BOA logo and a count of running, waiting, and error sessions.
 
 ### Status glyphs
 
@@ -59,7 +59,7 @@ Drag-to-reorder is disabled in the computed modes. The picker's state is per-bro
 A grouping toggle (layers icon) next to the sort toggle cycles the axis. Each click advances **By repo** to **By group** to **By repo and group** and back:
 
 - **By repo** (default): groups by git repository.
-- **By group**: groups by the user-defined group assigned in the TUI rename dialog, with `aoe group move`, or via **Edit group** below. Ungrouped sessions fall into an **Ungrouped** bucket pinned to the bottom.
+- **By group**: groups by the user-defined group assigned in the TUI rename dialog, with `boa group move`, or via **Edit group** below. Ungrouped sessions fall into an **Ungrouped** bucket pinned to the bottom.
 - **By repo and group**: repository headers with user groups nested inside each. A session split across groups appears once per subgroup.
 
 The choice is per-browser (localStorage). Collapse state is tracked separately per axis. You can move a session between groups from the web context menu, but group rename, color, and drag-reorder live on the repo axis only.

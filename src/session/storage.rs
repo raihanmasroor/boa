@@ -264,7 +264,7 @@ fn acquire_storage_flock(dir: &Path, name: &str) -> Result<StorageFlock> {
                                 target: "session.store",
                                 ?waited,
                                 path = %path.display(),
-                                "storage flock contended for >1s; another aoe process held it"
+                                "storage flock contended for >1s; another BOA process held it"
                             );
                         }
                     }
@@ -275,7 +275,7 @@ fn acquire_storage_flock(dir: &Path, name: &str) -> Result<StorageFlock> {
                         tracing::warn!(
                             target: "session.store",
                             path = %path.display(),
-                            "storage flock contended for >1s; another aoe process is mid-write"
+                            "storage flock contended for >1s; another BOA process is mid-write"
                         );
                         warned = true;
                     }

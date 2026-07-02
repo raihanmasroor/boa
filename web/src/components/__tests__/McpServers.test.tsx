@@ -117,12 +117,12 @@ async function openConflictModal() {
 }
 
 describe("McpServers conflict resolution", () => {
-  it("resolving 'Keep AoE version' posts the winner + fingerprint and reloads", async () => {
+  it("resolving 'Keep BOA version' posts the winner + fingerprint and reloads", async () => {
     resolveMcpConflict.mockResolvedValue("applied");
     const dialog = await openConflictModal();
     // After an applied resolution the surface reloads with no conflict.
     fetchMcpServers.mockResolvedValue(response());
-    fireEvent.click(within(dialog).getByText("Keep AoE version"));
+    fireEvent.click(within(dialog).getByText("Keep BOA version"));
     await waitFor(() => expect(resolveMcpConflict).toHaveBeenCalledWith("fs", "claude", "aoe", "fp-123"));
     await waitFor(() => expect(screen.queryByLabelText("resolve fs")).toBeNull());
   });
@@ -138,14 +138,14 @@ describe("McpServers conflict resolution", () => {
   it("a stale result shows the 'already resolved' notice", async () => {
     resolveMcpConflict.mockResolvedValue("stale");
     const dialog = await openConflictModal();
-    fireEvent.click(within(dialog).getByText("Keep AoE version"));
+    fireEvent.click(within(dialog).getByText("Keep BOA version"));
     expect(await screen.findByText(/already resolved by another surface/)).toBeTruthy();
   });
 
   it("an error result shows the failure notice", async () => {
     resolveMcpConflict.mockResolvedValue("error");
     const dialog = await openConflictModal();
-    fireEvent.click(within(dialog).getByText("Keep AoE version"));
+    fireEvent.click(within(dialog).getByText("Keep BOA version"));
     expect(await screen.findByText(/Could not resolve "fs"/)).toBeTruthy();
   });
 

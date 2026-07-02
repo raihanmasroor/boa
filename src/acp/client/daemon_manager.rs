@@ -40,7 +40,7 @@ pub enum ManagerError {
     /// `serve.pid` at all" from "stale PID" if they care; most
     /// callers just render the user-facing hint.
     #[error(
-        "no structured view daemon is running.\n\nStart one with one of:\n  aoe serve --daemon                 (localhost only, recommended for solo dev)\n  aoe serve --daemon --remote        (Tailscale Funnel or Cloudflare quick tunnel)\n  aoe serve --daemon --tunnel-name … (named Cloudflare Tunnel)\n\nOr attach to an existing remote daemon with:\n  AOE_DAEMON_URL=<url> AOE_DAEMON_TOKEN=<token> aoe …"
+        "no structured view daemon is running.\n\nStart one with one of:\n  boa serve --daemon                 (localhost only, recommended for solo dev)\n  boa serve --daemon --remote        (Tailscale Funnel or Cloudflare quick tunnel)\n  boa serve --daemon --tunnel-name … (named Cloudflare Tunnel)\n\nOr attach to an existing remote daemon with:\n  AOE_DAEMON_URL=<url> AOE_DAEMON_TOKEN=<token> boa …"
     )]
     NoDaemonRunning(#[from] DiscoveryError),
 }

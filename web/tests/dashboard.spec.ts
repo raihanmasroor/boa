@@ -10,12 +10,12 @@ test.describe("Dashboard layout", () => {
 
   test("shows branded home screen with logo text", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("empires", { exact: false })).toBeVisible();
+    await expect(page.getByText("band of", { exact: false })).toBeVisible();
   });
 
   test("shows branded home screen with action panes", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("empires", { exact: false })).toBeVisible();
+    await expect(page.getByText("band of", { exact: false })).toBeVisible();
     await expect(page.getByRole("button", { name: NEW_SESSION_PANE_NAME })).toBeVisible();
     await expect(page.getByText("Clone URL")).toBeVisible();
     await expect(page.getByText("Docs")).toBeVisible();
@@ -164,7 +164,7 @@ test.describe("Keyboard shortcuts", () => {
     await page.goto("/");
     // Should not crash even with no session selected
     await page.keyboard.press("Shift+d");
-    await expect(page.getByText("empires", { exact: false })).toBeVisible();
+    await expect(page.getByText("band of", { exact: false })).toBeVisible();
   });
 
   test("? opens help overlay", async ({ page }) => {
@@ -198,7 +198,7 @@ test.describe("Mobile responsive", () => {
     // use toBeInViewport rather than toBeVisible.
     await expect(page.getByLabel("New project session")).not.toBeInViewport();
     // Home screen content visible
-    await expect(page.getByText("empires", { exact: false })).toBeVisible();
+    await expect(page.getByText("band of", { exact: false })).toBeVisible();
   });
 
   test("mobile home screen shows sidebar toggle between title and panes", async ({ page }) => {

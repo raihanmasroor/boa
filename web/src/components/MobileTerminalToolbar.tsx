@@ -250,7 +250,7 @@ export function MobileTerminalToolbar({ sendData, keyboardOpen, ctrlActive, onCt
 
           // All paths failed. Tell the user what to try next.
           if (!window.isSecureContext) {
-            t?.error("Paste needs HTTPS. Run `aoe serve --remote` for a Tailscale or Cloudflare HTTPS URL.");
+            t?.error("Paste needs HTTPS. Run `boa serve --remote` for a Tailscale or Cloudflare HTTPS URL.");
           } else {
             t?.error("Couldn't read clipboard. Try copying again, or open this dashboard in Safari.");
           }

@@ -270,7 +270,7 @@ describe("PluginsSettings", () => {
     fireEvent.click(await findByLabelText("Enable Web Dashboard"));
 
     await waitFor(() => {
-      expect(reportInfo).toHaveBeenCalledWith("Web dashboard stays up until aoe serve is restarted.");
+      expect(reportInfo).toHaveBeenCalledWith("Web dashboard stays up until boa serve is restarted.");
     });
   });
 

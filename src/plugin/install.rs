@@ -78,7 +78,7 @@ impl OperationLog {
 pub fn set_enabled(plugin_id: &str, enabled: bool) -> Result<()> {
     let registry = super::registry();
     if registry.get(plugin_id).is_none() {
-        bail!("unknown plugin {plugin_id:?}; see `aoe plugin list`");
+        bail!("unknown plugin {plugin_id:?}; see `boa plugin list`");
     }
     enable_in_config(plugin_id, enabled)?;
     super::reload_registry();
@@ -282,7 +282,7 @@ async fn prepare_install(input: &str) -> Result<PreparedInstall> {
     reject_incompatible_host(&fetched.manifest)?;
 
     if super::plugins_dir()?.join(&id).exists() {
-        bail!("{id} is already installed; run `aoe plugin update {id}` or uninstall it first");
+        bail!("{id} is already installed; run `boa plugin update {id}` or uninstall it first");
     }
 
     let capabilities = capability_strings(&fetched)?;
@@ -317,7 +317,7 @@ fn apply_prepared_install(p: &PreparedInstall, log: &OperationLog) -> Result<Ins
     let final_dir = super::plugins_dir()?.join(&p.id);
     if final_dir.exists() {
         bail!(
-            "{} is already installed; run `aoe plugin update {}` or uninstall it first",
+            "{} is already installed; run `boa plugin update {}` or uninstall it first",
             p.id,
             p.id
         );
@@ -401,7 +401,7 @@ pub async fn install(input: &str, assume_yes: bool) -> Result<InstallReport> {
 /// arbitrary local path; local installs stay on the CLI.
 pub async fn preview_install(input: &str) -> Result<InstallConsent> {
     if !input.starts_with("gh:") {
-        bail!("web install supports gh: sources only; use `aoe plugin install` for a local path");
+        bail!("web install supports gh: sources only; use `boa plugin install` for a local path");
     }
     let p = prepare_install(input).await?;
     Ok(InstallConsent {
@@ -441,7 +441,7 @@ pub async fn apply_install(
     log: &OperationLog,
 ) -> Result<InstallReport> {
     if !input.starts_with("gh:") {
-        bail!("web install supports gh: sources only; use `aoe plugin install` for a local path");
+        bail!("web install supports gh: sources only; use `boa plugin install` for a local path");
     }
     let prepared = prepare_install(input).await?;
     if prepared.fingerprint != expected_fingerprint {
@@ -529,7 +529,7 @@ async fn prepare_update(id: &str) -> Result<Prepared> {
     let plugin_config = config
         .plugins
         .get(id)
-        .ok_or_else(|| anyhow!("{id} is not installed; see `aoe plugin list`"))?;
+        .ok_or_else(|| anyhow!("{id} is not installed; see `boa plugin list`"))?;
     let source_str = plugin_config
         .source
         .clone()
@@ -710,7 +710,7 @@ fn apply_prepared(
 
     if prepared.caps_changed && !granted {
         eprintln!(
-            "{id} updated but its capability set changed; it stays inactive until you re-approve with `aoe plugin update {id}`."
+            "{id} updated but its capability set changed; it stays inactive until you re-approve with `boa plugin update {id}`."
         );
     }
 
@@ -1140,7 +1140,7 @@ fn capability_strings(fetched: &FetchedPlugin) -> Result<Vec<String>> {
         .collect();
     if !unknown.is_empty() {
         bail!(
-            "plugin requests capabilities this host does not support: {}; upgrade aoe",
+            "plugin requests capabilities this host does not support: {}; upgrade BOA",
             unknown.join(", ")
         );
     }

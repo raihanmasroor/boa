@@ -70,7 +70,7 @@ pub enum LaunchError {
 
     #[error(
         "plugin {plugin_id}: worker program {path} is missing. \
-         Reinstall with `aoe plugin update {plugin_id}`."
+         Reinstall with `boa plugin update {plugin_id}`."
     )]
     InTreeMissing { plugin_id: String, path: PathBuf },
 
@@ -79,7 +79,7 @@ pub enum LaunchError {
 
     #[error(
         "plugin {plugin_id}: no prebuilt worker binary {path} for this platform ({os}-{arch}). \
-         Reinstall with `aoe plugin update {plugin_id}`, or publish a release asset for this platform."
+         Reinstall with `boa plugin update {plugin_id}`, or publish a release asset for this platform."
     )]
     ReleaseBinaryMissing {
         plugin_id: String,

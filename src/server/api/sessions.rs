@@ -1226,7 +1226,7 @@ fn worktree_edit_error_response(
     match e {
         E::NotManaged => (
             StatusCode::BAD_REQUEST,
-            "This worktree is not managed by aoe; its workdir name cannot be edited".to_string(),
+            "This worktree is not managed by BOA; its workdir name cannot be edited".to_string(),
         ),
         E::EmptyName => (
             StatusCode::BAD_REQUEST,

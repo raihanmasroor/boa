@@ -71,7 +71,7 @@ pub async fn run_standalone(session_id: &str) -> anyhow::Result<()> {
     use std::io::IsTerminal;
 
     if !io::stdin().is_terminal() {
-        anyhow::bail!("stdin is not a terminal; `aoe acp attach` requires an interactive TTY");
+        anyhow::bail!("stdin is not a terminal; `boa acp attach` requires an interactive TTY");
     }
 
     enable_raw_mode()?;

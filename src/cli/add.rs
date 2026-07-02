@@ -190,7 +190,7 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
 
     if (!args.extra_repos.is_empty() || !args.projects.is_empty()) && args.worktree_branch.is_none()
     {
-        bail!("--repo/--project requires --worktree to specify a branch\nTip: aoe add /path --project repoB -w branch-name");
+        bail!("--repo/--project requires --worktree to specify a branch\nTip: boa add /path --project repoB -w branch-name");
     }
 
     let resolved_project_paths: Vec<PathBuf> = if args.projects.is_empty() {
@@ -525,7 +525,7 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
 
                 if worktree_path.exists() {
                     bail!(
-                        "Worktree already exists at {}\nTip: Use 'aoe add {}' to add the existing worktree",
+                        "Worktree already exists at {}\nTip: Use 'boa add {}' to add the existing worktree",
                         worktree_path.display(),
                         worktree_path.display()
                     );
@@ -837,7 +837,7 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
                 bail!(
                     "Container runtime is not installed or not accessible.\n\
                      Install a supported runtime to use sandbox mode.\n\
-                     Tip: Use 'aoe add' without --sandbox to run directly on host"
+                     Tip: Use 'boa add' without --sandbox to run directly on host"
                 );
             }
         } else {
@@ -1120,13 +1120,13 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
         // bail), so route the user to the dashboard instead.
         println!();
         println!("Next steps:");
-        println!("  aoe serve                   # Start the dashboard (worker auto-spawns)");
+        println!("  boa serve                   # Start the dashboard (worker auto-spawns)");
         println!("  Open the printed URL and select '{}'.", final_title);
         if args.launch {
             println!();
             println!(
                 "(--launch is a no-op for structured view sessions; \
-                 lifecycle is managed by `aoe serve`.)"
+                 lifecycle is managed by `boa serve`.)"
             );
         }
     } else if args.launch {
@@ -1173,7 +1173,7 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
                     );
                 }
                 eprintln!(
-                    "Warning: launch failed: {}. Retry with: aoe session start {}",
+                    "Warning: launch failed: {}. Retry with: boa session start {}",
                     e, final_title
                 );
                 return Err(e);
@@ -1182,8 +1182,8 @@ pub async fn run(profile: &str, args: AddArgs) -> Result<()> {
     } else {
         println!();
         println!("Next steps:");
-        println!("  aoe session start {}   # Start the session", final_title);
-        println!("  aoe                         # Open TUI and press Enter to attach");
+        println!("  boa session start {}   # Start the session", final_title);
+        println!("  boa                         # Open TUI and press Enter to attach");
     }
 
     Ok(())
@@ -1363,7 +1363,7 @@ fn resolve_tool_for_add(args: &AddArgs, config: &crate::session::Config) -> Resu
                 if !crate::tmux::is_binary_on_path(&bin) {
                     bail!(
                         "'{}' (from session.agent_command_override) is not installed or not on $PATH.\n\
-                         See all supported agents: aoe agents",
+                         See all supported agents: boa agents",
                         bin
                     );
                 }
@@ -1374,7 +1374,7 @@ fn resolve_tool_for_add(args: &AddArgs, config: &crate::session::Config) -> Resu
                         bail!(
                             "'{}' is not installed or not on $PATH.\n\
                              Install with: {}\n\
-                             See all supported agents: aoe agents",
+                             See all supported agents: boa agents",
                             agent_def.binary,
                             agent_def.install_hint
                         );
@@ -1487,7 +1487,7 @@ fn resolve_named_tool(tool: &str, config: &crate::session::Config) -> Result<Nam
                 bail!(
                     "'{}' is not installed or not on $PATH.\n\
                      Install with: {}\n\
-                     See all supported agents: aoe agents",
+                     See all supported agents: boa agents",
                     agent_def.binary,
                     agent_def.install_hint
                 );

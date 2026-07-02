@@ -3,7 +3,7 @@
 ## Launch the TUI
 
 ```bash
-aoe
+boa
 ```
 
 This opens the dashboard. You'll see an empty session list on first run.
@@ -31,7 +31,7 @@ Press `?` in the TUI for the full keymap.
 **From the CLI:**
 
 ```bash
-aoe add /path/to/project
+boa add /path/to/project
 ```
 
 The session appears in the dashboard with status **Idle**.
@@ -40,17 +40,17 @@ The session appears in the dashboard with status **Idle**.
 
 These two words show up around the dashboard and mean different things.
 
-A **project** is a saved directory path, usually a git repository, that you register once so you can start sessions from it without retyping the path. It is an AoE registry entry, not a Claude Code project (which is tied to a directory by Claude itself). You do not have to register your repos; `n` and `aoe add <path>` work on any path. Registering is only a convenience for repos you reach for often.
+A **project** is a saved directory path, usually a git repository, that you register once so you can start sessions from it without retyping the path. It is a BOA registry entry, not a Claude Code project (which is tied to a directory by Claude itself). You do not have to register your repos; `n` and `boa add <path>` work on any path. Registering is only a convenience for repos you reach for often.
 
 Add a project two ways:
 
 ```bash
-aoe project add /path/to/repo        # CLI
+boa project add /path/to/repo        # CLI
 ```
 
 In the TUI, press `p` to open **Manage projects**, then `a` to add one. Once a project is registered, `b` starts a new session from it (this is why `b` reports "No Projects" until you have added at least one). See [Multi-Repo Workspaces](guides/multi-repo-workspaces.md#the-project-registry) for scopes and multi-repo sessions.
 
-A **group** is unrelated to projects. It is a label you assign to existing sessions to sort them in the sidebar (for example `fix` and `feature`), set from the session rename dialog or with `aoe group move`. Projects are where sessions start; groups are how sessions are bucketed once they exist. See the [Web Dashboard grouping section](guides/web/dashboard.md#sidebar-grouping-by-repo-by-group-or-both) for the grouping axes.
+A **group** is unrelated to projects. It is a label you assign to existing sessions to sort them in the sidebar (for example `fix` and `feature`), set from the session rename dialog or with `boa group move`. Projects are where sessions start; groups are how sessions are bucketed once they exist. See the [Web Dashboard grouping section](guides/web/dashboard.md#sidebar-grouping-by-repo-by-group-or-both) for the grouping axes.
 
 ## Attach to a Session
 
@@ -72,32 +72,32 @@ To work on a new branch with its own directory:
 
 ```bash
 # CLI
-aoe add . -w feat/my-feature -b
+boa add . -w feat/my-feature -b
 
 # TUI: press n, enter a title, enable Worktree
 # Optional: press Ctrl+P on Worktree and fill in Name
 ```
 
-This creates a new git branch, a worktree directory, and a session pointing at it. When you delete the session, AoE offers to clean up the worktree too.
+This creates a new git branch, a worktree directory, and a session pointing at it. When you delete the session, BOA offers to clean up the worktree too.
 
 ## Attach to Existing Work
 
-**Attach to an existing branch or worktree.** Omit `-b` and AoE re-uses the worktree for that branch, or checks the branch out into a new worktree if none exists:
+**Attach to an existing branch or worktree.** Omit `-b` and BOA re-uses the worktree for that branch, or checks the branch out into a new worktree if none exists:
 
 ```bash
-aoe add . -w feat/my-feature
+boa add . -w feat/my-feature
 ```
 
-In the TUI, press `Ctrl+P` on the Worktree field and toggle **Attach to existing branch** (same toggle in the web wizard). Removing the session only cleans up worktrees AoE created; attached ones are left alone. See [Worktrees Reference](guides/worktrees.md) for the full matrix.
+In the TUI, press `Ctrl+P` on the Worktree field and toggle **Attach to existing branch** (same toggle in the web wizard). Removing the session only cleans up worktrees BOA created; attached ones are left alone. See [Worktrees Reference](guides/worktrees.md) for the full matrix.
 
-**Resume a Claude Code conversation.** After attaching, run `/resume` in the Claude pane and pick a conversation. AoE captures the session ID and persists it so the next launch reattaches automatically. See [Session Resume](guides/session-resume.md), including `aoe session set-session-id` to set the Claude UUID explicitly.
+**Resume a Claude Code conversation.** After attaching, run `/resume` in the Claude pane and pick a conversation. BOA captures the session ID and persists it so the next launch reattaches automatically. See [Session Resume](guides/session-resume.md), including `boa session set-session-id` to set the Claude UUID explicitly.
 
 ## Create a Sandboxed Session
 
 To run an agent inside a Docker container:
 
 ```bash
-aoe add --sandbox .
+boa add --sandbox .
 ```
 
 In the TUI, toggle the sandbox checkbox when creating a session. The agent runs in an isolated container with your project mounted at `/workspace` and authentication credentials shared via persistent Docker volumes.
@@ -106,22 +106,22 @@ Requires Docker to be installed.
 
 ## Choose a Different Agent
 
-By default, AoE uses Claude Code. To use a different tool:
+By default, BOA uses Claude Code. To use a different tool:
 
 ```bash
-aoe add -c opencode .   # or any other supported agent
+boa add -c opencode .   # or any other supported agent
 ```
 
 In the TUI, select the tool from the dropdown in the new session dialog.
 
 ## Use the Web Dashboard
 
-Prefer a browser? Run `aoe serve` to start the web dashboard:
+Prefer a browser? Run `boa serve` to start the web dashboard:
 
 ```bash
-aoe serve                         # localhost only
-aoe serve --host 0.0.0.0          # accessible from other devices (use with VPN)
-aoe serve --daemon                # run in background
+boa serve                         # localhost only
+boa serve --host 0.0.0.0          # accessible from other devices (use with VPN)
+boa serve --daemon                # run in background
 ```
 
 Open the printed URL in any browser (phone, tablet, or another computer) for the same session list, live terminal streaming, and session controls. Install it as a PWA for an app-like experience. See the [Web Dashboard Guide](guides/web-dashboard.md) for details.

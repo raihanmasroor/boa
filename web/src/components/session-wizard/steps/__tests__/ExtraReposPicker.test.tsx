@@ -159,6 +159,6 @@ describe("ExtraReposPicker", () => {
     fetchProjects.mockResolvedValue([]);
     const { container } = setup();
     await waitFor(() => expect(container.textContent).toContain("No registered projects yet"));
-    expect(container.textContent).toContain("aoe project add");
+    expect(container.textContent).toContain("boa project add");
   });
 });

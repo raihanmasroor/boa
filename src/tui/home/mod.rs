@@ -3640,7 +3640,7 @@ impl HomeView {
     pub fn show_quit_confirm(&mut self) {
         self.confirm_dialog = Some(
             ConfirmDialog::new(
-                "Quit Agent of Empires",
+                "Quit Band of Agents",
                 "Quit?\nYour sessions persist in the background.",
                 "quit",
             )
@@ -4409,7 +4409,7 @@ impl HomeView {
         if projects.is_empty() {
             self.info_dialog = Some(InfoDialog::new(
                 "No Projects",
-                "No registered projects available. Add one with `aoe project add <path>`.",
+                "No registered projects available. Add one with `boa project add <path>`.",
             ));
             return;
         }

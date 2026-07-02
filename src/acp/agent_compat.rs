@@ -235,14 +235,14 @@ impl StartupError {
                 install_command,
                 ..
             } => format!(
-                "{package_name} {installed} installed; aoe requires >={required}. Run: {install_command}",
+                "{package_name} {installed} installed; BOA requires >={required}. Run: {install_command}",
             ),
             Self::MissingAgentInfo {
                 expected_package,
                 install_command,
                 ..
             } => format!(
-                "Adapter did not report its package version. aoe requires {expected_package} >={CLAUDE_AGENT_ACP_MIN_VERSION}. Run: {install_command}",
+                "Adapter did not report its package version. BOA requires {expected_package} >={CLAUDE_AGENT_ACP_MIN_VERSION}. Run: {install_command}",
             ),
             Self::MismatchedAgentName {
                 expected,
@@ -250,7 +250,7 @@ impl StartupError {
                 install_command,
                 ..
             } => format!(
-                "Adapter reported package name `{received}` but aoe expected `{expected}`. Run: {install_command}",
+                "Adapter reported package name `{received}` but BOA expected `{expected}`. Run: {install_command}",
             ),
             Self::UnparseableAgentVersion {
                 package_name,
@@ -259,10 +259,10 @@ impl StartupError {
                 install_command,
                 ..
             } => format!(
-                "{package_name} reported version `{raw_version}` which is not valid semver. aoe requires >={required}. Run: {install_command}",
+                "{package_name} reported version `{raw_version}` which is not valid semver. BOA requires >={required}. Run: {install_command}",
             ),
             Self::UnsupportedProtocolVersion { expected, received } => format!(
-                "Adapter speaks ACP protocol {received}; aoe requires {expected}.",
+                "Adapter speaks ACP protocol {received}; BOA requires {expected}.",
             ),
         }
     }

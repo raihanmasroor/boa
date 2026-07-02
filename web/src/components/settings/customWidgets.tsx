@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchAgents, fetchThemes } from "../../lib/api";
+import { themeLabel } from "../../lib/theme";
 import { dispatchThemePickerChanged } from "../../hooks/useResolvedTheme";
 import type { AgentInfo, SettingsFieldDescriptor } from "../../lib/types";
 import { SelectField, SliderField, TextField } from "./FormFields";
@@ -53,7 +54,7 @@ export function ThemeNameWidget({ descriptor, value, save }: CustomWidgetProps) 
           dispatchThemePickerChanged(v || undefined);
         }
       }}
-      options={themes.map((t) => ({ value: t, label: t }))}
+      options={themes.map((t) => ({ value: t, label: themeLabel(t) }))}
     />
   );
 }

@@ -620,7 +620,7 @@ async fn start_session(profile: &str, args: SessionIdArgs) -> Result<()> {
 fn bail_if_acp(inst: &crate::session::Instance, verb: &str) -> Result<()> {
     if inst.is_structured() {
         bail!(
-            "structured view sessions are managed by `aoe serve`; \
+            "structured view sessions are managed by `boa serve`; \
              cannot `aoe session {verb}` from the CLI.\n\
              The ACP worker is auto-spawned within ~2s of an structured-view session \
              while serve is running, or on next `aoe serve` startup.\n\
@@ -994,7 +994,7 @@ async fn attach_session(profile: &str, args: SessionIdArgs) -> Result<()> {
 
     if !tmux_session.exists() {
         bail!(
-            "Session is not running. Start it first with: aoe session start {}",
+            "Session is not running. Start it first with: boa session start {}",
             args.identifier
         );
     }
@@ -1023,7 +1023,7 @@ async fn show_session(profile: &str, args: ShowArgs) -> Result<()> {
                     tmux_name == session_name
                 })
                 .ok_or_else(|| {
-                    anyhow::anyhow!("Current tmux session is not an Agent of Empires session")
+                    anyhow::anyhow!("Current tmux session is not a Band of Agents session")
                 })?
                 .clone()
         } else {
@@ -1085,7 +1085,7 @@ async fn capture_session(profile: &str, args: CaptureArgs) -> Result<()> {
                     tmux_name == session_name
                 })
                 .ok_or_else(|| {
-                    anyhow::anyhow!("Current tmux session is not an Agent of Empires session")
+                    anyhow::anyhow!("Current tmux session is not a Band of Agents session")
                 })?
         } else {
             bail!("Not in a tmux session. Specify a session ID or run inside tmux.");
@@ -1174,7 +1174,7 @@ async fn rename_session(profile: &str, args: RenameArgs) -> Result<()> {
                     tmux_name == session_name
                 })
                 .ok_or_else(|| {
-                    anyhow::anyhow!("Current tmux session is not an Agent of Empires session")
+                    anyhow::anyhow!("Current tmux session is not a Band of Agents session")
                 })?
         } else {
             bail!("Not in a tmux session. Specify a session ID or run inside tmux.");
@@ -1341,7 +1341,7 @@ async fn set_worktree_name(profile: &str, args: SetWorktreeNameArgs) -> Result<(
                     tmux_name == session_name
                 })
                 .ok_or_else(|| {
-                    anyhow::anyhow!("Current tmux session is not an Agent of Empires session")
+                    anyhow::anyhow!("Current tmux session is not a Band of Agents session")
                 })?
         } else {
             bail!("Not in a tmux session. Specify a session ID or run inside tmux.");
@@ -1360,7 +1360,7 @@ async fn set_worktree_name(profile: &str, args: SetWorktreeNameArgs) -> Result<(
             .session
             .tie_workdir_to_name,
     ) {
-        bail!("Renaming is unified while session.tie_workdir_to_name is on; use 'aoe session rename --title <name>' instead, and the worktree directory follows. Disable the setting to edit the directory independently.");
+        bail!("Renaming is unified while session.tie_workdir_to_name is on; use 'boa session rename --title <name>' instead, and the worktree directory follows. Disable the setting to edit the directory independently.");
     }
     // Persisted status can lag the real tmux pane, and moving the worktree of
     // a still-running session is unsafe. Recompute from live tmux state before
@@ -1468,7 +1468,7 @@ async fn current_session(args: CurrentArgs) -> Result<()> {
         }
     }
 
-    bail!("Current tmux session is not an Agent of Empires session")
+    bail!("Current tmux session is not a Band of Agents session")
 }
 
 async fn set_session_id(profile: &str, args: SetSessionIdArgs) -> Result<()> {

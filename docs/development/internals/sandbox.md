@@ -4,7 +4,7 @@ This documents sandbox implementation details for contributors. If you just want
 
 ## Lifecycle
 
-1. **Session creation:** `aoe add --sandbox` records the sandbox configuration on the session.
+1. **Session creation:** `boa add --sandbox` records the sandbox configuration on the session.
 2. **Container start:** Starting the session creates/starts the Docker container with the appropriate volume mounts.
 3. **tmux + docker exec:** Host tmux runs `docker exec -it <container> <tool>` to launch the selected agent.
 4. **Cleanup:** Removing the session deletes the container (when `auto_cleanup`).
@@ -21,7 +21,7 @@ This documents sandbox implementation details for contributors. If you just want
 
 We share host agent credentials into containers so agents authenticate without re-login. The constraint: bind-mounting the actual host config dirs would let container writes mutate host files. Instead, per agent, we maintain a **shared sandbox directory** that all containers using that agent mount read-write.
 
-For each agent whose host config dir exists, AoE syncs credential files into that agent's sandbox dir, then mounts it RW into every container for that agent. Containers read credentials and write runtime state freely without touching host config. In-container changes (permission approvals, settings tweaks) persist across sessions because all containers share one directory. If an agent's host config dir doesn't exist (agent not installed locally), AoE still creates and mounts the sandbox dir so the agent can write auth/state that persists.
+For each agent whose host config dir exists, BOA syncs credential files into that agent's sandbox dir, then mounts it RW into every container for that agent. Containers read credentials and write runtime state freely without touching host config. In-container changes (permission approvals, settings tweaks) persist across sessions because all containers share one directory. If an agent's host config dir doesn't exist (agent not installed locally), BOA still creates and mounts the sandbox dir so the agent can write auth/state that persists.
 
 Sandbox dirs are **never auto-deleted**, not even when all sandboxed sessions are removed. This is deliberate: a later sandbox reuses the accumulated state instead of re-prompting setup.
 
@@ -34,7 +34,7 @@ Sandbox dirs are **never auto-deleted**, not even when all sandboxed sessions ar
 ### Platform-Specific Authentication
 
 - **Linux:** Credential files (e.g. `.credentials.json`) live in the agent's config dir and sync automatically.
-- **macOS:** Some agents store credentials in the Keychain, not on disk. AoE extracts them at sync time and writes them as files in the sandbox dir so the container can authenticate. Claude Code OAuth tokens are extracted from the Keychain and written as `.credentials.json`. If there's no Keychain entry (e.g. you auth via `ANTHROPIC_API_KEY`), the sandbox dir still works; pass the key via the `environment` config.
+- **macOS:** Some agents store credentials in the Keychain, not on disk. BOA extracts them at sync time and writes them as files in the sandbox dir so the container can authenticate. Claude Code OAuth tokens are extracted from the Keychain and written as `.credentials.json`. If there's no Keychain entry (e.g. you auth via `ANTHROPIC_API_KEY`), the sandbox dir still works; pass the key via the `environment` config.
 
 ### Credential Refresh
 
@@ -46,7 +46,7 @@ Each agent's shared sandbox dir lives inside that agent's own config dir as a `s
 
 ### Named-Volume Migration
 
-Older AoE stored agent auth in named Docker volumes (e.g. `aoe-claude-auth`). On upgrade, AoE migrates that data into the sandbox dirs automatically. The old volumes are **not** deleted; remove them manually once confirmed:
+Older BOA stored agent auth in named Docker volumes (e.g. `aoe-claude-auth`). On upgrade, BOA migrates that data into the sandbox dirs automatically. The old volumes are **not** deleted; remove them manually once confirmed:
 
 ```bash
 docker volume rm aoe-claude-auth aoe-opencode-auth aoe-codex-auth aoe-gemini-auth aoe-vibe-auth
@@ -64,16 +64,16 @@ Native adapters that share a binary with the underlying CLI (`opencode acp`, `ge
 
 ## Claude on Vertex AI
 
-If `CLAUDE_CODE_USE_VERTEX` is set and non-empty on the host, AoE wires up Claude+Vertex sessions automatically (only when the active agent is `claude`; other agents get neither the vars nor the cred mount even if the host flag is set):
+If `CLAUDE_CODE_USE_VERTEX` is set and non-empty on the host, BOA wires up Claude+Vertex sessions automatically (only when the active agent is `claude`; other agents get neither the vars nor the cred mount even if the host flag is set):
 
 - `CLAUDE_CODE_USE_VERTEX`, `ANTHROPIC_VERTEX_PROJECT_ID`, `ANTHROPIC_VERTEX_REGION`, and `CLOUD_ML_REGION` are forwarded when set.
-- GCP Application Default Credentials are bind-mounted read-only at the well-known container path `/root/.config/gcloud/application_default_credentials.json`. AoE uses `$GOOGLE_APPLICATION_CREDENTIALS` if set, else `~/.config/gcloud/application_default_credentials.json`. `GOOGLE_APPLICATION_CREDENTIALS` itself is not forwarded; client libraries discover the well-known path.
+- GCP Application Default Credentials are bind-mounted read-only at the well-known container path `/root/.config/gcloud/application_default_credentials.json`. BOA uses `$GOOGLE_APPLICATION_CREDENTIALS` if set, else `~/.config/gcloud/application_default_credentials.json`. `GOOGLE_APPLICATION_CREDENTIALS` itself is not forwarded; client libraries discover the well-known path.
 
 `ANTHROPIC_API_KEY` is not auto-forwarded; list it in `sandbox.environment` if you want it in-container.
 
 ## GitHub Authentication with `GH_TOKEN`
 
-Forwarding `GH_TOKEN` (e.g. `"GH_TOKEN=$GH_TOKEN"` in `sandbox.environment`) lets both `gh` and plain `git push` authenticate against `github.com` inside the container. AoE seeds a scoped credential helper in the sandbox gitconfig that reads the token at push time; no credential is written to disk.
+Forwarding `GH_TOKEN` (e.g. `"GH_TOKEN=$GH_TOKEN"` in `sandbox.environment`) lets both `gh` and plain `git push` authenticate against `github.com` inside the container. BOA seeds a scoped credential helper in the sandbox gitconfig that reads the token at push time; no credential is written to disk.
 
 Security notes:
 

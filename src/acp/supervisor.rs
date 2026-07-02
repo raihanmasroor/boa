@@ -1870,7 +1870,7 @@ impl<S: BroadcastSink> Supervisor<S> {
                                 info!(
                                     target: "acp.supervisor",
                                     session = %session_id,
-                                    "worker registry deleted by user (`aoe acp stop|kill`); \
+                                    "worker registry deleted by user (`boa acp stop|kill`); \
                                      dropping WorkerHandle without respawn"
                                 );
                                 // Emit a Stopped so the UI clears any
@@ -2394,7 +2394,7 @@ impl<S: BroadcastSink> Supervisor<S> {
                 target: "acp.supervisor",
                 count = drained.len(),
                 "detaching structured view workers; they continue running. \
-                 Use `aoe acp stop` to terminate."
+                 Use `boa acp stop` to terminate."
             );
             drained
         };

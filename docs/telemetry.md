@@ -1,6 +1,6 @@
 # Telemetry
 
-Agent of Empires can send **anonymous, opt-in** usage telemetry so the
+Band of Agents can send **anonymous, opt-in** usage telemetry so the
 maintainers can answer basic product questions (how many installs are active,
 how many sessions people keep open, which agents/models/platforms matter, TUI
 vs web). It is **off by default**, carries no PII and no content, and honors
@@ -12,13 +12,13 @@ Only when you opt in, and only aggregate counts (never a stream of actions). The
 full wire format is the closed schema in `src/telemetry/events.rs`. Three event
 kinds:
 
-- **`process_start`** when the TUI or `aoe serve` boots: surface, aoe version,
+- **`process_start`** when the TUI or `boa serve` boots: surface, BOA version,
   OS, CPU arch, and version-health signals (below).
-- **`cli_usage`** from `aoe <subcommand>` runs: surface, version, OS, arch, and a
+- **`cli_usage`** from `boa <subcommand>` runs: surface, version, OS, arch, and a
   count map of allowlisted subcommand names (e.g. `{add: 5, list: 2}`).
   Accumulated on disk and flushed as one POST per install per day. No argument,
   flag, or path is attached.
-- **`usage_snapshot`** from the TUI and `aoe serve`, on start, shutdown, and
+- **`usage_snapshot`** from the TUI and `boa serve`, on start, shutdown, and
   about every 4 hours. A point-in-time summary of the install:
   - session counts by status (running / idle / errored), and how many use a
     sandbox, the structured view, or yolo mode,
@@ -30,7 +30,7 @@ kinds:
   - which opt-in features are on, which surfaces were opened, and coarse
     structured-view interaction counts (approvals resolved and their
     allow/deny mix, agent switches, plan-mode use, queued prompts),
-  - for `aoe serve` only, coarse deployment enums: auth mode (`token` /
+  - for `boa serve` only, coarse deployment enums: auth mode (`token` /
     `passphrase` / `none`) and exposure (`tunnel` / `tailscale` / `local`),
   - a plugin census: installed count per source (`builtin` / `featured` /
     `community` / `local`) and the active state of builtin and featured
@@ -69,7 +69,7 @@ never derived from hostname, username, MAC, or filesystem.
 
 To count distinct installs, opt-in generates a random UUID stored in
 `<app_dir>/telemetry.json` (owner-only), kept out of `config.toml` on purpose
-since people paste config into bug reports. Opting out deletes the file. `aoe
+since people paste config into bug reports. Opting out deletes the file. `BOA
 telemetry reset-id` rotates it, which makes that install count as a new one in
 the aggregate; only reset if you want to disassociate from prior counts.
 
@@ -77,7 +77,7 @@ the aggregate; only reset if you want to disassociate from prior counts.
 
 Telemetry is **off by default**. Turn it on or off in any surface:
 
-- **CLI**: `aoe telemetry status | enable | disable | reset-id`
+- **CLI**: `boa telemetry status | enable | disable | reset-id`
 - **TUI**: Settings, System, Telemetry
 - **Web dashboard**: Settings, Telemetry, or the one-time consent prompt on first load
 
@@ -98,5 +98,5 @@ counts. `AOE_TELEMETRY_ENDPOINT` overrides the target, so you can point it at a
 local sink to see exactly what is sent. Sends are best-effort with a ~2s
 timeout; failures are swallowed and never block the tool, and there is no
 offline buffering. The web dashboard never posts directly (that would leak its
-IP and User-Agent); it reports local state to `aoe serve`, which does all
+IP and User-Agent); it reports local state to `boa serve`, which does all
 sending.

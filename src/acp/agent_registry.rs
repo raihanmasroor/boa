@@ -155,7 +155,7 @@ impl AgentRegistry {
             AgentSpec {
                 command: "${aoe_data_dir}/acp-worker/dist/aoe-agent".into(),
                 args: vec![],
-                description: "aoe's bundled multi-provider agent (Vercel AI SDK 6)".into(),
+                description: "BOA's bundled multi-provider agent (Vercel AI SDK 6)".into(),
                 env_allowlist: None,
             },
         );

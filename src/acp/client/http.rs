@@ -62,7 +62,7 @@ pub enum HttpError {
     // `AOE_DAEMON_TOKEN` was misleading on `--auth=passphrase` and
     // `--auth=none` daemons that never had a token in the first
     // place. See #1525.
-    #[error("daemon rejected the request (401); restart `aoe serve` or check `--auth` mode")]
+    #[error("daemon rejected the request (401); restart `boa serve` or check `--auth` mode")]
     Unauthorized,
     #[error("daemon returned HTTP {status}: {body}")]
     Server { status: StatusCode, body: String },

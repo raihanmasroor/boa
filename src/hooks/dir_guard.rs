@@ -202,7 +202,7 @@ where
             Err(e) => {
                 tracing::error!(
                     target: "hooks.guard",
-                    "hook base init failed: {e:#}. AoE will fall back to pane-detection. \
+                    "hook base init failed: {e:#}. BOA will fall back to pane-detection. \
                      Recover: rm -rf {}",
                     hook_base_path().display()
                 );

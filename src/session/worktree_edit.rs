@@ -128,7 +128,7 @@ pub struct WorktreeEditOutcome {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorktreeEditError {
-    #[error("this worktree is not managed by aoe; its workdir name cannot be edited")]
+    #[error("this worktree is not managed by BOA; its workdir name cannot be edited")]
     NotManaged,
     #[error("the new workdir name is empty")]
     EmptyName,

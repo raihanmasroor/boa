@@ -112,9 +112,9 @@ test.describe("Command palette", () => {
     await page.goto("/");
     await page.locator("body").click();
     await page.keyboard.press("ControlOrMeta+k");
-    await page.getByPlaceholder("Search actions, sessions, settings…").fill("About Agent");
+    await page.getByPlaceholder("Search actions, sessions, settings…").fill("About Band");
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("heading", { name: "Agent of Empires" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Band of Agents" })).toBeVisible();
   });
 
   test("mobile: palette icon button opens palette", async ({ page }) => {

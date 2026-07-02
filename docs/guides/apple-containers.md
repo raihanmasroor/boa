@@ -1,6 +1,6 @@
 # Apple Containers
 
-`aoe` supports **Apple Container** as a native macOS sandbox runtime, a lightweight alternative to Docker Desktop built on macOS virtualization. Once configured it behaves like the Docker sandbox (see [Docker Sandbox](sandbox.md)). The Apple-Container-specific differences are below.
+`boa` supports **Apple Container** as a native macOS sandbox runtime, a lightweight alternative to Docker Desktop built on macOS virtualization. Once configured it behaves like the Docker sandbox (see [Docker Sandbox](sandbox.md)). The Apple-Container-specific differences are below.
 
 ## Install
 
@@ -29,10 +29,10 @@ Scope it to a single profile to keep Docker as the global default:
 sandbox.container_runtime = "apple_container"
 ```
 
-Use it with `aoe add --profile apple .`. The TUI **Sandbox** toggle uses this runtime automatically, and shows an error if the `container` daemon is not running.
+Use it with `boa add --profile apple .`. The TUI **Sandbox** toggle uses this runtime automatically, and shows an error if the `container` daemon is not running.
 
 ## Apple-Container-specific gotchas
 
 - **Per-VM memory.** Each Apple Container runs in its own dedicated VM (Docker shares one VM across containers). As of March 2026, memory ballooning is partial: a container claims only the host memory it uses (up to its limit) but cannot release it back until the container is removed or restarted.
-- **No read-only mounts.** Apple Container does not support the `:ro` flag. If `mount_ssh = true` or other read-only volumes are configured, `aoe` downgrades them to read-write and warns in the logs. Named volumes are also unsupported and fall back to anonymous volumes.
+- **No read-only mounts.** Apple Container does not support the `:ro` flag. If `mount_ssh = true` or other read-only volumes are configured, `boa` downgrades them to read-write and warns in the logs. Named volumes are also unsupported and fall back to anonymous volumes.
 - **Separate image store.** Pull the image into Apple Container's own store with `container image pull ghcr.io/agent-of-empires/aoe-sandbox:latest`.

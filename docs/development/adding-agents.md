@@ -11,7 +11,7 @@
 | `src/session/container_config.rs` | Config mount for Docker sandbox |
 | `src/acp/agent_registry.rs` | Structured view ACP adapter entry (only if the agent ships an ACP server) |
 | `src/acp/agent_profiles.rs` + `web/src/lib/agentProfiles.ts` | Structured view profile (clear aliases, meta namespace, capability gates, tool aliases) |
-| `src/acp/install_hints.rs` | Install hint surfaced by `aoe acp doctor` and handshake failures |
+| `src/acp/install_hints.rs` | Install hint surfaced by `boa acp doctor` and handshake failures |
 | `docker/Dockerfile` | Install agent in sandbox image |
 | `docs/structured-view.md` | Per-agent structured view feature matrix |
 | `README.md`, `docs/` | Documentation updates |
@@ -22,7 +22,7 @@ Each level is additive; do only what the agent supports.
 
 | Level | What it gives | Requires |
 |-------|---------------|----------|
-| 1. Basic | Appears in `aoe agents`, sessions launch, status always "Idle" | `AgentDef` + stub `detect_status` |
+| 1. Basic | Appears in `boa agents`, sessions launch, status always "Idle" | `AgentDef` + stub `detect_status` |
 | 2. Pane-parse status | Status inferred from terminal output; no agent config, brittle to UI changes | `detect_<agent>_status(&str) -> Status` (OpenCode, Vibe, Copilot, Pi, Droid) |
 | 3. Hook status | Agent writes status to a file via hooks; reliable, survives UI changes | `hook_config` + generic `install_hooks()` or a custom `install_<agent>_hooks()` (Claude, Cursor, Gemini generic; Codex TOML, Hermes YAML, Kiro JSON) |
 | 4. Session resume | Restart resumes the prior conversation | `resume_strategy` in `AgentDef` |
@@ -55,7 +55,7 @@ cargo fmt && cargo clippy -- -D warnings
 cargo test --lib agents
 cargo test --lib <youragent>
 cargo test --lib container_config
-cargo build && ./target/debug/aoe agents   # verify detection
+cargo build && ./target/debug/boa agents   # verify detection
 ```
 
 ## Hook format reference

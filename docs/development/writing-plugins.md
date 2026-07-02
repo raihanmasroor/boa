@@ -1,6 +1,6 @@
 # Writing Plugins
 
-This guide takes you from nothing to an installed, running Agent of Empires
+This guide takes you from nothing to an installed, running Band of Agents
 plugin. For the full manifest schema see the
 [Plugin API Reference](../plugin-api.md); for the architecture and security model
 see [Plugin System Internals](internals/plugin-system.md). For installing and
@@ -55,7 +55,7 @@ slot = "pane"
 id = "my_plugin_pane"
 ```
 
-Pick an `id` outside the reserved `aoe.*` and `agent-of-empires.*` namespaces.
+Pick an `id` outside the reserved `boa.*` and `agent-of-empires.*` namespaces.
 Set `api_version` to the schema version you target (currently `6`) and
 `aoe_version` to the host range you have tested against. Every key is documented
 in the [Plugin API Reference](../plugin-api.md).
@@ -114,10 +114,10 @@ with `kind = "release-binary"`; see the reference.
 ## Install and test locally
 
 ```sh
-aoe plugin install ./my-plugin     # runs the build steps, prompts for grants
-aoe plugin list
-aoe plugin update my-plugin         # re-runs build, re-approves changed grants
-aoe plugin uninstall my-plugin
+boa plugin install ./my-plugin     # runs the build steps, prompts for grants
+boa plugin list
+boa plugin update my-plugin         # re-runs build, re-approves changed grants
+boa plugin uninstall my-plugin
 ```
 
 Drive the worker by hand before installing, to confirm the protocol:
@@ -134,6 +134,6 @@ guard on the protocol.
 
 Push a `vX.Y.Z` tag to cut a GitHub release (the starter's release workflow does
 the rest). Users install the latest release with
-`aoe plugin install gh:your-org/my-plugin`. To be listed in the Agent of Empires
+`boa plugin install gh:your-org/my-plugin`. To be listed in the Band of Agents
 featured index, which lets a plugin claim a verified namespace, open a PR adding
 your release's source tree hash to the featured index in the main repository.

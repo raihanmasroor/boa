@@ -107,7 +107,7 @@ pub async fn run(args: UpdateArgs) -> Result<()> {
     if let InstallMethod::Tarball { binary_path } = &method {
         eprintln!();
         println!(
-            "✓ Updated to v{}. Restart `aoe` to use the new version.",
+            "✓ Updated to v{}. Restart `boa` to use the new version.",
             info.latest_version
         );
         #[cfg(feature = "serve")]
@@ -194,7 +194,7 @@ fn handle_daemon_restart_after_update(binary_path: &Path, yes: bool) -> Result<(
             }
         }
         RestartDecision::Prompt => {
-            print!("Restart the running aoe serve daemon now? [Y/n] ");
+            print!("Restart the running boa serve daemon now? [Y/n] ");
             io::stdout().flush()?;
             let mut answer = String::new();
             io::stdin().read_line(&mut answer)?;
@@ -215,8 +215,8 @@ fn handle_daemon_restart_after_update(binary_path: &Path, yes: bool) -> Result<(
 /// point the user at the supervisor that owns the process instead.
 #[cfg(feature = "serve")]
 fn external_restart_hint() -> &'static str {
-    "  An `aoe serve` daemon is running but was not started by\n  \
-     `aoe serve --daemon`; restart it through whatever launched it (your\n  \
+    "  A `boa serve` daemon is running but was not started by\n  \
+     `boa serve --daemon`; restart it through whatever launched it (your\n  \
      service manager, or the terminal it runs in) so it picks up the new\n  \
      binary."
 }
@@ -237,7 +237,7 @@ fn restart_via_new_binary(binary_path: &Path) {
             println!("{}", daemon_restart_hint());
         }
         Err(e) => {
-            eprintln!("Failed to launch `aoe serve --restart`: {e}");
+            eprintln!("Failed to launch `boa serve --restart`: {e}");
             println!("{}", daemon_restart_hint());
         }
     }
@@ -252,7 +252,7 @@ fn restart_via_new_binary(binary_path: &Path) {
 /// build automatically (see #1754). Surfacing this avoids the silent
 /// mixed-version trap where a freshly-shipped fix appears not to work.
 fn daemon_restart_hint() -> &'static str {
-    "  If `aoe serve` is running, restart it (`aoe serve --restart`) so the daemon\n  \
+    "  If `boa serve` is running, restart it (`boa serve --restart`) so the daemon\n  \
      picks up the new binary. Acp workers from the old build finish their\n  \
      current turn, then respawn on the new build."
 }
@@ -265,7 +265,7 @@ fn daemon_restart_hint() -> &'static str {
 /// eval-on-startup setup avoids the problem entirely.
 fn completion_refresh_hint() -> &'static str {
     "  If you use static shell completions, regenerate them so they pick up new\n  \
-     commands, e.g. `aoe completion zsh > ~/.zfunc/_aoe`. Eval-on-startup setups\n  \
+     commands, e.g. `boa completion zsh > ~/.zfunc/_boa`. Eval-on-startup setups\n  \
      stay in sync automatically: https://www.agent-of-empires.com/guides/shell-completions/"
 }
 
@@ -276,7 +276,7 @@ mod tests {
     #[test]
     fn hint_points_at_regen_and_eval_alternative() {
         let hint = completion_refresh_hint();
-        assert!(hint.contains("aoe completion"));
+        assert!(hint.contains("boa completion"));
         assert!(hint.contains("guides/shell-completions"));
         // Mentions the always-fresh alternative so users can avoid manual refresh.
         assert!(hint.to_lowercase().contains("eval"));
@@ -286,7 +286,7 @@ mod tests {
     fn daemon_hint_mentions_restart_and_respawn() {
         let hint = daemon_restart_hint();
         // Points the user at the restart that actually applies the binary.
-        assert!(hint.contains("aoe serve --restart"));
+        assert!(hint.contains("boa serve --restart"));
         // Sets the expectation that workers converge to the new build.
         assert!(hint.to_lowercase().contains("respawn"));
     }

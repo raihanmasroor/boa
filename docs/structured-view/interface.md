@@ -9,15 +9,15 @@ readable. For setup and the overview, see [Structured view](../structured-view.m
 
 ## TUI vs web dashboard
 
-Both surfaces consume the same `aoe serve` daemon over the same HTTP/WS
+Both surfaces consume the same `boa serve` daemon over the same HTTP/WS
 surface, so the conversation log, pending approvals, and worker state
 stay in sync.
 
 - **Sessions started in structured view** appear in the TUI session list
   with a `[acp]` badge. Pressing Enter opens the native structured view,
-  which requires an `aoe serve` daemon to be already running. If one
+  which requires a `boa serve` daemon to be already running. If one
   isn't, the view shows an actionable error pointing at
-  `aoe serve --daemon` (localhost), `aoe serve --daemon --remote`
+  `boa serve --daemon` (localhost), `boa serve --daemon --remote`
   (Tailscale/Cloudflare), or `AOE_DAEMON_URL` (attach to a remote daemon
   you already have running). The TUI does not start a daemon for you, so
   the choice between localhost, tunnel, and named tunnel stays explicit.
@@ -257,7 +257,7 @@ when the spinner is stuck "active" but the daemon no longer has a turn in
 flight (for example after the worker was restarted mid-turn). The second
 press no longer waits for the server to confirm the first cancel, so the
 button is always a working escape and you should not need
-`aoe acp restart` to clear a wedged spinner.
+`boa acp restart` to clear a wedged spinner.
 
 Force stop is a hard interrupt. The agent resumes from its saved
 transcript on the next prompt, but any partial output from the tool that

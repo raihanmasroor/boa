@@ -46,15 +46,15 @@ async fn install_bundled() -> Result<()> {
                 }
 
                 println!("\n💡 Next steps:");
-                println!("  1. Launch the TUI: aoe");
+                println!("  1. Launch the TUI: boa");
                 println!("  2. Press 's' to open Settings");
                 println!("  3. Navigate to Sound category");
                 println!("  4. Enable sounds and configure transitions");
 
                 println!("\n🎮 Want Age of Empires II sounds instead?");
-                println!("   If you own AoE II, copy the taunt .wav files from:");
-                println!("   • (AoE II dir)/resources/_common/sound/taunt/");
-                println!("   • Or: (AoE II dir)/Sound/taunt/");
+                println!("   If you own Age of Empires II, copy the taunt .wav files from:");
+                println!("   • (Age of Empires II dir)/resources/_common/sound/taunt/");
+                println!("   • Or: (Age of Empires II dir)/Sound/taunt/");
                 println!("   To: {}", sounds_dir.display());
                 println!("\n   Then configure which sounds to use in Settings!");
             }
@@ -79,7 +79,7 @@ fn list_sounds() -> Result<()> {
 
     if sounds.is_empty() {
         println!("No sounds installed yet.");
-        println!("\nRun 'aoe sounds install' to get started.");
+        println!("\nRun 'boa sounds install' to get started.");
         return Ok(());
     }
 
@@ -93,7 +93,7 @@ fn list_sounds() -> Result<()> {
         println!("\nLocation: {}", sounds_dir.display());
     }
 
-    println!("\n💡 Test a sound: aoe sounds test <name>");
+    println!("\n💡 Test a sound: boa sounds test <name>");
 
     Ok(())
 }

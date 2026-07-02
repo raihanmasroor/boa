@@ -1,18 +1,18 @@
 # Repository Configuration & Hooks
 
-AoE supports per-repo configuration via a `.agent-of-empires/config.toml` file in your project root. This lets you define project-specific defaults and hooks that apply to every team member using AoE on that repo.
+BOA supports per-repo configuration via a `.agent-of-empires/config.toml` file in your project root. This lets you define project-specific defaults and hooks that apply to every team member using BOA on that repo.
 
 ## Getting Started
 
 Generate a template config:
 
 ```bash
-aoe init
+boa init
 ```
 
 This creates `.agent-of-empires/config.toml` with commented-out examples. Edit the file to enable the settings you need.
 
-> **Migrating from `.aoe/`?** AoE still reads the legacy `.aoe/config.toml` path, but we recommend renaming it: `mv .aoe .agent-of-empires`. If both exist, `.agent-of-empires/` takes priority.
+> **Migrating from `.boa/`?** BOA still reads the legacy `.boa/config.toml` path, but we recommend renaming it: `mv .boa .agent-of-empires`. If both exist, `.agent-of-empires/` takes priority.
 
 ## Configuration Sections
 
@@ -78,7 +78,7 @@ Container hooks get the same variables (forwarded via `docker exec -e`). Status-
 default_tool = "opencode"   # Override the default agent for this repo
 ```
 
-Any supported agent name (run `aoe add --help` to see the list).
+Any supported agent name (run `boa add --help` to see the list).
 
 ### Sandbox
 
@@ -121,15 +121,15 @@ delete_branch_on_cleanup = false
 
 ## Hook Trust System
 
-When AoE encounters hooks in a repo for the first time, it prompts you to review and approve them before execution. This prevents untrusted repos from running arbitrary commands.
+When BOA encounters hooks in a repo for the first time, it prompts you to review and approve them before execution. This prevents untrusted repos from running arbitrary commands.
 
 - Trust decisions are stored globally (shared across all profiles)
-- If hook commands change (e.g., someone updates `.agent-of-empires/config.toml`), AoE prompts for re-approval
-- Use `--trust-hooks` with `aoe add` to skip the trust prompt (useful for CI or repos you control)
+- If hook commands change (e.g., someone updates `.agent-of-empires/config.toml`), BOA prompts for re-approval
+- Use `--trust-hooks` with `boa add` to skip the trust prompt (useful for CI or repos you control)
 
 ```bash
 # Trust hooks automatically
-aoe add --trust-hooks .
+boa add --trust-hooks .
 ```
 
 ## Config Precedence

@@ -124,7 +124,7 @@ static CATALOG: &[Tip] = &[
         // Browser-neutral wording: the engine can't know the user's browser or
         // whether the dashboard is already installed.
         body: "You can install the dashboard as an app for quick access. In your browser, \
-               use the install option (Install Agent of Empires in Chrome, or Add to Home \
+               use the install option (Install Band of Agents in Chrome, or Add to Home \
                Screen on iOS) to keep it one tap away and keep notifications working.",
         trigger: TipTrigger::Rotation,
         // About the web dashboard's PWA install, irrelevant to the TUI.
@@ -180,7 +180,7 @@ static CATALOG: &[Tip] = &[
         id: "scratch-sessions",
         title: "Spin up a scratch session",
         body: "Need a throwaway? Toggle \"Skip project folder\" in the new-session wizard \
-               (or press Ctrl+Shift+N) to start a session with no repo. AoE makes a temp \
+               (or press Ctrl+Shift+N) to start a session with no repo. BOA makes a temp \
                directory and cleans it up when you delete the session.",
         trigger: TipTrigger::Rotation,
         surfaces: &[TipSurface::Web],

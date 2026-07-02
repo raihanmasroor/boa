@@ -2583,9 +2583,9 @@ impl Instance {
                     let path = (sel.resolve_config_file)(&agents_dir, &name);
                     match (sidecar.install)(&path, crate::hooks::HookInstallTarget::Host) {
                         Ok(()) => tracing::info!(target: "session.store",
-                            "Installed AoE status hooks into {} agent '{}' at {}", self.tool, name, path.display()),
+                            "Installed BOA status hooks into {} agent '{}' at {}", self.tool, name, path.display()),
                         Err(e) => tracing::warn!(target: "session.store",
-                            "Failed to install AoE hooks into {} agent '{}' at {}: {}", self.tool, name, path.display(), e),
+                            "Failed to install BOA hooks into {} agent '{}' at {}: {}", self.tool, name, path.display(), e),
                     }
                     return;
                 }
@@ -2596,7 +2596,7 @@ impl Instance {
         match (sidecar.install)(&config_path, crate::hooks::HookInstallTarget::Host) {
             Ok(()) => {
                 tracing::info!(target: "session.store",
-                    "Installed AoE status hooks for {} via standalone hooks agent", self.tool);
+                    "Installed BOA status hooks for {} via standalone hooks agent", self.tool);
                 if let Some(post_install) = sidecar.post_install_host {
                     post_install();
                 }

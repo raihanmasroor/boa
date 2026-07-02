@@ -513,7 +513,7 @@ fn update_via_brew(target_version: &str) -> Result<()> {
 }
 
 fn nix_refusal_message() -> String {
-    "aoe was installed via Nix. Update by running:\n\
+    "BOA was installed via Nix. Update by running:\n\
      \n    nix run github:agent-of-empires/agent-of-empires\n\
      \n(or rebuild your flake input)."
         .to_string()
@@ -524,7 +524,7 @@ fn print_nix_refusal() {
 }
 
 fn cargo_refusal_message() -> String {
-    "aoe was installed via cargo. Update by running:\n\
+    "BOA was installed via cargo. Update by running:\n\
      \n    cargo install --git https://github.com/agent-of-empires/agent-of-empires aoe\n\
      \n(or `git pull && cargo install --path .` from a local clone)."
         .to_string()
@@ -536,7 +536,7 @@ fn print_cargo_refusal() {
 
 fn unknown_refusal_message(binary_path: &Path) -> String {
     format!(
-        "Couldn't determine how aoe was installed at {}.\n\
+        "Couldn't determine how BOA was installed at {}.\n\
          Reinstall with:\n\
          \n    curl -fsSL https://raw.githubusercontent.com/agent-of-empires/agent-of-empires/main/scripts/install.sh | bash\n",
         binary_path.display()

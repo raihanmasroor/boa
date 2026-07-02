@@ -23,14 +23,14 @@ pub enum GitHubError {
 
     #[error(
         "GitHub rejected the request (HTTP 401).\n\
-         AoE only makes unauthenticated public requests, so this usually means \
+         BOA only makes unauthenticated public requests, so this usually means \
          the resource is private or the endpoint requires sign-in."
     )]
     Unauthorized,
 
     #[error(
         "GitHub refused the request for lack of an authorized scope (HTTP 403): {scopes}.\n\
-         AoE makes unauthenticated requests, so it cannot satisfy this; the \
+         BOA makes unauthenticated requests, so it cannot satisfy this; the \
          resource needs a signed-in client."
     )]
     InsufficientScope { scopes: String },

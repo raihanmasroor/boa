@@ -58,7 +58,7 @@ pub fn validate_sound_exists(filename: &str) -> Result<(), String> {
     let available = list_available_sounds();
     if available.is_empty() {
         return Err(
-            "No sounds installed. Run 'aoe sounds install' or add your own .wav/.ogg files."
+            "No sounds installed. Run 'boa sounds install' or add your own .wav/.ogg files."
                 .to_string(),
         );
     }

@@ -1,119 +1,119 @@
-# Command-Line Help for `aoe`
+# Command-Line Help for `boa`
 
-This document contains the help content for the `aoe` command-line program.
+This document contains the help content for the `boa` command-line program.
 
 **Command Overview:**
 
-* [`aoe`↴](#aoe)
-* [`aoe add`↴](#aoe-add)
-* [`aoe agents`↴](#aoe-agents)
-* [`aoe init`↴](#aoe-init)
-* [`aoe list`↴](#aoe-list)
-* [`aoe logs`↴](#aoe-logs)
-* [`aoe log-level`↴](#aoe-log-level)
-* [`aoe remove`↴](#aoe-remove)
-* [`aoe send`↴](#aoe-send)
-* [`aoe status`↴](#aoe-status)
-* [`aoe killall`↴](#aoe-killall)
-* [`aoe session`↴](#aoe-session)
-* [`aoe session start`↴](#aoe-session-start)
-* [`aoe session stop`↴](#aoe-session-stop)
-* [`aoe session restart`↴](#aoe-session-restart)
-* [`aoe session attach`↴](#aoe-session-attach)
-* [`aoe session show`↴](#aoe-session-show)
-* [`aoe session rename`↴](#aoe-session-rename)
-* [`aoe session set-worktree-name`↴](#aoe-session-set-worktree-name)
-* [`aoe session capture`↴](#aoe-session-capture)
-* [`aoe session current`↴](#aoe-session-current)
-* [`aoe session set-session-id`↴](#aoe-session-set-session-id)
-* [`aoe session set-base`↴](#aoe-session-set-base)
-* [`aoe session snooze`↴](#aoe-session-snooze)
-* [`aoe session unsnooze`↴](#aoe-session-unsnooze)
-* [`aoe session favorite`↴](#aoe-session-favorite)
-* [`aoe session unfavorite`↴](#aoe-session-unfavorite)
-* [`aoe session archive`↴](#aoe-session-archive)
-* [`aoe session unarchive`↴](#aoe-session-unarchive)
-* [`aoe session restore`↴](#aoe-session-restore)
-* [`aoe session list-trash`↴](#aoe-session-list-trash)
-* [`aoe session empty-trash`↴](#aoe-session-empty-trash)
-* [`aoe group`↴](#aoe-group)
-* [`aoe group list`↴](#aoe-group-list)
-* [`aoe group create`↴](#aoe-group-create)
-* [`aoe group delete`↴](#aoe-group-delete)
-* [`aoe group move`↴](#aoe-group-move)
-* [`aoe plugin`↴](#aoe-plugin)
-* [`aoe plugin list`↴](#aoe-plugin-list)
-* [`aoe plugin info`↴](#aoe-plugin-info)
-* [`aoe plugin enable`↴](#aoe-plugin-enable)
-* [`aoe plugin disable`↴](#aoe-plugin-disable)
-* [`aoe plugin install`↴](#aoe-plugin-install)
-* [`aoe plugin update`↴](#aoe-plugin-update)
-* [`aoe plugin uninstall`↴](#aoe-plugin-uninstall)
-* [`aoe plugin hash`↴](#aoe-plugin-hash)
-* [`aoe plugin discover`↴](#aoe-plugin-discover)
-* [`aoe plugin outdated`↴](#aoe-plugin-outdated)
-* [`aoe profile`↴](#aoe-profile)
-* [`aoe profile list`↴](#aoe-profile-list)
-* [`aoe profile create`↴](#aoe-profile-create)
-* [`aoe profile delete`↴](#aoe-profile-delete)
-* [`aoe profile rename`↴](#aoe-profile-rename)
-* [`aoe profile default`↴](#aoe-profile-default)
-* [`aoe project`↴](#aoe-project)
-* [`aoe project list`↴](#aoe-project-list)
-* [`aoe project add`↴](#aoe-project-add)
-* [`aoe project remove`↴](#aoe-project-remove)
-* [`aoe worktree`↴](#aoe-worktree)
-* [`aoe worktree list`↴](#aoe-worktree-list)
-* [`aoe worktree info`↴](#aoe-worktree-info)
-* [`aoe worktree cleanup`↴](#aoe-worktree-cleanup)
-* [`aoe tmux`↴](#aoe-tmux)
-* [`aoe tmux status`↴](#aoe-tmux-status)
-* [`aoe sounds`↴](#aoe-sounds)
-* [`aoe sounds install`↴](#aoe-sounds-install)
-* [`aoe sounds list`↴](#aoe-sounds-list)
-* [`aoe sounds test`↴](#aoe-sounds-test)
-* [`aoe theme`↴](#aoe-theme)
-* [`aoe theme list`↴](#aoe-theme-list)
-* [`aoe theme export`↴](#aoe-theme-export)
-* [`aoe theme dir`↴](#aoe-theme-dir)
-* [`aoe settings`↴](#aoe-settings)
-* [`aoe settings explain`↴](#aoe-settings-explain)
-* [`aoe telemetry`↴](#aoe-telemetry)
-* [`aoe telemetry status`↴](#aoe-telemetry-status)
-* [`aoe telemetry enable`↴](#aoe-telemetry-enable)
-* [`aoe telemetry disable`↴](#aoe-telemetry-disable)
-* [`aoe telemetry reset-id`↴](#aoe-telemetry-reset-id)
-* [`aoe mcp`↴](#aoe-mcp)
-* [`aoe mcp list`↴](#aoe-mcp-list)
-* [`aoe serve`↴](#aoe-serve)
-* [`aoe url`↴](#aoe-url)
-* [`aoe acp`↴](#aoe-acp)
-* [`aoe acp doctor`↴](#aoe-acp-doctor)
-* [`aoe acp agents`↴](#aoe-acp-agents)
-* [`aoe acp ps`↴](#aoe-acp-ps)
-* [`aoe acp stop`↴](#aoe-acp-stop)
-* [`aoe acp kill`↴](#aoe-acp-kill)
-* [`aoe acp logs`↴](#aoe-acp-logs)
-* [`aoe acp restart`↴](#aoe-acp-restart)
-* [`aoe acp history`↴](#aoe-acp-history)
-* [`aoe acp status`↴](#aoe-acp-status)
-* [`aoe acp prompt`↴](#aoe-acp-prompt)
-* [`aoe acp approve`↴](#aoe-acp-approve)
-* [`aoe acp cancel`↴](#aoe-acp-cancel)
-* [`aoe acp tail`↴](#aoe-acp-tail)
-* [`aoe acp attach`↴](#aoe-acp-attach)
-* [`aoe acp switch-agent`↴](#aoe-acp-switch-agent)
-* [`aoe uninstall`↴](#aoe-uninstall)
-* [`aoe update`↴](#aoe-update)
-* [`aoe completion`↴](#aoe-completion)
+* [`boa`↴](#boa)
+* [`boa add`↴](#boa-add)
+* [`boa agents`↴](#boa-agents)
+* [`boa init`↴](#boa-init)
+* [`boa list`↴](#boa-list)
+* [`boa logs`↴](#boa-logs)
+* [`boa log-level`↴](#boa-log-level)
+* [`boa remove`↴](#boa-remove)
+* [`boa send`↴](#boa-send)
+* [`boa status`↴](#boa-status)
+* [`boa killall`↴](#boa-killall)
+* [`boa session`↴](#boa-session)
+* [`boa session start`↴](#boa-session-start)
+* [`boa session stop`↴](#boa-session-stop)
+* [`boa session restart`↴](#boa-session-restart)
+* [`boa session attach`↴](#boa-session-attach)
+* [`boa session show`↴](#boa-session-show)
+* [`boa session rename`↴](#boa-session-rename)
+* [`boa session set-worktree-name`↴](#boa-session-set-worktree-name)
+* [`boa session capture`↴](#boa-session-capture)
+* [`boa session current`↴](#boa-session-current)
+* [`boa session set-session-id`↴](#boa-session-set-session-id)
+* [`boa session set-base`↴](#boa-session-set-base)
+* [`boa session snooze`↴](#boa-session-snooze)
+* [`boa session unsnooze`↴](#boa-session-unsnooze)
+* [`boa session favorite`↴](#boa-session-favorite)
+* [`boa session unfavorite`↴](#boa-session-unfavorite)
+* [`boa session archive`↴](#boa-session-archive)
+* [`boa session unarchive`↴](#boa-session-unarchive)
+* [`boa session restore`↴](#boa-session-restore)
+* [`boa session list-trash`↴](#boa-session-list-trash)
+* [`boa session empty-trash`↴](#boa-session-empty-trash)
+* [`boa group`↴](#boa-group)
+* [`boa group list`↴](#boa-group-list)
+* [`boa group create`↴](#boa-group-create)
+* [`boa group delete`↴](#boa-group-delete)
+* [`boa group move`↴](#boa-group-move)
+* [`boa plugin`↴](#boa-plugin)
+* [`boa plugin list`↴](#boa-plugin-list)
+* [`boa plugin info`↴](#boa-plugin-info)
+* [`boa plugin enable`↴](#boa-plugin-enable)
+* [`boa plugin disable`↴](#boa-plugin-disable)
+* [`boa plugin install`↴](#boa-plugin-install)
+* [`boa plugin update`↴](#boa-plugin-update)
+* [`boa plugin uninstall`↴](#boa-plugin-uninstall)
+* [`boa plugin hash`↴](#boa-plugin-hash)
+* [`boa plugin discover`↴](#boa-plugin-discover)
+* [`boa plugin outdated`↴](#boa-plugin-outdated)
+* [`boa profile`↴](#boa-profile)
+* [`boa profile list`↴](#boa-profile-list)
+* [`boa profile create`↴](#boa-profile-create)
+* [`boa profile delete`↴](#boa-profile-delete)
+* [`boa profile rename`↴](#boa-profile-rename)
+* [`boa profile default`↴](#boa-profile-default)
+* [`boa project`↴](#boa-project)
+* [`boa project list`↴](#boa-project-list)
+* [`boa project add`↴](#boa-project-add)
+* [`boa project remove`↴](#boa-project-remove)
+* [`boa worktree`↴](#boa-worktree)
+* [`boa worktree list`↴](#boa-worktree-list)
+* [`boa worktree info`↴](#boa-worktree-info)
+* [`boa worktree cleanup`↴](#boa-worktree-cleanup)
+* [`boa tmux`↴](#boa-tmux)
+* [`boa tmux status`↴](#boa-tmux-status)
+* [`boa sounds`↴](#boa-sounds)
+* [`boa sounds install`↴](#boa-sounds-install)
+* [`boa sounds list`↴](#boa-sounds-list)
+* [`boa sounds test`↴](#boa-sounds-test)
+* [`boa theme`↴](#boa-theme)
+* [`boa theme list`↴](#boa-theme-list)
+* [`boa theme export`↴](#boa-theme-export)
+* [`boa theme dir`↴](#boa-theme-dir)
+* [`boa settings`↴](#boa-settings)
+* [`boa settings explain`↴](#boa-settings-explain)
+* [`boa telemetry`↴](#boa-telemetry)
+* [`boa telemetry status`↴](#boa-telemetry-status)
+* [`boa telemetry enable`↴](#boa-telemetry-enable)
+* [`boa telemetry disable`↴](#boa-telemetry-disable)
+* [`boa telemetry reset-id`↴](#boa-telemetry-reset-id)
+* [`boa mcp`↴](#boa-mcp)
+* [`boa mcp list`↴](#boa-mcp-list)
+* [`boa serve`↴](#boa-serve)
+* [`boa url`↴](#boa-url)
+* [`boa acp`↴](#boa-acp)
+* [`boa acp doctor`↴](#boa-acp-doctor)
+* [`boa acp agents`↴](#boa-acp-agents)
+* [`boa acp ps`↴](#boa-acp-ps)
+* [`boa acp stop`↴](#boa-acp-stop)
+* [`boa acp kill`↴](#boa-acp-kill)
+* [`boa acp logs`↴](#boa-acp-logs)
+* [`boa acp restart`↴](#boa-acp-restart)
+* [`boa acp history`↴](#boa-acp-history)
+* [`boa acp status`↴](#boa-acp-status)
+* [`boa acp prompt`↴](#boa-acp-prompt)
+* [`boa acp approve`↴](#boa-acp-approve)
+* [`boa acp cancel`↴](#boa-acp-cancel)
+* [`boa acp tail`↴](#boa-acp-tail)
+* [`boa acp attach`↴](#boa-acp-attach)
+* [`boa acp switch-agent`↴](#boa-acp-switch-agent)
+* [`boa uninstall`↴](#boa-uninstall)
+* [`boa update`↴](#boa-update)
+* [`boa completion`↴](#boa-completion)
 
-## `aoe`
+## `boa`
 
-Agent of Empires (aoe) is a terminal session manager that uses tmux to help you manage and monitor AI coding agents like Claude Code and OpenCode.
+Band of Agents (BOA) is a terminal session manager that uses tmux to help you manage and monitor AI coding agents like Claude Code and OpenCode.
 
 Run without arguments to launch the TUI dashboard.
 
-**Usage:** `aoe [OPTIONS] [COMMAND]`
+**Usage:** `boa [OPTIONS] [COMMAND]`
 
 ###### **Subcommands:**
 
@@ -121,12 +121,12 @@ Run without arguments to launch the TUI dashboard.
 * `agents` — List supported agents and their install status
 * `init` — Initialize .agent-of-empires/config.toml in a repository
 * `list` — List all sessions
-* `logs` — View the configured AoE log file with a pretty viewer
+* `logs` — View the configured BOA log file with a pretty viewer
 * `log-level` — Get or set the running daemon's log filter at runtime. Pass a bare level (debug/info/...) for the safe expansion, or `--filter <expr>` for raw EnvFilter syntax. `--get` prints the current filter. Changes are ephemeral and lost on daemon restart
 * `remove` — Remove a session
 * `send` — Send a message to a running agent session
 * `status` — Show session status summary
-* `killall` — Force-stop everything aoe is running: the serve daemon, all agent workers, and all aoe tmux sessions. Destructive and unprompted
+* `killall` — Force-stop everything BOA is running: the serve daemon, all agent workers, and all BOA tmux sessions. Destructive and unprompted
 * `session` — Manage session lifecycle (start, stop, attach, etc.)
 * `group` — Manage groups for organizing sessions
 * `plugin` — Manage plugins (list, info, enable, disable, install, update, uninstall)
@@ -140,24 +140,24 @@ Run without arguments to launch the TUI dashboard.
 * `telemetry` — Manage anonymous opt-in usage telemetry
 * `mcp` — Inspect the effective MCP server set (provenance, conflicts, drift)
 * `serve` — Start a web dashboard for remote session access
-* `url` — Print the current dashboard URL of a running `aoe serve` daemon
+* `url` — Print the current dashboard URL of a running `boa serve` daemon
 * `acp` — Manage the ACP structured-view workers (doctor, ps, logs, prompt, approve, ...)
-* `uninstall` — Uninstall Agent of Empires
-* `update` — Update aoe to the latest release
+* `uninstall` — Uninstall Band of Agents
+* `update` — Update BOA to the latest release
 * `completion` — Generate shell completions
 
 ###### **Options:**
 
 * `-p`, `--profile <PROFILE>` — Profile to use (separate workspace with its own sessions)
-* `--daemon-url <DAEMON_URL>` — Attach to a remote agent daemon instead of using the local session list. Equivalent to setting `AOE_DAEMON_URL`; pair with `AOE_DAEMON_TOKEN` for the bearer token. Only meaningful at the no-subcommand `aoe` invocation (the TUI dashboard); ignored otherwise
+* `--daemon-url <DAEMON_URL>` — Attach to a remote agent daemon instead of using the local session list. Equivalent to setting `AOE_DAEMON_URL`; pair with `AOE_DAEMON_TOKEN` for the bearer token. Only meaningful at the no-subcommand `boa` invocation (the TUI dashboard); ignored otherwise
 
 
 
-## `aoe add`
+## `boa add`
 
 Add a new session
 
-**Usage:** `aoe add [OPTIONS] [PATH]`
+**Usage:** `boa add [OPTIONS] [PATH]`
 
 ###### **Arguments:**
 
@@ -185,26 +185,26 @@ Add a new session
 * `--trust-hooks` — Automatically trust this repository's hooks and project-local MCP servers without prompting
 * `--extra-args <EXTRA_ARGS>` — Extra arguments to append after the agent binary
 * `--cmd-override <CMD_OVERRIDE>` — Override the agent binary command
-* `--structured-view` — Render this session in the structured view (ACP-based native rendering) instead of the default terminal view. `aoe add` defaults to the terminal (raw tmux/PTY) so the CLI matches the TUI; pass this (or `--agent`) to opt into the structured rendering. Ignored for tools with no ACP adapter
+* `--structured-view` — Render this session in the structured view (ACP-based native rendering) instead of the default terminal view. `boa add` defaults to the terminal (raw tmux/PTY) so the CLI matches the TUI; pass this (or `--agent`) to opt into the structured rendering. Ignored for tools with no ACP adapter
 * `--agent <AGENT>` — Pick a specific ACP agent for the structured view (e.g., aoe-agent, claude-code)
 * `--model <MODEL>` — Override the model used by aoe-agent (e.g., claude-opus-4-7, gpt-5, gemini-2.5-pro). Forwarded to the agent at session start
-* `--scratch` — Create the session in a fresh scratch directory under `<app_dir>/scratch/<id>/` instead of a project path. The directory is removed when the session is deleted (unless `aoe rm` is given `--keep-scratch`). Mutually exclusive with worktree-related flags
+* `--scratch` — Create the session in a fresh scratch directory under `<app_dir>/scratch/<id>/` instead of a project path. The directory is removed when the session is deleted (unless `boa rm` is given `--keep-scratch`). Mutually exclusive with worktree-related flags
 
 
 
-## `aoe agents`
+## `boa agents`
 
 List supported agents and their install status
 
-**Usage:** `aoe agents`
+**Usage:** `boa agents`
 
 
 
-## `aoe init`
+## `boa init`
 
 Initialize .agent-of-empires/config.toml in a repository
 
-**Usage:** `aoe init [PATH]`
+**Usage:** `boa init [PATH]`
 
 ###### **Arguments:**
 
@@ -214,11 +214,11 @@ Initialize .agent-of-empires/config.toml in a repository
 
 
 
-## `aoe list`
+## `boa list`
 
 List all sessions
 
-**Usage:** `aoe list [OPTIONS]`
+**Usage:** `boa list [OPTIONS]`
 
 ###### **Options:**
 
@@ -227,11 +227,11 @@ List all sessions
 
 
 
-## `aoe logs`
+## `boa logs`
 
-View the configured AoE log file with a pretty viewer
+View the configured BOA log file with a pretty viewer
 
-**Usage:** `aoe logs [OPTIONS]`
+**Usage:** `boa logs [OPTIONS]`
 
 ###### **Options:**
 
@@ -242,11 +242,11 @@ View the configured AoE log file with a pretty viewer
 
 
 
-## `aoe log-level`
+## `boa log-level`
 
 Get or set the running daemon's log filter at runtime. Pass a bare level (debug/info/...) for the safe expansion, or `--filter <expr>` for raw EnvFilter syntax. `--get` prints the current filter. Changes are ephemeral and lost on daemon restart
 
-**Usage:** `aoe log-level [OPTIONS] [LEVEL]`
+**Usage:** `boa log-level [OPTIONS] [LEVEL]`
 
 ###### **Arguments:**
 
@@ -259,11 +259,11 @@ Get or set the running daemon's log filter at runtime. Pass a bare level (debug/
 
 
 
-## `aoe remove`
+## `boa remove`
 
 Remove a session
 
-**Usage:** `aoe remove [OPTIONS] <IDENTIFIER>`
+**Usage:** `boa remove [OPTIONS] <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -280,11 +280,11 @@ Remove a session
 
 
 
-## `aoe send`
+## `boa send`
 
 Send a message to a running agent session
 
-**Usage:** `aoe send [OPTIONS] <IDENTIFIER> <MESSAGE>`
+**Usage:** `boa send [OPTIONS] <IDENTIFIER> <MESSAGE>`
 
 ###### **Arguments:**
 
@@ -297,11 +297,11 @@ Send a message to a running agent session
 
 
 
-## `aoe status`
+## `boa status`
 
 Show session status summary
 
-**Usage:** `aoe status [OPTIONS]`
+**Usage:** `boa status [OPTIONS]`
 
 ###### **Options:**
 
@@ -311,26 +311,26 @@ Show session status summary
 
 
 
-## `aoe killall`
+## `boa killall`
 
-Force-stop everything aoe is running: the serve daemon, all agent workers, and all aoe tmux sessions. Destructive and unprompted
+Force-stop everything BOA is running: the serve daemon, all agent workers, and all BOA tmux sessions. Destructive and unprompted
 
-**Usage:** `aoe killall [OPTIONS]`
+**Usage:** `boa killall [OPTIONS]`
 
 ###### **Options:**
 
 * `--timeout-secs <TIMEOUT_SECS>` — Grace period in seconds before force-killing agent workers. tmux sessions and the daemon use their own built-in grace
 
   Default value: `5`
-* `--keep-daemon` — Leave the `aoe serve` daemon running; stop only workers and tmux sessions
+* `--keep-daemon` — Leave the `boa serve` daemon running; stop only workers and tmux sessions
 
 
 
-## `aoe session`
+## `boa session`
 
 Manage session lifecycle (start, stop, attach, etc.)
 
-**Usage:** `aoe session <COMMAND>`
+**Usage:** `boa session <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -357,11 +357,11 @@ Manage session lifecycle (start, stop, attach, etc.)
 
 
 
-## `aoe session start`
+## `boa session start`
 
 Start a session's tmux process
 
-**Usage:** `aoe session start <IDENTIFIER>`
+**Usage:** `boa session start <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -369,11 +369,11 @@ Start a session's tmux process
 
 
 
-## `aoe session stop`
+## `boa session stop`
 
 Stop session process
 
-**Usage:** `aoe session stop <IDENTIFIER>`
+**Usage:** `boa session stop <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -381,11 +381,11 @@ Stop session process
 
 
 
-## `aoe session restart`
+## `boa session restart`
 
 Restart session (or all sessions with `--all`)
 
-**Usage:** `aoe session restart [OPTIONS] [IDENTIFIER]`
+**Usage:** `boa session restart [OPTIONS] [IDENTIFIER]`
 
 ###### **Arguments:**
 
@@ -393,18 +393,18 @@ Restart session (or all sessions with `--all`)
 
 ###### **Options:**
 
-* `--all` — Restart every session in the active profile. Useful after `aoe update`, after editing `sandbox.environment`, after a Docker hiccup, or after changing a hook. Mutually exclusive with `identifier`
+* `--all` — Restart every session in the active profile. Useful after `boa update`, after editing `sandbox.environment`, after a Docker hiccup, or after changing a hook. Mutually exclusive with `identifier`
 * `--parallel <PARALLEL>` — Concurrency cap for `--all`. Restarting many sandboxed sessions in parallel pressures dockerd, so the default is intentionally modest. Ignored when `--all` is not set
 
   Default value: `3`
 
 
 
-## `aoe session attach`
+## `boa session attach`
 
 Attach to session interactively
 
-**Usage:** `aoe session attach <IDENTIFIER>`
+**Usage:** `boa session attach <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -412,11 +412,11 @@ Attach to session interactively
 
 
 
-## `aoe session show`
+## `boa session show`
 
 Show session details
 
-**Usage:** `aoe session show [OPTIONS] [IDENTIFIER]`
+**Usage:** `boa session show [OPTIONS] [IDENTIFIER]`
 
 ###### **Arguments:**
 
@@ -428,11 +428,11 @@ Show session details
 
 
 
-## `aoe session rename`
+## `boa session rename`
 
 Rename a session
 
-**Usage:** `aoe session rename [OPTIONS] [IDENTIFIER]`
+**Usage:** `boa session rename [OPTIONS] [IDENTIFIER]`
 
 ###### **Arguments:**
 
@@ -446,11 +446,11 @@ Rename a session
 
 
 
-## `aoe session set-worktree-name`
+## `boa session set-worktree-name`
 
 Edit a managed worktree session's workdir directory name (and, optionally, its git branch). Moves the worktree directory in place; the session must not be running. See #1723
 
-**Usage:** `aoe session set-worktree-name [OPTIONS] --name <NAME> [IDENTIFIER]`
+**Usage:** `boa session set-worktree-name [OPTIONS] --name <NAME> [IDENTIFIER]`
 
 ###### **Arguments:**
 
@@ -463,11 +463,11 @@ Edit a managed worktree session's workdir directory name (and, optionally, its g
 
 
 
-## `aoe session capture`
+## `boa session capture`
 
 Capture tmux pane output
 
-**Usage:** `aoe session capture [OPTIONS] [IDENTIFIER]`
+**Usage:** `boa session capture [OPTIONS] [IDENTIFIER]`
 
 ###### **Arguments:**
 
@@ -483,11 +483,11 @@ Capture tmux pane output
 
 
 
-## `aoe session current`
+## `boa session current`
 
 Auto-detect current session
 
-**Usage:** `aoe session current [OPTIONS]`
+**Usage:** `boa session current [OPTIONS]`
 
 ###### **Options:**
 
@@ -496,11 +496,11 @@ Auto-detect current session
 
 
 
-## `aoe session set-session-id`
+## `boa session set-session-id`
 
 Set the resume target for a session (pin a conversation or force a one-shot fresh start)
 
-**Usage:** `aoe session set-session-id <IDENTIFIER> <SESSION_ID>`
+**Usage:** `boa session set-session-id <IDENTIFIER> <SESSION_ID>`
 
 ###### **Arguments:**
 
@@ -509,11 +509,11 @@ Set the resume target for a session (pin a conversation or force a one-shot fres
 
 
 
-## `aoe session set-base`
+## `boa session set-base`
 
 Set or clear the per-session diff base branch. The diff view compares the worktree against this ref instead of the auto-detected default. Useful when the PR target differs from the project default (stacked PRs, hotfix off `release/*`, renamed default branch). See #970
 
-**Usage:** `aoe session set-base [OPTIONS] <IDENTIFIER> [BRANCH]`
+**Usage:** `boa session set-base [OPTIONS] <IDENTIFIER> [BRANCH]`
 
 ###### **Arguments:**
 
@@ -526,11 +526,11 @@ Set or clear the per-session diff base branch. The diff view compares the worktr
 
 
 
-## `aoe session snooze`
+## `boa session snooze`
 
 Snooze a session for a duration (temporary archive, auto wakes)
 
-**Usage:** `aoe session snooze [OPTIONS] <IDENTIFIER>`
+**Usage:** `boa session snooze [OPTIONS] <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -542,11 +542,11 @@ Snooze a session for a duration (temporary archive, auto wakes)
 
 
 
-## `aoe session unsnooze`
+## `boa session unsnooze`
 
 Wake a snoozed session immediately
 
-**Usage:** `aoe session unsnooze <IDENTIFIER>`
+**Usage:** `boa session unsnooze <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -554,11 +554,11 @@ Wake a snoozed session immediately
 
 
 
-## `aoe session favorite`
+## `boa session favorite`
 
 Mark a session as a favorite. Favorited rows pin to the top of their status tier in the Attention sort and render with a leading `* ` glyph plus bold + underline
 
-**Usage:** `aoe session favorite <IDENTIFIER>`
+**Usage:** `boa session favorite <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -566,11 +566,11 @@ Mark a session as a favorite. Favorited rows pin to the top of their status tier
 
 
 
-## `aoe session unfavorite`
+## `boa session unfavorite`
 
 Clear the favorite flag on a session
 
-**Usage:** `aoe session unfavorite <IDENTIFIER>`
+**Usage:** `boa session unfavorite <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -578,11 +578,11 @@ Clear the favorite flag on a session
 
 
 
-## `aoe session archive`
+## `boa session archive`
 
 Archive a session: sink it in the Attention sort and tear down its tmux sessions. Worktree, branch, container preserved. `--no-kill` skips tmux teardown. See #1868
 
-**Usage:** `aoe session archive [OPTIONS] <IDENTIFIER>`
+**Usage:** `boa session archive [OPTIONS] <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -594,11 +594,11 @@ Archive a session: sink it in the Attention sort and tear down its tmux sessions
 
 
 
-## `aoe session unarchive`
+## `boa session unarchive`
 
 Unarchive a session (restores it to its tier in the Attention sort)
 
-**Usage:** `aoe session unarchive <IDENTIFIER>`
+**Usage:** `boa session unarchive <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -606,11 +606,11 @@ Unarchive a session (restores it to its tier in the Attention sort)
 
 
 
-## `aoe session restore`
+## `boa session restore`
 
 Restore a trashed session, returning it to its prior bucket with its transcript and metadata intact. See #2489
 
-**Usage:** `aoe session restore <IDENTIFIER>`
+**Usage:** `boa session restore <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -618,27 +618,27 @@ Restore a trashed session, returning it to its prior bucket with its transcript 
 
 
 
-## `aoe session list-trash`
+## `boa session list-trash`
 
 List the sessions currently in the trash
 
-**Usage:** `aoe session list-trash`
+**Usage:** `boa session list-trash`
 
 
 
-## `aoe session empty-trash`
+## `boa session empty-trash`
 
 Permanently purge every trashed session in the profile (irreversible)
 
-**Usage:** `aoe session empty-trash`
+**Usage:** `boa session empty-trash`
 
 
 
-## `aoe group`
+## `boa group`
 
 Manage groups for organizing sessions
 
-**Usage:** `aoe group <COMMAND>`
+**Usage:** `boa group <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -649,11 +649,11 @@ Manage groups for organizing sessions
 
 
 
-## `aoe group list`
+## `boa group list`
 
 List all groups
 
-**Usage:** `aoe group list [OPTIONS]`
+**Usage:** `boa group list [OPTIONS]`
 
 ###### **Options:**
 
@@ -661,11 +661,11 @@ List all groups
 
 
 
-## `aoe group create`
+## `boa group create`
 
 Create a new group
 
-**Usage:** `aoe group create [OPTIONS] <NAME>`
+**Usage:** `boa group create [OPTIONS] <NAME>`
 
 ###### **Arguments:**
 
@@ -677,11 +677,11 @@ Create a new group
 
 
 
-## `aoe group delete`
+## `boa group delete`
 
 Delete a group
 
-**Usage:** `aoe group delete [OPTIONS] <NAME>`
+**Usage:** `boa group delete [OPTIONS] <NAME>`
 
 ###### **Arguments:**
 
@@ -693,11 +693,11 @@ Delete a group
 
 
 
-## `aoe group move`
+## `boa group move`
 
 Move session to group
 
-**Usage:** `aoe group move <IDENTIFIER> <GROUP>`
+**Usage:** `boa group move <IDENTIFIER> <GROUP>`
 
 ###### **Arguments:**
 
@@ -706,11 +706,11 @@ Move session to group
 
 
 
-## `aoe plugin`
+## `boa plugin`
 
 Manage plugins (list, info, enable, disable, install, update, uninstall)
 
-**Usage:** `aoe plugin <COMMAND>`
+**Usage:** `boa plugin <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -722,36 +722,36 @@ Manage plugins (list, info, enable, disable, install, update, uninstall)
 * `update` — Update an installed external plugin from its recorded source. Prompts to re-approve capabilities if the update changes the capability set
 * `uninstall` — Uninstall an external plugin, removing its files and capability grant
 * `hash` — Print the deterministic source tree hash for a plugin directory, the value a maintainer pins in the featured index
-* `discover` — Search GitHub's `aoe-plugin` topic for installable plugins
+* `discover` — Search GitHub's `boa-plugin` topic for installable plugins
 * `outdated` — List installed external plugins that have an update available
 
 
 
-## `aoe plugin list`
+## `boa plugin list`
 
 List every known plugin with version, validation, and state
 
-**Usage:** `aoe plugin list`
+**Usage:** `boa plugin list`
 
 
 
-## `aoe plugin info`
+## `boa plugin info`
 
 Show one plugin's manifest details
 
-**Usage:** `aoe plugin info <ID>`
+**Usage:** `boa plugin info <ID>`
 
 ###### **Arguments:**
 
-* `<ID>` — Plugin id, e.g. `aoe.web`
+* `<ID>` — Plugin id, e.g. `boa.web`
 
 
 
-## `aoe plugin enable`
+## `boa plugin enable`
 
 Enable a plugin's contributions
 
-**Usage:** `aoe plugin enable <ID>`
+**Usage:** `boa plugin enable <ID>`
 
 ###### **Arguments:**
 
@@ -759,11 +759,11 @@ Enable a plugin's contributions
 
 
 
-## `aoe plugin disable`
+## `boa plugin disable`
 
 Disable a plugin; its settings stay on disk for re-enabling
 
-**Usage:** `aoe plugin disable <ID>`
+**Usage:** `boa plugin disable <ID>`
 
 ###### **Arguments:**
 
@@ -771,11 +771,11 @@ Disable a plugin; its settings stay on disk for re-enabling
 
 
 
-## `aoe plugin install`
+## `boa plugin install`
 
 Install an external plugin from a `gh:owner/repo[@ref]` slug or a local directory. With no `@ref`, installs the repo's latest release; an explicit `@ref` installs unverified, un-audited code. Community plugins run at your own risk
 
-**Usage:** `aoe plugin install [OPTIONS] <SOURCE>`
+**Usage:** `boa plugin install [OPTIONS] <SOURCE>`
 
 ###### **Arguments:**
 
@@ -787,11 +787,11 @@ Install an external plugin from a `gh:owner/repo[@ref]` slug or a local director
 
 
 
-## `aoe plugin update`
+## `boa plugin update`
 
 Update an installed external plugin from its recorded source. Prompts to re-approve capabilities if the update changes the capability set
 
-**Usage:** `aoe plugin update <ID>`
+**Usage:** `boa plugin update <ID>`
 
 ###### **Arguments:**
 
@@ -799,11 +799,11 @@ Update an installed external plugin from its recorded source. Prompts to re-appr
 
 
 
-## `aoe plugin uninstall`
+## `boa plugin uninstall`
 
 Uninstall an external plugin, removing its files and capability grant
 
-**Usage:** `aoe plugin uninstall <ID>`
+**Usage:** `boa plugin uninstall <ID>`
 
 ###### **Arguments:**
 
@@ -811,11 +811,11 @@ Uninstall an external plugin, removing its files and capability grant
 
 
 
-## `aoe plugin hash`
+## `boa plugin hash`
 
 Print the deterministic source tree hash for a plugin directory, the value a maintainer pins in the featured index
 
-**Usage:** `aoe plugin hash <PATH>`
+**Usage:** `boa plugin hash <PATH>`
 
 ###### **Arguments:**
 
@@ -823,11 +823,11 @@ Print the deterministic source tree hash for a plugin directory, the value a mai
 
 
 
-## `aoe plugin discover`
+## `boa plugin discover`
 
-Search GitHub's `aoe-plugin` topic for installable plugins
+Search GitHub's `boa-plugin` topic for installable plugins
 
-**Usage:** `aoe plugin discover [QUERY]`
+**Usage:** `boa plugin discover [QUERY]`
 
 ###### **Arguments:**
 
@@ -835,19 +835,19 @@ Search GitHub's `aoe-plugin` topic for installable plugins
 
 
 
-## `aoe plugin outdated`
+## `boa plugin outdated`
 
 List installed external plugins that have an update available
 
-**Usage:** `aoe plugin outdated`
+**Usage:** `boa plugin outdated`
 
 
 
-## `aoe profile`
+## `boa profile`
 
 Manage profiles (separate workspaces)
 
-**Usage:** `aoe profile [COMMAND]`
+**Usage:** `boa profile [COMMAND]`
 
 ###### **Subcommands:**
 
@@ -859,19 +859,19 @@ Manage profiles (separate workspaces)
 
 
 
-## `aoe profile list`
+## `boa profile list`
 
 List all profiles
 
-**Usage:** `aoe profile list`
+**Usage:** `boa profile list`
 
 
 
-## `aoe profile create`
+## `boa profile create`
 
 Create a new profile
 
-**Usage:** `aoe profile create <NAME>`
+**Usage:** `boa profile create <NAME>`
 
 ###### **Arguments:**
 
@@ -879,11 +879,11 @@ Create a new profile
 
 
 
-## `aoe profile delete`
+## `boa profile delete`
 
 Delete a profile
 
-**Usage:** `aoe profile delete <NAME>`
+**Usage:** `boa profile delete <NAME>`
 
 ###### **Arguments:**
 
@@ -891,11 +891,11 @@ Delete a profile
 
 
 
-## `aoe profile rename`
+## `boa profile rename`
 
 Rename a profile
 
-**Usage:** `aoe profile rename <OLD_NAME> <NEW_NAME>`
+**Usage:** `boa profile rename <OLD_NAME> <NEW_NAME>`
 
 ###### **Arguments:**
 
@@ -904,11 +904,11 @@ Rename a profile
 
 
 
-## `aoe profile default`
+## `boa profile default`
 
 Show or set default profile
 
-**Usage:** `aoe profile default [NAME]`
+**Usage:** `boa profile default [NAME]`
 
 ###### **Arguments:**
 
@@ -916,11 +916,11 @@ Show or set default profile
 
 
 
-## `aoe project`
+## `boa project`
 
 Manage the project registry used by multi-repo session pickers
 
-**Usage:** `aoe project <COMMAND>`
+**Usage:** `boa project <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -930,11 +930,11 @@ Manage the project registry used by multi-repo session pickers
 
 
 
-## `aoe project list`
+## `boa project list`
 
 List registered projects
 
-**Usage:** `aoe project list [OPTIONS]`
+**Usage:** `boa project list [OPTIONS]`
 
 ###### **Options:**
 
@@ -948,11 +948,11 @@ List registered projects
 
 
 
-## `aoe project add`
+## `boa project add`
 
 Add a project to the registry
 
-**Usage:** `aoe project add [OPTIONS] <PATH>`
+**Usage:** `boa project add [OPTIONS] <PATH>`
 
 ###### **Arguments:**
 
@@ -970,11 +970,11 @@ Add a project to the registry
 
 
 
-## `aoe project remove`
+## `boa project remove`
 
 Remove a project from the registry
 
-**Usage:** `aoe project remove [OPTIONS] <NAME_OR_PATH>`
+**Usage:** `boa project remove [OPTIONS] <NAME_OR_PATH>`
 
 ###### **Arguments:**
 
@@ -989,11 +989,11 @@ Remove a project from the registry
 
 
 
-## `aoe worktree`
+## `boa worktree`
 
 Manage git worktrees for parallel development
 
-**Usage:** `aoe worktree <COMMAND>`
+**Usage:** `boa worktree <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1003,19 +1003,19 @@ Manage git worktrees for parallel development
 
 
 
-## `aoe worktree list`
+## `boa worktree list`
 
 List all worktrees in current repository
 
-**Usage:** `aoe worktree list`
+**Usage:** `boa worktree list`
 
 
 
-## `aoe worktree info`
+## `boa worktree info`
 
 Show worktree information for a session
 
-**Usage:** `aoe worktree info <IDENTIFIER>`
+**Usage:** `boa worktree info <IDENTIFIER>`
 
 ###### **Arguments:**
 
@@ -1023,11 +1023,11 @@ Show worktree information for a session
 
 
 
-## `aoe worktree cleanup`
+## `boa worktree cleanup`
 
 Cleanup orphaned worktrees
 
-**Usage:** `aoe worktree cleanup [OPTIONS]`
+**Usage:** `boa worktree cleanup [OPTIONS]`
 
 ###### **Options:**
 
@@ -1035,11 +1035,11 @@ Cleanup orphaned worktrees
 
 
 
-## `aoe tmux`
+## `boa tmux`
 
 tmux integration utilities
 
-**Usage:** `aoe tmux <COMMAND>`
+**Usage:** `boa tmux <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1047,13 +1047,13 @@ tmux integration utilities
 
 
 
-## `aoe tmux status`
+## `boa tmux status`
 
 Output session info for use in custom tmux status bar
 
-Add this to your ~/.tmux.conf: set -g status-right "#(aoe tmux status)"
+Add this to your ~/.tmux.conf: set -g status-right "#(BOA tmux status)"
 
-**Usage:** `aoe tmux status [OPTIONS]`
+**Usage:** `boa tmux status [OPTIONS]`
 
 ###### **Options:**
 
@@ -1063,11 +1063,11 @@ Add this to your ~/.tmux.conf: set -g status-right "#(aoe tmux status)"
 
 
 
-## `aoe sounds`
+## `boa sounds`
 
 Manage sound effects for agent state transitions
 
-**Usage:** `aoe sounds <COMMAND>`
+**Usage:** `boa sounds <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1077,27 +1077,27 @@ Manage sound effects for agent state transitions
 
 
 
-## `aoe sounds install`
+## `boa sounds install`
 
 Install bundled sound effects
 
-**Usage:** `aoe sounds install`
+**Usage:** `boa sounds install`
 
 
 
-## `aoe sounds list`
+## `boa sounds list`
 
 List currently installed sounds
 
-**Usage:** `aoe sounds list`
+**Usage:** `boa sounds list`
 
 
 
-## `aoe sounds test`
+## `boa sounds test`
 
 Test a sound by playing it
 
-**Usage:** `aoe sounds test <NAME>`
+**Usage:** `boa sounds test <NAME>`
 
 ###### **Arguments:**
 
@@ -1105,11 +1105,11 @@ Test a sound by playing it
 
 
 
-## `aoe theme`
+## `boa theme`
 
 Manage color themes (list, export, customize)
 
-**Usage:** `aoe theme <COMMAND>`
+**Usage:** `boa theme <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1119,19 +1119,19 @@ Manage color themes (list, export, customize)
 
 
 
-## `aoe theme list`
+## `boa theme list`
 
 List all available themes (built-in and custom)
 
-**Usage:** `aoe theme list`
+**Usage:** `boa theme list`
 
 
 
-## `aoe theme export`
+## `boa theme export`
 
 Export a built-in theme as a TOML file for customization
 
-**Usage:** `aoe theme export [OPTIONS] <NAME>`
+**Usage:** `boa theme export [OPTIONS] <NAME>`
 
 ###### **Arguments:**
 
@@ -1143,19 +1143,19 @@ Export a built-in theme as a TOML file for customization
 
 
 
-## `aoe theme dir`
+## `boa theme dir`
 
 Show the custom themes directory path
 
-**Usage:** `aoe theme dir`
+**Usage:** `boa theme dir`
 
 
 
-## `aoe settings`
+## `boa settings`
 
 Inspect resolved settings and their provenance
 
-**Usage:** `aoe settings <COMMAND>`
+**Usage:** `boa settings <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1163,11 +1163,11 @@ Inspect resolved settings and their provenance
 
 
 
-## `aoe settings explain`
+## `boa settings explain`
 
 Explain where a setting's effective value comes from. KEY is a core `section.field` (e.g. `acp.default_agent`) or a plugin `plugin:<id>.<field>` (e.g. `plugin:acme.kit.retries`)
 
-**Usage:** `aoe settings explain <KEY>`
+**Usage:** `boa settings explain <KEY>`
 
 ###### **Arguments:**
 
@@ -1175,11 +1175,11 @@ Explain where a setting's effective value comes from. KEY is a core `section.fie
 
 
 
-## `aoe telemetry`
+## `boa telemetry`
 
 Manage anonymous opt-in usage telemetry
 
-**Usage:** `aoe telemetry <COMMAND>`
+**Usage:** `boa telemetry <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1190,43 +1190,43 @@ Manage anonymous opt-in usage telemetry
 
 
 
-## `aoe telemetry status`
+## `boa telemetry status`
 
 Show the current telemetry opt-in state and install id
 
-**Usage:** `aoe telemetry status`
+**Usage:** `boa telemetry status`
 
 
 
-## `aoe telemetry enable`
+## `boa telemetry enable`
 
 Opt in to anonymous usage telemetry
 
-**Usage:** `aoe telemetry enable`
+**Usage:** `boa telemetry enable`
 
 
 
-## `aoe telemetry disable`
+## `boa telemetry disable`
 
 Opt out of telemetry (deletes the local install id)
 
-**Usage:** `aoe telemetry disable`
+**Usage:** `boa telemetry disable`
 
 
 
-## `aoe telemetry reset-id`
+## `boa telemetry reset-id`
 
 Generate a fresh anonymous install id (only while opted in)
 
-**Usage:** `aoe telemetry reset-id`
+**Usage:** `boa telemetry reset-id`
 
 
 
-## `aoe mcp`
+## `boa mcp`
 
 Inspect the effective MCP server set (provenance, conflicts, drift)
 
-**Usage:** `aoe mcp <COMMAND>`
+**Usage:** `boa mcp <COMMAND>`
 
 ###### **Subcommands:**
 
@@ -1234,11 +1234,11 @@ Inspect the effective MCP server set (provenance, conflicts, drift)
 
 
 
-## `aoe mcp list`
+## `boa mcp list`
 
 List the merged effective MCP server set with provenance, plus any conflicts and servers kept after removal from a native config
 
-**Usage:** `aoe mcp list [OPTIONS]`
+**Usage:** `boa mcp list [OPTIONS]`
 
 ###### **Options:**
 
@@ -1247,15 +1247,15 @@ List the merged effective MCP server set with provenance, plus any conflicts and
 
 
 
-## `aoe serve`
+## `boa serve`
 
 Start a web dashboard for remote session access
 
-**Usage:** `aoe serve [OPTIONS]`
+**Usage:** `boa serve [OPTIONS]`
 
 ###### **Options:**
 
-* `--port <PORT>` — Port to listen on (default: 8080; debug builds default to 8081 so a `cargo run` instance does not collide with an installed release `aoe`)
+* `--port <PORT>` — Port to listen on (default: 8080; debug builds default to 8081 so a `cargo run` instance does not collide with an installed release `boa`)
 * `--host <HOST>` — Host/IP to bind to (use 0.0.0.0 for LAN/VPN access)
 
   Default value: `127.0.0.1`
@@ -1269,7 +1269,7 @@ Start a web dashboard for remote session access
 * `--remote` — Expose the dashboard over a public HTTPS tunnel. Prefers Tailscale Funnel when `tailscale` is installed and logged in (stable `.ts.net` URL, installable PWAs survive restarts). Falls back to a Cloudflare quick tunnel otherwise (fresh URL on every restart)
 * `--tunnel-name <TUNNEL_NAME>` — Use a named Cloudflare Tunnel (requires prior `cloudflared tunnel create`). Takes precedence over Tailscale auto-detection
 * `--no-tailscale` — Skip Tailscale Funnel auto-detection and go straight to Cloudflare. Useful if you have Tailscale installed for unrelated reasons
-* `--tunnel-url <TUNNEL_URL>` — Hostname for a named tunnel (e.g., aoe.example.com)
+* `--tunnel-url <TUNNEL_URL>` — Hostname for a named tunnel (e.g., boa.example.com)
 * `--daemon` — Run as a background daemon (detach from terminal)
 * `--stop` — Stop a running daemon
 * `--status` — Print the running daemon's PID, mode, URLs, and log path. Exits non-zero when no daemon is running. Useful for shell scripts that want to know whether a daemon is up without parsing `ps`.
@@ -1277,15 +1277,15 @@ Start a web dashboard for remote session access
    `--status` is read-only and incompatible with every flag that would change daemon state (`--stop`, `--daemon`, `--remote`) or the bind config of a fresh daemon (`--no-auth`, `--auth`, `--behind-proxy`, `--read-only`, `--passphrase`, `--port`, `--tunnel-name`, `--no-tailscale`, `--tunnel-url`, `--open`). Clap reports the misuse instead of silently ignoring the extras.
 * `--passphrase <PASSPHRASE>` — Require a passphrase for login (second-factor auth). Can also be set via AOE_SERVE_PASSPHRASE environment variable
 * `--open` — Open the dashboard URL in the default browser once the server is ready. Ignored under --daemon, --remote, SSH (SSH_CONNECTION/SSH_TTY), or when no display server is reachable on Linux/BSD
-* `--restart` — Restart a running `aoe serve` daemon, replaying the host, port, mode, and auth it was launched with (read from `serve.launch`). The passphrase is recalled from `serve.passphrase` or `AOE_SERVE_PASSPHRASE` before the old daemon is stopped, so a passphrase-protected daemon is never left down. Incompatible with the flags that would change the daemon's bind config: that config comes from the persisted launch state
+* `--restart` — Restart a running `boa serve` daemon, replaying the host, port, mode, and auth it was launched with (read from `serve.launch`). The passphrase is recalled from `serve.passphrase` or `AOE_SERVE_PASSPHRASE` before the old daemon is stopped, so a passphrase-protected daemon is never left down. Incompatible with the flags that would change the daemon's bind config: that config comes from the persisted launch state
 
 
 
-## `aoe url`
+## `boa url`
 
-Print the current dashboard URL of a running `aoe serve` daemon
+Print the current dashboard URL of a running `boa serve` daemon
 
-**Usage:** `aoe url [OPTIONS]`
+**Usage:** `boa url [OPTIONS]`
 
 ###### **Options:**
 
@@ -1294,18 +1294,18 @@ Print the current dashboard URL of a running `aoe serve` daemon
 
 
 
-## `aoe acp`
+## `boa acp`
 
 Manage the ACP structured-view workers (doctor, ps, logs, prompt, approve, ...)
 
-**Usage:** `aoe acp <COMMAND>`
+**Usage:** `boa acp <COMMAND>`
 
 ###### **Subcommands:**
 
 * `doctor` — Verify the structured view can start: Node runtime, configured agents, provider auth (claude login)
 * `agents` — List configured agents (claude-code, aoe-agent, etc.)
 * `ps` — List running agent workers (detached or attached)
-* `stop` — Gracefully stop an agent worker (SIGTERM the runner, agent receives stdin EOF). Sessions can be reattached on the next `aoe serve` only if they are still alive afterward; `stop` destroys the worker
+* `stop` — Gracefully stop an agent worker (SIGTERM the runner, agent receives stdin EOF). Sessions can be reattached on the next `boa serve` only if they are still alive afterward; `stop` destroys the worker
 * `kill` — SIGKILL a worker immediately (use when `stop` doesn't take)
 * `logs` — Tail the runner's log file for an agent session
 * `restart` — Restart a wedged agent worker: stop the existing runner, then let the daemon's reconciler spawn a fresh one on the next tick
@@ -1316,15 +1316,15 @@ Manage the ACP structured-view workers (doctor, ps, logs, prompt, approve, ...)
 * `cancel` — Cancel the in-flight prompt for an agent session
 * `tail` — Stream the agent broadcast for a session to stdout as JSON lines (one frame per line). Press Ctrl-C to stop
 * `attach` — Open the TUI structured view directly for a known session id. Combine with `AOE_DAEMON_URL` (+ `AOE_DAEMON_TOKEN`) to attach across machines without going through the home session list
-* `switch-agent` — Switch an agent session to a different ACP agent, keeping the transcript. The new agent starts fresh; use `aoe acp agents` to list valid targets. Handy for returning to claude after a rate-limit handoff to codex
+* `switch-agent` — Switch an agent session to a different ACP agent, keeping the transcript. The new agent starts fresh; use `boa acp agents` to list valid targets. Handy for returning to claude after a rate-limit handoff to codex
 
 
 
-## `aoe acp doctor`
+## `boa acp doctor`
 
 Verify the structured view can start: Node runtime, configured agents, provider auth (claude login)
 
-**Usage:** `aoe acp doctor [OPTIONS]`
+**Usage:** `boa acp doctor [OPTIONS]`
 
 ###### **Options:**
 
@@ -1333,19 +1333,19 @@ Verify the structured view can start: Node runtime, configured agents, provider 
 
 
 
-## `aoe acp agents`
+## `boa acp agents`
 
 List configured agents (claude-code, aoe-agent, etc.)
 
-**Usage:** `aoe acp agents`
+**Usage:** `boa acp agents`
 
 
 
-## `aoe acp ps`
+## `boa acp ps`
 
 List running agent workers (detached or attached)
 
-**Usage:** `aoe acp ps [OPTIONS]`
+**Usage:** `boa acp ps [OPTIONS]`
 
 ###### **Options:**
 
@@ -1353,11 +1353,11 @@ List running agent workers (detached or attached)
 
 
 
-## `aoe acp stop`
+## `boa acp stop`
 
-Gracefully stop an agent worker (SIGTERM the runner, agent receives stdin EOF). Sessions can be reattached on the next `aoe serve` only if they are still alive afterward; `stop` destroys the worker
+Gracefully stop an agent worker (SIGTERM the runner, agent receives stdin EOF). Sessions can be reattached on the next `boa serve` only if they are still alive afterward; `stop` destroys the worker
 
-**Usage:** `aoe acp stop [OPTIONS] [SESSION]`
+**Usage:** `boa acp stop [OPTIONS] [SESSION]`
 
 ###### **Arguments:**
 
@@ -1372,11 +1372,11 @@ Gracefully stop an agent worker (SIGTERM the runner, agent receives stdin EOF). 
 
 
 
-## `aoe acp kill`
+## `boa acp kill`
 
 SIGKILL a worker immediately (use when `stop` doesn't take)
 
-**Usage:** `aoe acp kill <SESSION>`
+**Usage:** `boa acp kill <SESSION>`
 
 ###### **Arguments:**
 
@@ -1384,11 +1384,11 @@ SIGKILL a worker immediately (use when `stop` doesn't take)
 
 
 
-## `aoe acp logs`
+## `boa acp logs`
 
 Tail the runner's log file for an agent session
 
-**Usage:** `aoe acp logs [OPTIONS]`
+**Usage:** `boa acp logs [OPTIONS]`
 
 ###### **Options:**
 
@@ -1397,11 +1397,11 @@ Tail the runner's log file for an agent session
 
 
 
-## `aoe acp restart`
+## `boa acp restart`
 
 Restart a wedged agent worker: stop the existing runner, then let the daemon's reconciler spawn a fresh one on the next tick
 
-**Usage:** `aoe acp restart <SESSION>`
+**Usage:** `boa acp restart <SESSION>`
 
 ###### **Arguments:**
 
@@ -1409,11 +1409,11 @@ Restart a wedged agent worker: stop the existing runner, then let the daemon's r
 
 
 
-## `aoe acp history`
+## `boa acp history`
 
 Print the persisted transcript for an agent session
 
-**Usage:** `aoe acp history [OPTIONS] <SESSION>`
+**Usage:** `boa acp history [OPTIONS] <SESSION>`
 
 ###### **Arguments:**
 
@@ -1428,11 +1428,11 @@ Print the persisted transcript for an agent session
 
 
 
-## `aoe acp status`
+## `boa acp status`
 
 Print live status for an agent session: highest/lowest seq, and whether the on-disk retention window has truncated history
 
-**Usage:** `aoe acp status [OPTIONS] <SESSION>`
+**Usage:** `boa acp status [OPTIONS] <SESSION>`
 
 ###### **Arguments:**
 
@@ -1444,11 +1444,11 @@ Print live status for an agent session: highest/lowest seq, and whether the on-d
 
 
 
-## `aoe acp prompt`
+## `boa acp prompt`
 
 Send a prompt to an agent session's agent
 
-**Usage:** `aoe acp prompt <SESSION> <TEXT>`
+**Usage:** `boa acp prompt <SESSION> <TEXT>`
 
 ###### **Arguments:**
 
@@ -1457,11 +1457,11 @@ Send a prompt to an agent session's agent
 
 
 
-## `aoe acp approve`
+## `boa acp approve`
 
 Resolve a pending approval (default: allow). Use --always for a session-scoped allow-list entry, --deny to refuse the request
 
-**Usage:** `aoe acp approve [OPTIONS] <SESSION> <NONCE>`
+**Usage:** `boa acp approve [OPTIONS] <SESSION> <NONCE>`
 
 ###### **Arguments:**
 
@@ -1475,11 +1475,11 @@ Resolve a pending approval (default: allow). Use --always for a session-scoped a
 
 
 
-## `aoe acp cancel`
+## `boa acp cancel`
 
 Cancel the in-flight prompt for an agent session
 
-**Usage:** `aoe acp cancel <SESSION>`
+**Usage:** `boa acp cancel <SESSION>`
 
 ###### **Arguments:**
 
@@ -1487,11 +1487,11 @@ Cancel the in-flight prompt for an agent session
 
 
 
-## `aoe acp tail`
+## `boa acp tail`
 
 Stream the agent broadcast for a session to stdout as JSON lines (one frame per line). Press Ctrl-C to stop
 
-**Usage:** `aoe acp tail [OPTIONS] <SESSION>`
+**Usage:** `boa acp tail [OPTIONS] <SESSION>`
 
 ###### **Arguments:**
 
@@ -1505,11 +1505,11 @@ Stream the agent broadcast for a session to stdout as JSON lines (one frame per 
 
 
 
-## `aoe acp attach`
+## `boa acp attach`
 
 Open the TUI structured view directly for a known session id. Combine with `AOE_DAEMON_URL` (+ `AOE_DAEMON_TOKEN`) to attach across machines without going through the home session list
 
-**Usage:** `aoe acp attach <SESSION>`
+**Usage:** `boa acp attach <SESSION>`
 
 ###### **Arguments:**
 
@@ -1517,11 +1517,11 @@ Open the TUI structured view directly for a known session id. Combine with `AOE_
 
 
 
-## `aoe acp switch-agent`
+## `boa acp switch-agent`
 
-Switch an agent session to a different ACP agent, keeping the transcript. The new agent starts fresh; use `aoe acp agents` to list valid targets. Handy for returning to claude after a rate-limit handoff to codex
+Switch an agent session to a different ACP agent, keeping the transcript. The new agent starts fresh; use `boa acp agents` to list valid targets. Handy for returning to claude after a rate-limit handoff to codex
 
-**Usage:** `aoe acp switch-agent [OPTIONS] <SESSION> <TARGET>`
+**Usage:** `boa acp switch-agent [OPTIONS] <SESSION> <TARGET>`
 
 ###### **Arguments:**
 
@@ -1534,11 +1534,11 @@ Switch an agent session to a different ACP agent, keeping the transcript. The ne
 
 
 
-## `aoe uninstall`
+## `boa uninstall`
 
-Uninstall Agent of Empires
+Uninstall Band of Agents
 
-**Usage:** `aoe uninstall [OPTIONS]`
+**Usage:** `boa uninstall [OPTIONS]`
 
 ###### **Options:**
 
@@ -1549,11 +1549,11 @@ Uninstall Agent of Empires
 
 
 
-## `aoe update`
+## `boa update`
 
-Update aoe to the latest release
+Update BOA to the latest release
 
-**Usage:** `aoe update [OPTIONS]`
+**Usage:** `boa update [OPTIONS]`
 
 ###### **Options:**
 
@@ -1563,11 +1563,11 @@ Update aoe to the latest release
 
 
 
-## `aoe completion`
+## `boa completion`
 
 Generate shell completions
 
-**Usage:** `aoe completion <SHELL>`
+**Usage:** `boa completion <SHELL>`
 
 ###### **Arguments:**
 

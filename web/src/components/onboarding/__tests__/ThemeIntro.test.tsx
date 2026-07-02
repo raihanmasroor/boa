@@ -56,7 +56,7 @@ describe("ThemeIntro", () => {
     await mount();
     fireEvent.click(screen.getByRole("option", { name: "modus-vivendi" }));
     await waitFor(() => expect(dispatchSpy).toHaveBeenCalledWith("modus-vivendi"));
-    fireEvent.click(screen.getByRole("option", { name: "empire" }));
+    fireEvent.click(screen.getByRole("option", { name: "band" }));
     await waitFor(() => expect(dispatchSpy).toHaveBeenCalledWith("empire"));
     expect(updateTheme).toHaveBeenCalledTimes(2);
   });
@@ -64,11 +64,11 @@ describe("ThemeIntro", () => {
   it("shows an error and does not repaint when the save fails", async () => {
     updateTheme.mockImplementation(() => Promise.resolve(false));
     await mount();
-    fireEvent.click(screen.getByRole("option", { name: "empire" }));
+    fireEvent.click(screen.getByRole("option", { name: "band" }));
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
     expect(dispatchSpy).not.toHaveBeenCalled();
     // Highlight reverts so the grid never claims an unsaved theme is active.
-    expect(screen.getByRole("option", { name: "empire" }).getAttribute("aria-selected")).toBe("false");
+    expect(screen.getByRole("option", { name: "band" }).getAttribute("aria-selected")).toBe("false");
   });
 
   it("dismisses via Continue", async () => {

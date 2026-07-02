@@ -1,6 +1,6 @@
 # Adding a Setting
 
-Settings in AoE are single-source (#1692): a field is declared once on its
+Settings in BOA are single-source (#1692): a field is declared once on its
 `Config` sub-struct, and every surface (TUI, web dashboard, server validation,
 profile/repo overrides, `config.toml`) derives from that one declaration. In
 the common case, adding a setting is a single edit.

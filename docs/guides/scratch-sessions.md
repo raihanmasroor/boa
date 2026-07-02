@@ -1,7 +1,7 @@
 # Scratch sessions
 
 A scratch session is a session that does not belong to any project on
-disk. When you start one, AoE provisions a fresh directory under
+disk. When you start one, BOA provisions a fresh directory under
 `~/.agent-of-empires/scratch/<id>/` (on Linux:
 `$XDG_CONFIG_HOME/agent-of-empires/scratch/<id>/`), attaches the
 session to it, and removes the directory when you delete the session
@@ -22,7 +22,7 @@ specific repo or to keep stray files around afterwards.
 ### Command line
 
 ```bash
-aoe add --scratch -t "Quick question" -c claude
+boa add --scratch -t "Quick question" -c claude
 ```
 
 The session prints its resolved `Path:` line pointing at
@@ -32,7 +32,7 @@ summary. You do not pass a project path; it is provisioned for you.
 Trying to pass a path alongside `--scratch` is rejected:
 
 ```bash
-aoe add /Users/me/repo --scratch
+boa add /Users/me/repo --scratch
 # error: Cannot specify a project path with --scratch
 ```
 
@@ -96,9 +96,9 @@ Storing under the app dir (rather than `$TMPDIR`) means scratch directories surv
 
 ## What happens at delete
 
-Deleting a scratch session (`aoe rm`, web dashboard, or TUI delete dialog) also removes its scratch directory.
+Deleting a scratch session (`boa rm`, web dashboard, or TUI delete dialog) also removes its scratch directory.
 
-Pass `--keep-scratch` to `aoe rm` (or check the box in the delete dialog) to keep the directory on disk; the session is detached from AoE's view but the files survive, and the kept path is logged.
+Pass `--keep-scratch` to `boa rm` (or check the box in the delete dialog) to keep the directory on disk; the session is detached from BOA's view but the files survive, and the kept path is logged.
 
 Deleted scratch directories do not appear in the wizard's **Recent projects** tab.
 
@@ -120,6 +120,6 @@ Deleted scratch directories do not appear in the wizard's **Recent projects** ta
 
 ## Cleanup and retention
 
-If `aoe serve` (or your shell session) dies before you delete a scratch session, the directory is left on disk. There is no automatic retention policy yet; clean up by deleting the session record (which removes the directory) or by removing entries under the scratch root directly.
+If `boa serve` (or your shell session) dies before you delete a scratch session, the directory is left on disk. There is no automatic retention policy yet; clean up by deleting the session record (which removes the directory) or by removing entries under the scratch root directly.
 
-To keep the files, use `aoe rm --keep-scratch` and copy them out, or create a new session against a real path with `aoe add <path>`.
+To keep the files, use `boa rm --keep-scratch` and copy them out, or create a new session against a real path with `boa add <path>`.

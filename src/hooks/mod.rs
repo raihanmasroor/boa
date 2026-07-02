@@ -578,7 +578,7 @@ pub fn install_hooks(
 
         if settings == before {
             tracing::debug!(target: "hooks.install",
-                "AoE hooks in {} already up to date; skipping write",
+                "BOA hooks in {} already up to date; skipping write",
                 settings_path.display());
             return Ok(());
         }
@@ -589,7 +589,7 @@ pub fn install_hooks(
         let formatted = serde_json::to_string_pretty(&settings)?;
         crate::session::atomic_write_following_symlinks(settings_path, formatted.as_bytes())?;
 
-        tracing::info!(target: "hooks.install", "Installed AoE hooks in {}", settings_path.display());
+        tracing::info!(target: "hooks.install", "Installed BOA hooks in {}", settings_path.display());
         Ok(())
     })
 }
@@ -683,14 +683,14 @@ pub(crate) fn install_codex_hooks_with_preserved_state(
 
         if config.to_string() == before {
             tracing::debug!(target: "hooks.install",
-                "AoE hooks in {} already up to date; skipping write",
+                "BOA hooks in {} already up to date; skipping write",
                 config_path.display());
             return Ok(());
         }
 
         write_codex_config(config_path, &config)?;
         tracing::info!(target: "hooks.install",
-            "Installed AoE hooks in {}", config_path.display());
+            "Installed BOA hooks in {}", config_path.display());
         Ok(())
     })
 }
@@ -964,7 +964,7 @@ fn codex_hooks_feature_is_disabled(config: &toml_edit::DocumentMut, config_path:
 
     if disabled {
         tracing::warn!(target: "hooks.install",
-            "Codex hooks are explicitly disabled in {}; skipping AoE status hooks",
+            "Codex hooks are explicitly disabled in {}; skipping BOA status hooks",
             config_path.display()
         );
     }
@@ -988,7 +988,7 @@ pub fn uninstall_codex_hooks(config_path: &Path) -> Result<bool> {
         Ok(true)
     })?;
     if modified {
-        tracing::info!(target: "hooks.uninstall", "Removed AoE hooks from {}", config_path.display());
+        tracing::info!(target: "hooks.uninstall", "Removed BOA hooks from {}", config_path.display());
     }
     Ok(modified)
 }
@@ -1054,7 +1054,7 @@ pub fn uninstall_hooks(settings_path: &Path) -> Result<bool> {
         let formatted = serde_json::to_string_pretty(&settings)?;
         crate::session::atomic_write_following_symlinks(settings_path, formatted.as_bytes())?;
 
-        tracing::info!(target: "hooks.uninstall", "Removed AoE hooks from {}", settings_path.display());
+        tracing::info!(target: "hooks.uninstall", "Removed BOA hooks from {}", settings_path.display());
         Ok(true)
     })
 }
@@ -1121,7 +1121,7 @@ pub fn install_settl_hooks(config_path: &Path, target: HookInstallTarget) -> Res
 
         if config == before {
             tracing::debug!(target: "hooks.install",
-                "AoE hooks in {} already up to date; skipping write",
+                "BOA hooks in {} already up to date; skipping write",
                 config_path.display());
             return Ok(());
         }
@@ -1132,7 +1132,7 @@ pub fn install_settl_hooks(config_path: &Path, target: HookInstallTarget) -> Res
         let formatted = toml::to_string_pretty(&config)?;
         crate::session::atomic_write_following_symlinks(config_path, formatted.as_bytes())?;
 
-        tracing::info!(target: "hooks.install", "Installed AoE hooks in {}", config_path.display());
+        tracing::info!(target: "hooks.install", "Installed BOA hooks in {}", config_path.display());
         Ok(())
     })
 }
@@ -1169,7 +1169,7 @@ pub fn uninstall_settl_hooks(config_path: &Path) -> Result<bool> {
 
         let formatted = toml::to_string_pretty(&config)?;
         crate::session::atomic_write_following_symlinks(config_path, formatted.as_bytes())?;
-        tracing::info!(target: "hooks.uninstall", "Removed AoE hooks from {}", config_path.display());
+        tracing::info!(target: "hooks.uninstall", "Removed BOA hooks from {}", config_path.display());
         Ok(true)
     })
 }
@@ -1279,7 +1279,7 @@ pub fn install_hermes_hooks(config_path: &Path, target: HookInstallTarget) -> Re
 
         if !yaml_changed && !allowlist_changed {
             tracing::debug!(target: "hooks.install",
-                "AoE hooks in {} already up to date; skipping write",
+                "BOA hooks in {} already up to date; skipping write",
                 config_path.display());
             return Ok(());
         }
@@ -1302,7 +1302,7 @@ pub fn install_hermes_hooks(config_path: &Path, target: HookInstallTarget) -> Re
             )?;
         }
 
-        tracing::info!(target: "hooks.install", "Installed AoE hooks in {}", config_path.display());
+        tracing::info!(target: "hooks.install", "Installed BOA hooks in {}", config_path.display());
         Ok(())
     })
 }
@@ -1372,7 +1372,7 @@ pub fn uninstall_hermes_hooks(config_path: &Path) -> Result<bool> {
 
         let formatted = serde_yaml::to_string(&config)?;
         crate::session::atomic_write_following_symlinks(config_path, formatted.as_bytes())?;
-        tracing::info!(target: "hooks.uninstall", "Removed AoE hooks from {}", config_path.display());
+        tracing::info!(target: "hooks.uninstall", "Removed BOA hooks from {}", config_path.display());
         Ok(true)
     })
 }
@@ -1525,7 +1525,7 @@ pub fn install_kiro_hooks(agent_config_path: &Path, target: HookInstallTarget) -
 
         if config == before {
             tracing::debug!(target: "hooks.install",
-                "AoE hooks in {} already up to date; skipping write",
+                "BOA hooks in {} already up to date; skipping write",
                 agent_config_path.display());
             return Ok(());
         }
@@ -1536,7 +1536,7 @@ pub fn install_kiro_hooks(agent_config_path: &Path, target: HookInstallTarget) -
         let formatted = serde_json::to_string_pretty(&Value::Object(config))?;
         crate::session::atomic_write_following_symlinks(agent_config_path, formatted.as_bytes())?;
 
-        tracing::info!(target: "hooks.install", "Installed AoE hooks in {}", agent_config_path.display());
+        tracing::info!(target: "hooks.install", "Installed BOA hooks in {}", agent_config_path.display());
         Ok(())
     })
 }
@@ -1697,7 +1697,7 @@ pub fn uninstall_kiro_hooks(agent_config_path: &Path) -> Result<bool> {
             )?;
         }
 
-        tracing::info!(target: "hooks.uninstall", "Removed AoE hooks from {}", agent_config_path.display());
+        tracing::info!(target: "hooks.uninstall", "Removed BOA hooks from {}", agent_config_path.display());
         Ok(true)
     })
 }
@@ -1714,7 +1714,7 @@ pub fn uninstall_all_hooks() {
             HookTargetKind::Sidecar(sidecar) => (sidecar.uninstall)(&target.path),
         };
         match result {
-            Ok(true) => println!("Removed AoE hooks from {}", target.path.display()),
+            Ok(true) => println!("Removed BOA hooks from {}", target.path.display()),
             Ok(false) => {}
             Err(e) => tracing::warn!(target: "hooks.uninstall",
                 "Failed to remove {} hooks from {}: {}",

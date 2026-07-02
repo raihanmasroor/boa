@@ -41,11 +41,11 @@ use super::worktree::WorktreeCommands;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Parser)]
-#[command(name = "aoe")]
+#[command(name = "boa")]
 #[command(about = "Terminal session manager for AI coding agents")]
 #[command(version = VERSION)]
 #[command(
-    long_about = "Agent of Empires (aoe) is a terminal session manager that uses tmux to help \
+    long_about = "Band of Agents (boa) is a terminal session manager that uses tmux to help \
     you manage and monitor AI coding agents like Claude Code and OpenCode.\n\n\
     Run without arguments to launch the TUI dashboard."
 )]
@@ -57,7 +57,7 @@ pub struct Cli {
     /// Attach to a remote agent daemon instead of using the local
     /// session list. Equivalent to setting `AOE_DAEMON_URL`; pair with
     /// `AOE_DAEMON_TOKEN` for the bearer token. Only meaningful at the
-    /// no-subcommand `aoe` invocation (the TUI dashboard); ignored
+    /// no-subcommand `boa` invocation (the TUI dashboard); ignored
     /// otherwise.
     #[arg(long, global = true, env = "AOE_DAEMON_URL")]
     pub daemon_url: Option<String>,
@@ -81,7 +81,7 @@ pub enum Commands {
     #[command(alias = "ls")]
     List(ListArgs),
 
-    /// View the configured AoE log file with a pretty viewer
+    /// View the configured Band of Agents log file with a pretty viewer
     Logs(LogsArgs),
 
     /// Get or set the running daemon's log filter at runtime.
@@ -101,8 +101,8 @@ pub enum Commands {
     /// Show session status summary
     Status(StatusArgs),
 
-    /// Force-stop everything aoe is running: the serve daemon, all agent
-    /// workers, and all aoe tmux sessions. Destructive and unprompted.
+    /// Force-stop everything Band of Agents is running: the serve daemon, all
+    /// agent workers, and all of its tmux sessions. Destructive and unprompted.
     Killall(KillallArgs),
 
     /// Internal: trap for `aoe stop`, which is not a command in aoe (stopping
@@ -216,10 +216,10 @@ pub enum Commands {
     #[command(name = "__extract-session-id", hide = true)]
     ExtractSessionId(ExtractSessionIdArgs),
 
-    /// Uninstall Agent of Empires
+    /// Uninstall Band of Agents
     Uninstall(UninstallArgs),
 
-    /// Update aoe to the latest release
+    /// Update BOA to the latest release
     Update(UpdateArgs),
 
     /// Generate shell completions

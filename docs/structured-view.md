@@ -2,7 +2,7 @@
 
 The **structured view** is the default rendering for AI coding agents in the web dashboard and the native TUI. Instead of a terminal pane (PTY bytes through xterm.js), it renders the agent's structured state directly: plan, tool-call cards, diffs, and approvals. It is mobile-first and scales the same components into a richer multi-pane desktop layout.
 
-It speaks the [Agent Client Protocol](https://agentclientprotocol.com/) (ACP), a JSON-RPC standard for editor-agent communication. aoe is the *client*; the agent (Claude Code, Gemini, the bundled `aoe-agent`, etc.) is the *server*. Any ACP-capable agent uses the structured view by default; a session can opt into the **terminal view** instead, per session, and you can switch at any time. Agents with no ACP adapter always run in the terminal view.
+It speaks the [Agent Client Protocol](https://agentclientprotocol.com/) (ACP), a JSON-RPC standard for editor-agent communication. BOA is the *client*; the agent (Claude Code, Gemini, the bundled `aoe-agent`, etc.) is the *server*. Any ACP-capable agent uses the structured view by default; a session can opt into the **terminal view** instead, per session, and you can switch at any time. Agents with no ACP adapter always run in the terminal view.
 
 ![The structured view rendering an agent's plan, tool-call cards, and a pending approval](assets/structured-view/overview.png)
 
@@ -16,7 +16,7 @@ Contributors: see [Structured View Internals](development/internals/structured-v
 
 ## Supported agents
 
-aoe ships an ACP registry entry for each tool whose ACP server we've verified. For those tools the web wizard shows a per-session **Use structured view** toggle (on by default), under the wizard's **More options** disclosure. Tools not in the set, and custom agents without an ACP command, have no toggle and always run in the terminal view.
+BOA ships an ACP registry entry for each tool whose ACP server we've verified. For those tools the web wizard shows a per-session **Use structured view** toggle (on by default), under the wizard's **More options** disclosure. Tools not in the set, and custom agents without an ACP command, have no toggle and always run in the terminal view.
 
 | Agent | ACP adapter | Install | Auth |
 |-------|-------------|---------|------|
@@ -26,11 +26,11 @@ aoe ships an ACP registry entry for each tool whose ACP server we've verified. F
 | `gemini` | `gemini --acp` (native) | `npm install -g @google/gemini-cli` | `GEMINI_API_KEY`, OAuth, or Vertex |
 | `vibe` | `vibe-acp` (native) | see [mistral-vibe](https://github.com/mistralai/mistral-vibe) | Mistral API key |
 | `pi` | `pi-acp` (adapter) | `npm install -g pi-acp` (plus `@earendil-works/pi-coding-agent`) | `pi-acp --terminal-login`, or provider env |
-| `aoe-agent` | bundled (Vercel AI SDK 6) | ships with `aoe` | provider env vars |
+| `aoe-agent` | bundled (Vercel AI SDK 6) | ships with `boa` | provider env vars |
 
 Tools not yet wired into the registry (aider, cursor, copilot, droid, hermes, kiro) always run in the terminal view. A **custom agent** can opt in by setting an ACP launch command via `agent_acp_cmd` (see [Configuration](guides/configuration.md#running-a-custom-agent-in-the-structured-view)).
 
-The structured view always forwards `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, and `CLAUDE_CONFIG_DIR` to the agent. For other agents, set their auth env in the environment that runs `aoe serve` (or the per-session `extra_env` field).
+The structured view always forwards `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, and `CLAUDE_CONFIG_DIR` to the agent. For other agents, set their auth env in the environment that runs `boa serve` (or the per-session `extra_env` field).
 
 ### Feature matrix
 
@@ -45,7 +45,7 @@ Each feature fires for any ACP agent, only when the agent's profile opts in, or 
 | `/clear` boundary divider | `/clear` | `/new` | `/new` | none | none |
 | TodoWrite / Skill / ExitPlanMode / ScheduleWakeup cards | ✓ | — | — | — | — |
 | Subagent indentation | ✓ | — | unverified | — | — |
-| Session resume across `aoe serve` restart | ✓ | depends | ✓ | depends | depends |
+| Session resume across `boa serve` restart | ✓ | depends | ✓ | depends | depends |
 
 Codex/opencode/gemini support is built from adapter docs and code reading rather than hands-on walkthroughs, so some tool aliases may need adjustment; file an issue with the observed `tool.kind` + `tool.name`. opencode ≥1.16.0 is recommended: it classifies `apply_patch` as `edit` and `task` as `think`, populates `external_directory` permission context, and emits clean read-tool content. Older opencode still works but falls back to generic tool cards, verbose read text, and blind permission prompts. Mode picker, slash palette, and usage display depend on the adapter advertising the matching channels; when it doesn't, the UI stays empty rather than showing stale state. How profiles gate these is covered in [Structured View Internals](development/internals/structured-view.md#agent-profiles).
 
@@ -53,30 +53,30 @@ Codex/opencode/gemini support is built from adapter docs and code reading rather
 
 The web new-session wizard is the primary path; no CLI needed.
 
-1. Run `aoe serve` and open the dashboard.
+1. Run `boa serve` and open the dashboard.
 2. Click **New session**, pick your project and agent, and launch. Structured view is on by default; to confirm or change it, expand **More options** and leave **Use structured view** on.
 3. Open the session: you see the structured plan and tool-call cards instead of a terminal.
 
-The CLI is the optional path for scripting or headless launches. Unlike the wizard, `aoe add` defaults to the terminal view (matching the TUI):
+The CLI is the optional path for scripting or headless launches. Unlike the wizard, `boa add` defaults to the terminal view (matching the TUI):
 
 ```bash
-aoe acp doctor                              # confirm prerequisites
-aoe add . --cmd claude --structured-view    # structured view for an ACP tool
-aoe add . --agent aoe-agent --model gpt-5   # pick an ACP agent + model (implies structured view)
+boa acp doctor                              # confirm prerequisites
+boa add . --cmd claude --structured-view    # structured view for an ACP tool
+boa add . --agent aoe-agent --model gpt-5   # pick an ACP agent + model (implies structured view)
 ```
 
 `--agent` for an uninstalled adapter errors with an install hint; `--structured-view` (no `--agent`) falls back to the terminal view with a warning so the command still succeeds.
 ## Requirements
 
-- aoe built with `--features serve`.
+- BOA built with `--features serve`.
 - Node.js 20+ on `PATH` (the structured view spawns an ACP agent subprocess; `aoe-agent` needs Node 20+ for Vercel AI SDK 6).
 - For Claude Code, a `claude login` session.
 
-If Node is missing or too old, the session falls back to the terminal view with an actionable warning. Verify with `aoe acp doctor`:
+If Node is missing or too old, the session falls back to the terminal view with an actionable warning. Verify with `boa acp doctor`:
 
 ```bash
-aoe acp doctor          # reports Node + each configured agent's reachability
-aoe acp doctor --fix    # npm-install the npm-distributed adapters (claude / codex / pi)
+boa acp doctor          # reports Node + each configured agent's reachability
+boa acp doctor --fix    # npm-install the npm-distributed adapters (claude / codex / pi)
 ```
 
 It exits 1 if Node is missing, 2 if some agents are unreachable, else 0. Pass `--json` for machine-readable output. Install the native CLIs (opencode / gemini / vibe) through their own channels.
@@ -93,9 +93,9 @@ Non-ACP tools always run in the terminal view, with no toggle.
 
 `--cmd <tool>` resolves through `session.agent_command_override` the same as terminal sessions, so an override like `opencode = "opencode-plannotator"` makes `--cmd opencode` launch `opencode-plannotator acp` (the required ACP args are preserved). Adapter-backed agents such as Claude use `session.agent_acp_cmd` for a full command swap instead. The wizard shows the resolved launch command read-only.
 
-`aoe add` does not prompt for a name by default: it uses `--title`, else the worktree branch name, else a generated name. Pass `-i`/`--interactive` for the same name prompt the TUI and wizard show. Set per-agent defaults for web-created sessions under `[session.acp_defaults.<agent>]`:
+`boa add` does not prompt for a name by default: it uses `--title`, else the worktree branch name, else a generated name. Pass `-i`/`--interactive` for the same name prompt the TUI and wizard show. Set per-agent defaults for web-created sessions under `[session.acp_defaults.<agent>]`:
 
-When a structured view session keeps its generated civilization name (no `--title`, no branch name), AoE auto-renames it from your first message using the session's own agent in one-shot mode (`claude -p`, `codex exec`, `opencode run`, `gemini -p`). This is on by default and controlled by `session.smart_rename`. It renames the title only, never the worktree directory (the running agent holds it), and never touches a session you named yourself. Sandboxed sessions, agents with no one-shot mode, and command-overridden agents keep the generated name. See [Configuration: Session](guides/configuration.md#session).
+When a structured view session keeps its generated civilization name (no `--title`, no branch name), BOA auto-renames it from your first message using the session's own agent in one-shot mode (`claude -p`, `codex exec`, `opencode run`, `gemini -p`). This is on by default and controlled by `session.smart_rename`. It renames the title only, never the worktree directory (the running agent holds it), and never touches a session you named yourself. Sandboxed sessions, agents with no one-shot mode, and command-overridden agents keep the generated name. See [Configuration: Session](guides/configuration.md#session).
 
 To name with a different agent than the session's own (e.g. a cheaper or more obedient title model), set `session.smart_rename_agent` to any installed one-shot-capable agent; leave it empty to use the session's agent. If the automatic rename never lands (the one-shot timed out or returned unusable output), right-click the session in the sidebar and pick "Auto-name now" to re-run it; the action is offered only while the session is still default-named.
 
@@ -113,32 +113,32 @@ The `[acp]` block holds the structured view's global tuning knobs (timeouts, con
 
 ## Agent artifacts
 
-Each session gets a managed artifact directory, exposed to the agent as `AOE_ARTIFACT_DIR` (bind-mounted at `/aoe/artifacts` inside a sandbox). A screenshot or status file the agent writes there is served over an authenticated, session-scoped route and opens in the dashboard: transcript links open the file in a new tab, and markdown images render inline. Files written elsewhere (an arbitrary `/tmp` path, for example) cannot be served and render as plain, non-clickable text. To make a generated artifact viewable, write it under `$AOE_ARTIFACT_DIR`.
+Each session gets a managed artifact directory, exposed to the agent as `AOE_ARTIFACT_DIR` (bind-mounted at `/boa/artifacts` inside a sandbox). A screenshot or status file the agent writes there is served over an authenticated, session-scoped route and opens in the dashboard: transcript links open the file in a new tab, and markdown images render inline. Files written elsewhere (an arbitrary `/tmp` path, for example) cannot be served and render as plain, non-clickable text. To make a generated artifact viewable, write it under `$AOE_ARTIFACT_DIR`.
 
 ## Cross-machine attach
 
-Set `AOE_DAEMON_URL` (and optionally `AOE_DAEMON_TOKEN`) to point at a remote `aoe serve`:
+Set `AOE_DAEMON_URL` (and optionally `AOE_DAEMON_TOKEN`) to point at a remote `boa serve`:
 
 ```sh
-AOE_DAEMON_URL=https://aoe.example.com AOE_DAEMON_TOKEN=… aoe   # remote session picker
-aoe acp attach <session_id> --daemon-url https://aoe.example.com
+AOE_DAEMON_URL=https://boa.example.com AOE_DAEMON_TOKEN=… boa   # remote session picker
+boa acp attach <session_id> --daemon-url https://boa.example.com
 ```
 
-When `AOE_DAEMON_URL` is set, the TUI swaps the local home view for a remote session picker, and `aoe serve --status` / the `aoe acp *` verbs retarget to the remote. Local-only operations (tmux attach, `aoe stop`, file edit) aren't available against a remote; use the web dashboard or SSH into the host. Unset the variable to fall back to local introspection.
+When `AOE_DAEMON_URL` is set, the TUI swaps the local home view for a remote session picker, and `boa serve --status` / the `boa acp *` verbs retarget to the remote. Local-only operations (tmux attach, `boa stop`, file edit) aren't available against a remote; use the web dashboard or SSH into the host. Unset the variable to fall back to local introspection.
 
 ## Headless CLI verbs
 
-Every structured-view operation has a matching `aoe acp <verb>` against the same daemon:
+Every structured-view operation has a matching `boa acp <verb>` against the same daemon:
 
 | Verb | What it does |
 |------|--------------|
-| `aoe acp history <id>` | Dump the persisted transcript |
-| `aoe acp status <id>` | Print highest/lowest seq and the daemon source |
-| `aoe acp prompt <id> <text>` | Send a prompt (`-` reads stdin) |
-| `aoe acp approve <id> <nonce> [--always\|--deny]` | Resolve a pending approval |
-| `aoe acp cancel <id>` | Cancel the in-flight prompt |
-| `aoe acp tail <id>` | Stream broadcast frames as JSON lines |
-| `aoe acp attach <id>` | Open the TUI structured view for this session |
-| `aoe acp ps` / `stop` / `kill` / `restart` / `logs` / `switch-agent` | Worker management |
+| `boa acp history <id>` | Dump the persisted transcript |
+| `boa acp status <id>` | Print highest/lowest seq and the daemon source |
+| `boa acp prompt <id> <text>` | Send a prompt (`-` reads stdin) |
+| `boa acp approve <id> <nonce> [--always\|--deny]` | Resolve a pending approval |
+| `boa acp cancel <id>` | Cancel the in-flight prompt |
+| `boa acp tail <id>` | Stream broadcast frames as JSON lines |
+| `boa acp attach <id>` | Open the TUI structured view for this session |
+| `boa acp ps` / `stop` / `kill` / `restart` / `logs` / `switch-agent` | Worker management |
 
-Every verb requires a running `aoe serve` daemon and exits with a hint if none is found. Start one with `aoe serve --daemon` (localhost) or `aoe serve --daemon --remote` (Tailscale/Cloudflare), or set `AOE_DAEMON_URL`. The CLI does not spawn a daemon on your behalf, so the localhost-vs-tunnel choice stays explicit.
+Every verb requires a running `boa serve` daemon and exits with a hint if none is found. Start one with `boa serve --daemon` (localhost) or `boa serve --daemon --remote` (Tailscale/Cloudflare), or set `AOE_DAEMON_URL`. The CLI does not spawn a daemon on your behalf, so the localhost-vs-tunnel choice stays explicit.

@@ -64,12 +64,12 @@ function ConflictModal({
       <div className="bg-surface-800 border border-surface-700/50 rounded-lg p-5 w-[min(36rem,90vw)]">
         <h3 className="font-mono text-sm uppercase tracking-widest text-text-muted mb-2">Conflict: {conflict.name}</h3>
         <p className="font-body text-[13px] text-text-secondary mb-3">
-          This server's definition in the agent's native config changed since AoE last saw it. Pick which side wins. AoE
-          never writes back to the native config; keeping AoE's version stores it in the global mcp.json.
+          This server's definition in the agent's native config changed since BOA last saw it. Pick which side wins. BOA
+          never writes back to the native config; keeping BOA's version stores it in the global mcp.json.
         </p>
         <div className="space-y-2 mb-4">
           <div>
-            <span className="font-mono text-[11px] text-text-muted">AoE (last seen):</span>
+            <span className="font-mono text-[11px] text-text-muted">BOA (last seen):</span>
             <p className="font-mono text-[12px] text-text-primary">{conflict.previous}</p>
           </div>
           <div>
@@ -100,7 +100,7 @@ function ConflictModal({
             onClick={() => onResolve("aoe")}
             className="px-3 py-1.5 text-[13px] rounded bg-brand-600 text-white hover:bg-brand-500 disabled:opacity-50"
           >
-            Keep AoE version
+            Keep BOA version
           </button>
         </div>
       </div>

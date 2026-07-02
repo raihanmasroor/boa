@@ -1,6 +1,6 @@
 # Features
 
-Everything Agent of Empires ships, grouped by what it does, each linking to its full guide. New here? Read the [Quick Start](quick-start.md) first; this page is the inventory.
+Everything Band of Agents ships, grouped by what it does, each linking to its full guide. New here? Read the [Quick Start](quick-start.md) first; this page is the inventory.
 
 ## Surfaces
 
@@ -12,7 +12,7 @@ See the [Quick Start](quick-start.md) for the keyboard tour.
 
 ### Web dashboard
 
-Browser access to the same sessions: real terminal in the page, switch sessions, type into the terminal, review diffs. Installable as a PWA on desktop ("Install Agent of Empires" in Chrome) and on iOS ("Add to Home Screen"). Token-based auth by default; QR + passphrase pairing when you expose it remotely.
+Browser access to the same sessions: real terminal in the page, switch sessions, type into the terminal, review diffs. Installable as a PWA on desktop ("Install Band of Agents" in Chrome) and on iOS ("Add to Home Screen"). Token-based auth by default; QR + passphrase pairing when you expose it remotely.
 
 [Web Dashboard guide](guides/web-dashboard.md)
 
@@ -30,7 +30,7 @@ Create, monitor, and control agents from the command line. Integrates with workf
 
 ### HTTP API
 
-REST endpoints for driving sessions from external orchestrators. Same operations as the CLI; useful when another service or agent needs to spawn and monitor AoE sessions.
+REST endpoints for driving sessions from external orchestrators. Same operations as the CLI; useful when another service or agent needs to spawn and monitor BOA sessions.
 
 [HTTP API Reference](api.md)
 
@@ -44,7 +44,7 @@ Press `R` in the TUI to expose the web dashboard over HTTPS with QR + passphrase
 
 ### Multi-agent support
 
-AoE drives Claude Code, OpenCode, Mistral Vibe, Codex CLI, Gemini CLI, Cursor CLI, Copilot CLI, Pi.dev, Factory Droid, Hermes, Kiro CLI, and Qwen Code, auto-detecting which are installed and listing them in the new-session picker.
+BOA drives Claude Code, OpenCode, Mistral Vibe, Codex CLI, Gemini CLI, Cursor CLI, Copilot CLI, Pi.dev, Factory Droid, Hermes, Kiro CLI, and Qwen Code, auto-detecting which are installed and listing them in the new-session picker.
 
 For per-agent structured-view support (which agents render plan panels, which tools are recognized), see the [Structured view feature matrix](structured-view.md#feature-matrix).
 
@@ -58,7 +58,7 @@ Wrap any agent in a custom script or sandboxed launcher. Useful for injecting en
 
 ### Git worktrees
 
-Create a session and AoE creates a branch + worktree automatically. Delete the session and AoE cleans up. Run parallel agents on different branches of the same repo without touching your main checkout.
+Create a session and BOA creates a branch + worktree automatically. Delete the session and BOA cleans up. Run parallel agents on different branches of the same repo without touching your main checkout.
 
 [Git Worktrees guide](guides/worktrees.md)
 
@@ -101,19 +101,19 @@ Each session reports `Running`, `Waiting`, `Idle`, or `Error` based on tmux pane
 
 ### Auto-stop idle sessions
 
-Set `session.auto_stop_idle_secs` and a plain tmux session that sits `Idle` past the threshold is stopped automatically, leaving a restartable `Stopped` row. Off by default; never stops an attached or recently used session; runs from both the TUI and `aoe serve`. Agent workers use the separate `acp.auto_stop_idle_secs` knob.
+Set `session.auto_stop_idle_secs` and a plain tmux session that sits `Idle` past the threshold is stopped automatically, leaving a restartable `Stopped` row. Off by default; never stops an attached or recently used session; runs from both the TUI and `boa serve`. Agent workers use the separate `acp.auto_stop_idle_secs` knob.
 
 [Configuration: session section](guides/configuration.md#session)
 
 ### Session resume
 
-Persist and resume Claude Code conversations across reboots, upgrades, and runtime rotations. AoE captures the resume token so the next launch picks up where the agent left off.
+Persist and resume Claude Code conversations across reboots, upgrades, and runtime rotations. BOA captures the resume token so the next launch picks up where the agent left off.
 
 [Session Resume guide](guides/session-resume.md)
 
 ### tmux persistence
 
-Every agent runs in its own tmux session. Close the TUI, disconnect SSH, or crash your terminal; the agents keep running. Reopen `aoe` and everything is where you left it. `Ctrl+b d` detaches and returns to the TUI.
+Every agent runs in its own tmux session. Close the TUI, disconnect SSH, or crash your terminal; the agents keep running. Reopen `boa` and everything is where you left it. `Ctrl+b d` detaches and returns to the TUI.
 
 ### Tool sessions
 
@@ -131,7 +131,7 @@ Review git changes and edit files without leaving the TUI. Browse the diff, jump
 
 ### tmux status bar
 
-Surface AoE session info inside your existing tmux status bar. Useful when you spend most of your time inside tmux and want session counts and statuses visible without switching to the TUI.
+Surface BOA session info inside your existing tmux status bar. Useful when you spend most of your time inside tmux and want session counts and statuses visible without switching to the TUI.
 
 [tmux Status Bar guide](guides/tmux-status-bar.md)
 

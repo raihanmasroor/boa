@@ -45,7 +45,7 @@ command = "tig --all"
 
 Tool sessions are intentionally a config-file feature today; they are
 not editable from the settings TUI. Edit `config.toml` and reload from
-the settings dialog (or restart `aoe`) to pick up changes.
+the settings dialog (or restart `boa`) to pick up changes.
 
 ### Hotkey rules
 
@@ -59,7 +59,7 @@ Tool hotkeys are limited to `Alt+<single-char>`:
 - Multi-character keys (`Alt+gg`, `Alt+F1`) are rejected.
 - Other modifiers (`Ctrl+g`, `Shift+g`) are not supported.
 
-If a hotkey fails to parse, AoE shows an info dialog on startup (and on
+If a hotkey fails to parse, BOA shows an info dialog on startup (and on
 settings reload) listing each invalid entry. The corresponding tool is
 still reachable from the picker and command palette; only the dead
 binding is dropped.
@@ -102,7 +102,7 @@ opens a **separate** tool session against that worktree, with its own
 independent state.
 
 Tool sessions are automatically killed when their parent agent session
-is removed (`aoe remove <id>`, "Remove session" in the TUI, or delete
+is removed (`boa remove <id>`, "Remove session" in the TUI, or delete
 in the web dashboard). Cleanup sweeps all of the agent's tool sessions
 even if you renamed or deleted the `[tools.*]` entry, so nothing is left
 orphaned.
@@ -168,5 +168,5 @@ command = "btm"
 
 Tool sessions are named `aoe_tool_<tool>_<title>_<id8>` (`aoe_dev_tool_` in debug builds; `<id8>` is the
 first 8 characters of the agent session ID). You can attach manually
-with `tmux attach -t <name>`, though AoE's three access paths are
+with `tmux attach -t <name>`, though BOA's three access paths are
 faster.

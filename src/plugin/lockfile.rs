@@ -89,7 +89,7 @@ impl Lockfile {
         // contract. The user should upgrade rather than downgrade-corrupt it.
         if lockfile.lock_version > LOCK_VERSION {
             anyhow::bail!(
-                "{} is lock_version {} but this aoe understands {}; upgrade aoe",
+                "{} is lock_version {} but this BOA understands {}; upgrade BOA",
                 path.display(),
                 lockfile.lock_version,
                 LOCK_VERSION

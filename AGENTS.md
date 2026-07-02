@@ -4,7 +4,7 @@
 
 ## Project Structure & Module Organization
 
-- `src/main.rs`: binary entrypoint (`aoe`).
+- `src/main.rs`: binary entrypoint (`boa`).
 - `src/lib.rs`: shared library code used by the CLI/TUI.
 - `src/cli/`: clap command handlers (e.g., `src/cli/add.rs`, `src/cli/session.rs`).
 - `src/tui/`: ratatui UI and input handling.
@@ -19,9 +19,9 @@
 - `web/`: React + TypeScript frontend for the web dashboard (built with Vite + Tailwind CSS).
 - `src/migrations/`: versioned data migrations for breaking changes (see below).
 - `tests/`: integration tests (`tests/*.rs`).
-- `tests/e2e/`: end-to-end tests exercising the full `aoe` binary (see E2E Tests below).
+- `tests/e2e/`: end-to-end tests exercising the full `boa` binary (see E2E Tests below).
 - `docs/`: user-facing documentation and guides.
-- `docs/development/adding-agents.md`: guide for adding a new agent to AoE.
+- `docs/development/adding-agents.md`: guide for adding a new agent to BOA.
 - `docs/development/adding-settings.md`: guide for adding a setting via the single-source schema.
 - `scripts/`: installation and utility scripts.
 - `xtask/`: build automation workspace.
@@ -31,21 +31,21 @@
 
 ## Build, Test, and Development Commands
 
-- `cargo build` / `cargo build --release`: TUI-only (release binary at `target/release/aoe`).
-- `cargo build --profile dev-release`: optimized local builds without LTO; faster compile. Lands on the release namespace (app dir, tmux prefix, serve port), so it shares state with an installed release `aoe`. Use `--release` only when producing a shipping binary.
+- `cargo build` / `cargo build --release`: TUI-only (release binary at `target/release/boa`).
+- `cargo build --profile dev-release`: optimized local builds without LTO; faster compile. Lands on the release namespace (app dir, tmux prefix, serve port), so it shares state with an installed release `boa`. Use `--release` only when producing a shipping binary.
 - `cargo build --features serve`: includes the web dashboard (needs Node.js + npm).
 - `cargo test`: unit + integration tests (some skip if `tmux` unavailable).
 - `cargo fmt` + `cargo clippy`: run before pushing; fix clippy warnings unless there's a strong reason not to.
 - Debug logging: `AGENT_OF_EMPIRES_DEBUG=1 cargo run` (writes `debug.log` in app data dir).
 - Running from source needs `tmux` installed.
-- Debug builds use an isolated namespace so they don't collide with an installed release `aoe`: app data dir is `~/.agent-of-empires-dev` (macOS/Windows) or `~/.config/agent-of-empires-dev` (Linux), tmux session prefix is `aoe_dev_`, and `aoe serve` defaults to port `8081`. Release builds keep the original `agent-of-empires` paths, `aoe_` prefix, and port `8080`.
+- Debug builds use an isolated namespace so they don't collide with an installed release `boa`: app data dir is `~/.agent-of-empires-dev` (macOS/Windows) or `~/.config/agent-of-empires-dev` (Linux), tmux session prefix is `aoe_dev_`, and `boa serve` defaults to port `8081`. Release builds keep the original `agent-of-empires` paths, `aoe_` prefix, and port `8080`.
 
 ### Web Dashboard
 
-- Stack: React 19, TypeScript, Vite, Tailwind v4, xterm.js v6. Installable as a PWA ("Install Agent of Empires" in Chrome; "Add to Home Screen" on iOS).
+- Stack: React 19, TypeScript, Vite, Tailwind v4, xterm.js v6. Installable as a PWA ("Install Band of Agents" in Chrome; "Add to Home Screen" on iOS).
 - Build: `cargo build --features serve` (build.rs runs `npm install && npm run build` in `web/` when inputs change).
-- Run: `aoe serve --host 0.0.0.0` (token-based auth by default).
-- Frontend dev: `cargo xtask dev` (Unix) builds the serve binary, then runs `aoe serve` (8081) and the Vite dev server (5173, HMR) together, pointing Vite at the backend via `VITE_PROXY` so `/api` and the `/sessions/*/ws` relays resolve; open `:5173`, Ctrl-C stops both. Or run them by hand: `cd web && npm run dev` plus a separate `cargo run --features serve -- serve`.
+- Run: `boa serve --host 0.0.0.0` (token-based auth by default).
+- Frontend dev: `cargo xtask dev` (Unix) builds the serve binary, then runs `boa serve` (8081) and the Vite dev server (5173, HMR) together, pointing Vite at the backend via `VITE_PROXY` so `/api` and the `/sessions/*/ws` relays resolve; open `:5173`, Ctrl-C stops both. Or run them by hand: `cd web && npm run dev` plus a separate `cargo run --features serve -- serve`.
 - Web checks (CI gates all three on any `web/` change): `cd web && npm run format:check` (oxfmt, NOT prettier; `npm run format` to fix), `npm run lint` (ESLint), and `npx tsc -b` (typecheck, also part of `npm run build`). ESLint and tsc do not catch formatting; run oxfmt explicitly.
 - TUI-only `cargo build` (without `--features serve`) needs no JS tooling.
 
@@ -120,11 +120,11 @@ would need a breaking config-layout migration; the web does not surface it.
 
 ### E2E Tests
 
-Full-binary e2e tests live in `tests/e2e/`, exercising `aoe` through tmux (TUI) and as a subprocess (CLI). Run with `cargo test --features e2e-tests --test e2e` (add `-- --nocapture` for screen dumps on failure). The e2e target is gated behind the `e2e-tests` feature so CI can run the serve suite as parallel shards (one runs everything except e2e, one runs e2e only); `cargo test --features serve` skips e2e, and naming the target without the feature errors loudly instead of skipping. Run the full serve suite locally with `cargo test --features serve,e2e-tests`.
+Full-binary e2e tests live in `tests/e2e/`, exercising `boa` through tmux (TUI) and as a subprocess (CLI). Run with `cargo test --features e2e-tests --test e2e` (add `-- --nocapture` for screen dumps on failure). The e2e target is gated behind the `e2e-tests` feature so CI can run the serve suite as parallel shards (one runs everything except e2e, one runs e2e only); `cargo test --features serve` skips e2e, and naming the target without the feature errors loudly instead of skipping. Run the full serve suite locally with `cargo test --features serve,e2e-tests`.
 
 The harness (`tests/e2e/harness.rs`) exposes `TuiTestHarness` with `spawn_tui()`/`spawn(args)`, `send_keys(keys)`/`type_text(text)`, `wait_for(text)` (10s timeout), `capture_screen()`/`assert_screen_contains(text)`, and `run_cli(args)`. TUI tests auto-skip without tmux; Docker tests use `#[ignore]`; all use `#[serial]` for tmux isolation.
 
-Agent-view live-daemon e2e (`tests/e2e/acp_focus_isolation_e2e.rs`) stands up a real `aoe serve --daemon` and attaches the native TUI structured view against it. It reuses the shared Node fake-ACP agent (`web/tests/helpers/fakeAcpAgent.mjs`) to drive a deterministic pending approval, so it needs `--features serve` and Node on `PATH` (it auto-skips via `require_node!` otherwise). The harness installs the fake as the `claude` / `claude-agent-acp` / `aoe-agent` shims (`install_acp_shim`), roots `$HOME` under `/tmp` (`new_in_tmp`, keeping the worker unix socket under the macOS `sun_path` limit), and stops the worker plus daemon on `Drop` (`stop_daemon_on_drop`).
+Agent-view live-daemon e2e (`tests/e2e/acp_focus_isolation_e2e.rs`) stands up a real `boa serve --daemon` and attaches the native TUI structured view against it. It reuses the shared Node fake-ACP agent (`web/tests/helpers/fakeAcpAgent.mjs`) to drive a deterministic pending approval, so it needs `--features serve` and Node on `PATH` (it auto-skips via `require_node!` otherwise). The harness installs the fake as the `claude` / `claude-agent-acp` / `aoe-agent` shims (`install_acp_shim`), roots `$HOME` under `/tmp` (`new_in_tmp`, keeping the worker unix socket under the macOS `sun_path` limit), and stops the worker plus daemon on `Drop` (`stop_daemon_on_drop`).
 
 Recording (for PR reviews): `RECORD_E2E=1 cargo test --features e2e-tests --test e2e -- --nocapture` locally (needs `asciinema` + `agg`, outputs to `target/e2e-recordings/`), or add the `needs-recording` label in CI.
 
@@ -133,7 +133,7 @@ Recording (for PR reviews): `RECORD_E2E=1 cargo test --features e2e-tests --test
 Two suites under `web/`:
 
 - **Mocked**: `web/tests/*.spec.ts`, run via `cd web && npx playwright test --config=playwright.config.ts`. Uses `page.route()` to stub `/api/*` responses; serves the production Vite bundle through `vite preview` on port 4173. Fast and deterministic; for UI logic that does not depend on real backend state.
-- **Live**: `web/tests/live/*.spec.ts`, run via `cd web && npx playwright test --config=playwright.live.config.ts`. Each test spawns a real `aoe serve` subprocess against an isolated `HOME` via the harness in `web/tests/helpers/aoeServe.ts`. Two workers, `workerIndex`-based port allocation, `TMUX_TMPDIR` per test. For flows that depend on backend persistence, auth, sessions, tmux, git, read-only, or structured view.
+- **Live**: `web/tests/live/*.spec.ts`, run via `cd web && npx playwright test --config=playwright.live.config.ts`. Each test spawns a real `boa serve` subprocess against an isolated `HOME` via the harness in `web/tests/helpers/aoeServe.ts`. Two workers, `workerIndex`-based port allocation, `TMUX_TMPDIR` per test. For flows that depend on backend persistence, auth, sessions, tmux, git, read-only, or structured view.
 
 When deciding which suite to use:
 
@@ -153,7 +153,7 @@ Full recipe, harness API, and fake-ACP-agent details live in `docs/development/p
 
 **Legacy mobile/touch recipe (still applies for the mocked specs under `tests/`):**
 
-1. Shim a fake tool on `$PATH` so `aoe add --cmd claude` creates a live tmux session (the live harness already does this for you).
+1. Shim a fake tool on `$PATH` so `boa add --cmd claude` creates a live tmux session (the live harness already does this for you).
 2. Emulate mobile with `devices['iPhone 13']` so `pointer: coarse` matches.
 3. Spy on PTY bytes by patching `WebSocket.prototype.send` in an `addInitScript` and pushing into `window.__WS_SENT__`.
 4. Synthesize multi-touch via `page.evaluate` dispatching raw `new TouchEvent(...)` on `.xterm`; Playwright's `page.touchscreen` is single-finger only.
@@ -199,7 +199,7 @@ Coverage runs on every PR via the merge of Vitest + Playwright LCOVs (see `web/s
   - **macOS**: `~/.agent-of-empires/` by default, or `$XDG_CONFIG_HOME/agent-of-empires/` when `XDG_CONFIG_HOME` is set or that dir already exists (issue #1948). Resolution is `get_app_dir_path` -> `macos_app_dir`; nothing is moved automatically, so an existing `~/.agent-of-empires/` keeps being used.
   - **Windows**: `~/.agent-of-empires/`
 - Keep user data out of commits. For repo-local experiments, use ignored paths like `./.agent-of-empires/`, `.env`, and `.mcp.json`.
-- `aoe serve` writes several files to the app dir while running. All are owner-only (0600) where they contain secrets. The daemon cleans them up on shutdown; `daemon_pid()`'s stale-PID check sweeps them otherwise.
+- `boa serve` writes several files to the app dir while running. All are owner-only (0600) where they contain secrets. The daemon cleans them up on shutdown; `daemon_pid()`'s stale-PID check sweeps them otherwise.
   - `serve.pid`: daemon PID for `--stop` and reattach detection.
   - `serve.url`: primary URL (includes the auth token) plus alternates.
   - `serve.mode`: `tunnel` / `tailscale` / `local`.

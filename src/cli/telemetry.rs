@@ -93,7 +93,7 @@ fn run_set_enabled(enabled: bool) -> Result<()> {
 fn run_reset_id() -> Result<()> {
     if !Config::load_or_warn().telemetry.enabled {
         println!(
-            "Telemetry is disabled; nothing to reset. Enable it first with `aoe telemetry enable`."
+            "Telemetry is disabled; nothing to reset. Enable it first with `boa telemetry enable`."
         );
         return Ok(());
     }

@@ -1064,7 +1064,7 @@ pub async fn test(
         return Err(StatusCode::CONFLICT.into_response());
     };
     let payload = super::push_send::PushPayload {
-        title: "Agent of Empires".to_string(),
+        title: "Band of Agents".to_string(),
         body: "Test notification. If you see this on your lock screen, push is working."
             .to_string(),
         url,

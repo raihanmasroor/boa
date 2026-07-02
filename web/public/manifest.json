@@ -1,6 +1,6 @@
 {
-  "name": "Agent of Empires",
-  "short_name": "AoE",
+  "name": "Band of Agents",
+  "short_name": "BOA",
   "description": "AI agent session manager",
   "start_url": "/",
   "display": "standalone",

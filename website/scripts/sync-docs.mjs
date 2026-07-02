@@ -24,21 +24,21 @@ const PAGES = [
     dest: "guides/shell-completions.md",
     title: "Shell Completions",
     description:
-      "Install and refresh tab-completion for the aoe CLI in bash, zsh, fish, PowerShell, and elvish.",
+      "Install and refresh tab-completion for the boa CLI in bash, zsh, fish, PowerShell, and elvish.",
   },
   {
     source: "docs/guides/diff-view.md",
     dest: "guides/diff-view.md",
     title: "Diff View",
     description:
-      "Review git changes and edit files directly from the Agent of Empires TUI.",
+      "Review git changes and edit files directly from the Band of Agents TUI.",
   },
   {
     source: "docs/guides/repo-config.md",
     dest: "guides/repo-config.md",
     title: "Repository Configuration & Hooks",
     description:
-      "Per-repo configuration and hooks for Agent of Empires sessions.",
+      "Per-repo configuration and hooks for Band of Agents sessions.",
   },
   {
     source: "docs/guides/mcp-servers.md",
@@ -52,28 +52,28 @@ const PAGES = [
     dest: "guides/sandbox.md",
     title: "Docker Sandbox: Quick Reference",
     description:
-      "Run AI coding agents in isolated Docker containers with Agent of Empires.",
+      "Run AI coding agents in isolated Docker containers with Band of Agents.",
   },
   {
     source: "docs/guides/tmux-status-bar.md",
     dest: "guides/tmux-status-bar.md",
     title: "tmux Status Bar",
     description:
-      "Configure the tmux status bar to display Agent of Empires session information.",
+      "Configure the tmux status bar to display Band of Agents session information.",
   },
   {
     source: "docs/guides/web-dashboard.md",
     dest: "guides/web-dashboard.md",
     title: "Web Dashboard (Experimental)",
     description:
-      "Remote access to AI coding agent sessions from any browser with Agent of Empires.",
+      "Remote access to AI coding agent sessions from any browser with Band of Agents.",
   },
   {
     source: "docs/guides/remote-phone-access.md",
     dest: "guides/remote-phone-access.md",
     title: "Remote Access from Your Phone",
     description:
-      "Access your Agent of Empires sessions from your phone via Tailscale Funnel or Cloudflare Tunnel with QR pairing.",
+      "Access your Band of Agents sessions from your phone via Tailscale Funnel or Cloudflare Tunnel with QR pairing.",
   },
   {
     source: "docs/guides/web/dashboard.md",
@@ -108,14 +108,14 @@ const PAGES = [
     dest: "guides/worktrees.md",
     title: "Worktrees Reference",
     description:
-      "Git worktree commands and configuration reference for Agent of Empires.",
+      "Git worktree commands and configuration reference for Band of Agents.",
   },
   {
     source: "docs/guides/agent-override.md",
     dest: "guides/agent-override.md",
     title: "Agent Command Overrides",
     description:
-      "Override agent commands with custom scripts or sandboxed wrappers in Agent of Empires.",
+      "Override agent commands with custom scripts or sandboxed wrappers in Band of Agents.",
   },
   {
     source: "docs/guides/session-resume.md",
@@ -136,7 +136,7 @@ const PAGES = [
     dest: "guides/multi-repo-workspaces.md",
     title: "Multi-Repo Workspaces",
     description:
-      "Drive a single Agent of Empires session across several git repositories with the project registry and multi-select pickers.",
+      "Drive a single Band of Agents session across several git repositories with the project registry and multi-select pickers.",
   },
   {
     source: "docs/guides/scratch-sessions.md",
@@ -164,7 +164,7 @@ const PAGES = [
   {
     source: "docs/index.md",
     dest: "docs/index.md",
-    title: "Agent of Empires",
+    title: "Band of Agents",
     description:
       "Terminal session manager for AI coding agents on Linux and macOS, built on tmux and written in Rust.",
   },
@@ -173,27 +173,27 @@ const PAGES = [
     dest: "docs/installation.md",
     title: "Installation",
     description:
-      "Install Agent of Empires on Linux or macOS via the install script, Homebrew, or from source.",
+      "Install Band of Agents on Linux or macOS via the install script, Homebrew, or from source.",
   },
   {
     source: "docs/quick-start.md",
     dest: "docs/quick-start.md",
     title: "Quick Start",
     description:
-      "Get up and running with Agent of Empires in minutes. Create sessions, attach to agents, and use worktrees.",
+      "Get up and running with Band of Agents in minutes. Create sessions, attach to agents, and use worktrees.",
   },
   {
     source: "docs/development.md",
     dest: "docs/development.md",
     title: "Development",
-    description: "Build, run, and test Agent of Empires from source.",
+    description: "Build, run, and test Band of Agents from source.",
   },
   {
     source: "docs/development/adding-agents.md",
     dest: "docs/development/adding-agents.md",
     title: "Adding a New Agent",
     description:
-      "Step-by-step guide for adding support for a new AI coding agent to AoE.",
+      "Step-by-step guide for adding support for a new AI coding agent to BOA.",
   },
   {
     source: "docs/development/adding-settings.md",
@@ -207,7 +207,7 @@ const PAGES = [
     dest: "docs/development/logging.md",
     title: "Logging",
     description:
-      "Logging targets, env-var matrix, runtime control endpoint, and browser-side error relay for Agent of Empires.",
+      "Logging targets, env-var matrix, runtime control endpoint, and browser-side error relay for Band of Agents.",
   },
   {
     source: "docs/development/playwright.md",
@@ -221,7 +221,7 @@ const PAGES = [
     dest: "docs/development/releases.md",
     title: "Releases",
     description:
-      "Weekly release cadence, automated staging PR, post-merge tagger, and emergency-release path for Agent of Empires maintainers.",
+      "Weekly release cadence, automated staging PR, post-merge tagger, and emergency-release path for Band of Agents maintainers.",
   },
   {
     source: "docs/development/web-dashboard.md",
@@ -256,7 +256,7 @@ const PAGES = [
     dest: "docs/development/writing-plugins.md",
     title: "Writing Plugins",
     description:
-      "Build an Agent of Empires plugin end to end: scaffold from the template, declare the manifest, write the JSON-RPC worker, install locally, and publish.",
+      "Build a Band of Agents plugin end to end: scaffold from the template, declare the manifest, write the JSON-RPC worker, install locally, and publish.",
   },
   {
     source: "docs/development/internals/sessions.md",
@@ -270,56 +270,56 @@ const PAGES = [
     dest: "docs/sounds.md",
     title: "Sound Effects",
     description:
-      "Configure audio feedback for agent state transitions in Agent of Empires.",
+      "Configure audio feedback for agent state transitions in Band of Agents.",
   },
   {
     source: "docs/push-notifications.md",
     dest: "docs/push-notifications.md",
     title: "Push Notifications",
     description:
-      "Browser and PWA push notifications for Agent of Empires session status changes and structured view approvals.",
+      "Browser and PWA push notifications for Band of Agents session status changes and structured view approvals.",
   },
   {
     source: "docs/features.md",
     dest: "docs/features.md",
     title: "Features",
     description:
-      "Canonical inventory of every Agent of Empires feature, grouped by surface and capability, with links to each guide.",
+      "Canonical inventory of every Band of Agents feature, grouped by surface and capability, with links to each guide.",
   },
   {
     source: "docs/github-integration.md",
     dest: "docs/github-integration.md",
     title: "GitHub Integration",
     description:
-      "How Agent of Empires resolves a GitHub token, the per-failure hints it shows, and what is deferred to follow-ups.",
+      "How Band of Agents resolves a GitHub token, the per-failure hints it shows, and what is deferred to follow-ups.",
   },
   {
     source: "docs/guides/podman.md",
     dest: "guides/podman.md",
     title: "Podman",
     description:
-      "Run Agent of Empires sandboxes on Podman, a daemonless and rootless Docker alternative.",
+      "Run Band of Agents sandboxes on Podman, a daemonless and rootless Docker alternative.",
   },
   {
     source: "docs/guides/apple-containers.md",
     dest: "guides/apple-containers.md",
     title: "Apple Containers",
     description:
-      "Run Agent of Empires sandboxes on Apple's native macOS container runtime on Apple silicon.",
+      "Run Band of Agents sandboxes on Apple's native macOS container runtime on Apple silicon.",
   },
   {
     source: "docs/guides/configuration.md",
     dest: "docs/guides/configuration.md",
     title: "Configuration Reference",
     description:
-      "Complete configuration reference for Agent of Empires settings, profiles, and repo config.",
+      "Complete configuration reference for Band of Agents settings, profiles, and repo config.",
   },
   {
     source: "docs/cli/reference.md",
     dest: "docs/cli/reference.md",
     title: "CLI Reference",
     description:
-      "Complete command-line reference for the aoe CLI tool.",
+      "Complete command-line reference for the boa CLI tool.",
   },
   {
     source: "docs/structured-view.md",
@@ -361,7 +361,7 @@ const PAGES = [
     dest: "docs/api.md",
     title: "HTTP API Reference",
     description:
-      "REST endpoints for driving Agent of Empires sessions from external orchestrators.",
+      "REST endpoints for driving Band of Agents sessions from external orchestrators.",
   },
   {
     source: "docs/plugin-api.md",
@@ -375,7 +375,7 @@ const PAGES = [
     dest: "docs/telemetry.md",
     title: "Telemetry",
     description:
-      "How Agent of Empires' anonymous, opt-in usage telemetry works: what is and isn't collected, the DO_NOT_TRACK override, and how to enable or disable it.",
+      "How Band of Agents' anonymous, opt-in usage telemetry works: what is and isn't collected, the DO_NOT_TRACK override, and how to enable or disable it.",
   },
 ];
 

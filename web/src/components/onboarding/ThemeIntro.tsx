@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchThemes } from "../../lib/api";
+import { themeLabel } from "../../lib/theme";
 import { useThemeMutation } from "../../hooks/useThemeMutation";
 
 const PANEL = "hidden lg:flex lg:w-64 lg:flex-col gap-2 bg-surface-900/40 p-4";
@@ -159,7 +160,7 @@ export function ThemeIntro({ onDone }: Props) {
                           : "border-surface-700 text-text-secondary hover:border-brand-600 hover:text-text-primary"
                       }`}
                     >
-                      {t}
+                      {themeLabel(t)}
                     </button>
                   );
                 })}

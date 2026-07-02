@@ -41,7 +41,7 @@ describe("StartupErrorBanner native-binary branch", () => {
     expect(container.textContent).toContain("Architecture mismatch");
     expect(container.textContent).toContain("dynamic loader");
     expect(container.textContent).toContain("bind-mounted into a container");
-    expect(container.textContent).not.toContain("aoe acp doctor --fix");
+    expect(container.textContent).not.toContain("boa acp doctor --fix");
   });
 
   it("links the native-binary docs anchor", () => {
@@ -71,7 +71,7 @@ describe("StartupErrorBanner respawn-budget park with a moved project_path (#226
     const { container } = render(<StartupErrorBanner sessionId="s-1" message={PARK_MOVED_CWD} />);
     expect(container.textContent).toContain("working directory no longer exists");
     expect(container.textContent).toContain("/Users/me/aoe/worktrees/Burmese");
-    expect(container.textContent).not.toContain("aoe acp doctor --fix");
+    expect(container.textContent).not.toContain("boa acp doctor --fix");
   });
 });
 
@@ -85,7 +85,7 @@ describe("StartupErrorBanner fallback branch (unchanged)", () => {
       }),
     );
     const { container } = render(<StartupErrorBanner sessionId="s-1" message="some unknown failure" />);
-    expect(container.textContent).toContain("aoe acp doctor --fix");
+    expect(container.textContent).toContain("boa acp doctor --fix");
   });
 });
 

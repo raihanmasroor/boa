@@ -641,7 +641,7 @@ pub fn init_subscriber_with_options(
                 target: "log.runtime",
                 version = env!("CARGO_PKG_VERSION"),
                 pid = std::process::id(),
-                "aoe started"
+                "BOA started"
             );
             InitResult {
                 controller: Some(controller),
