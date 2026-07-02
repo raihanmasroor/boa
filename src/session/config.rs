@@ -537,6 +537,23 @@ pub struct AcpConfig {
         advanced
     )]
     pub allow_agent_install: bool,
+    /// BOA divergence from upstream: auto-provision missing ACP adapter
+    /// binaries (`claude-agent-acp`, `codex-acp`, `gemini`) at `aoe serve`
+    /// startup so the structured view works out of the box, without the user
+    /// hand-running `npm install -g`. On by default. The provision runs in a
+    /// background task (never blocks serve), is best-effort (failures fall
+    /// back to the existing manual install hints), and is skipped in
+    /// read-only mode. Turn off to keep serve from ever running `npm install
+    /// -g` on its own. See BOA.md and `crate::acp::auto_provision`.
+    #[serde(default = "default_true")]
+    #[setting(
+        label = "Auto-install ACP adapters at startup",
+        widget = "toggle",
+        web = "local_only:runs npm install on the host as the daemon user",
+        global_only,
+        advanced
+    )]
+    pub auto_install_adapters: bool,
 }
 
 fn default_rate_limit_auto_resume_grace_secs() -> u32 {
@@ -614,6 +631,7 @@ impl Default for AcpConfig {
             rate_limit_auto_resume: false,
             rate_limit_auto_resume_grace_secs: default_rate_limit_auto_resume_grace_secs(),
             allow_agent_install: false,
+            auto_install_adapters: true,
         }
     }
 }

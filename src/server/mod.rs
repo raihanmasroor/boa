@@ -1211,6 +1211,36 @@ pub async fn start_server(config: ServerConfig<'_>) -> anyhow::Result<()> {
         );
     }
 
+    // BOA divergence from upstream: auto-provision missing ACP adapter
+    // binaries so the structured view works out of the box on a fresh
+    // install, without the user hand-running `npm install -g`. Fully in the
+    // background (never blocks the listener) and best-effort — every failure
+    // falls back to the existing manual install hints. Skipped in read-only
+    // mode (a host-level npm install must not run there) and when the
+    // operator turns the flag off. See BOA.md and `acp::auto_provision`.
+    if config.acp.auto_install_adapters && !read_only {
+        crate::task_util::spawn_supervised(
+            "server.acp_auto_provision",
+            crate::task_util::PanicPolicy::Log,
+            async move {
+                // `npm install -g` is blocking; keep it off the async worker.
+                if let Err(e) = tokio::task::spawn_blocking(|| {
+                    crate::acp::auto_provision::run_startup_provision(
+                        crate::acp::auto_provision::PROVISION_BINARIES,
+                    )
+                })
+                .await
+                {
+                    tracing::warn!(
+                        target: "acp.auto_provision",
+                        error = %e,
+                        "auto-provision task join failed (non-fatal)"
+                    );
+                }
+            },
+        );
+    }
+
     // Push-notification consumer: subscribes to status_tx, applies
     // dwell + cooldown, sends pushes. No-op when push_state is None
     // (feature disabled via web.notifications_enabled=false).
