@@ -42,8 +42,10 @@ const MORE_OPTIONS_OPEN_KEY = "aoe-new-session-more-options-open";
 /** localStorage key remembering the last agent-instruction text the user
  *  submitted. Per-browser, so someone who reuses the same instruction on
  *  every session does not retype it. Free text, so no validation on read
- *  unlike the tool key. See #2614. */
-const LAST_USED_INSTRUCTION_KEY = "aoe-acp-last-instruction";
+ *  unlike the tool key. Not ACP-scoped (custom_instruction ships for
+ *  tmux-passthrough sessions too), so it uses the new-session prefix. See
+ *  #2614. */
+const LAST_USED_INSTRUCTION_KEY = "aoe-new-session-last-instruction";
 
 function loadLastUsedTool(): string {
   const stored = safeGetItem(LAST_USED_TOOL_KEY);

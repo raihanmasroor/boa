@@ -28,7 +28,7 @@ vi.mock("../../../lib/api", () => ({
   createSession: (...args: unknown[]) => createSession(...args),
 }));
 
-const INSTRUCTION_KEY = "aoe-acp-last-instruction";
+const INSTRUCTION_KEY = "aoe-new-session-last-instruction";
 const MORE_OPTIONS_KEY = "aoe-new-session-more-options-open";
 
 afterEach(() => {
