@@ -177,6 +177,65 @@ session list so the pane re-renders. Hidden in read-only mode.
 **Blast radius:** low and web-only. No new endpoints (reuses the existing
 server switch) and no Rust changes.
 
+### Per-account "profile" cards in the new-session picker
+**Why:** the P0 dual-account trick (see the roadmap above) worked only via
+hand-written `claude-personal` / `claude-ydo` PATH wrappers that export
+`CLAUDE_CONFIG_DIR`. The web wizard's "Which AI agent?" step showed one card per
+agent and always launched the default account, so a second Claude login was
+invisible there. We want the picker to scan the host for each agent's real
+logged-in accounts and offer each as its own pickable card, launching the chosen
+one on that account.
+
+**What:** a read-only filesystem scan discovers the distinct logged-in accounts
+("profiles") per agent using each CLI's credential/state files, and the wizard
+renders one card per account **only when 2+ exist** (single-account agents keep
+their one plain card). Picking a card injects that account's config-dir env at
+launch:
+- **Claude** — enumerates `~/.claude*` directories (dropping the `~/.claude.json`
+  files). Default `~/.claude` (creds in the macOS Keychain + `~/.claude.json`)
+  launches with **no** override; alternates (`~/.claude-personal`, `~/.claude-ydo`,
+  each with its own `.credentials.json`/`.claude.json`) inject
+  `CLAUDE_CONFIG_DIR=<dir>`. This is exactly what the old wrappers did.
+- **Codex** — `~/.codex*` dirs with an `auth.json`; separate accounts inject
+  `CODEX_HOME=<dir>` (NOT `-p/--profile`, which layers config within one home).
+  Single account today → one plain card.
+- **Gemini** — the CLI has no verified per-account config-dir env var, so only the
+  single `~/.gemini` account is surfaced and no account switch is attempted.
+
+The chosen account's env is submitted as `agent_env`, **re-validated server-side
+against the same discovery** (so a tampered request can't inject arbitrary host
+env), stored on the instance, and appended to `profile_host_environment()` so it
+flows to BOTH the launch prefix and the status-hook install path (hooks land in
+the chosen account's config dir). The existing `--remote-control` divergence is
+untouched — the env is a prefix, not a flag change.
+
+**Session/weekly limits:** intentionally **not** shown. The investigation found
+**no real local source** for Claude/Codex/Gemini usage limits (verdict: not
+available), so per the "be honest" rule we omit the limit line entirely rather
+than fabricate a number or show a permanent "—" that implies a broken feature.
+If a real local source is later confirmed, attach it to each `AgentProfile`.
+
+**Touched (additive):**
+- `src/agent_profiles.rs` — **new** module: `AgentProfile`, per-agent discovery
+  predicates, `validate_agent_env`, + unit tests. Registered in `src/lib.rs`.
+- `src/server/api/system.rs` — `AgentInfo.profiles` field, populated in
+  `list_agents` (builtin) and empty for custom agents.
+- `src/server/api/sessions.rs` — `CreateSessionBody.agent_env` + server-side
+  `validate_agent_env` before building the instance.
+- `src/session/builder.rs` — `InstanceParams.agent_env` → `instance.agent_env`.
+- `src/session/instance.rs` — persisted `Instance.agent_env` (serde default) +
+  `profile_host_environment` appends it.
+- TUI/CLI `InstanceParams` sites pass `agent_env: Vec::new()` (web-only feature).
+- `web/`: `AgentProfile` type + `AgentInfo.profiles`, `CreateSessionRequest.agent_env`,
+  wizard `agentEnv` state (reset on tool change), profile-card expansion in
+  `AgentPickerEssentials`, submit wiring in `SessionWizard`, + a component test.
+
+**Blast radius:** low. One new always-empty-by-default persisted field on
+`Instance`/`InstanceParams` (only `Instance::new` is a full literal; all test
+helpers use it), one additive `AgentInfo`/`CreateSessionBody` field, and the
+`profile_host_environment` append. Merge risk is a literal-init conflict if
+upstream reorders those structs — resolved by adding `agent_env: Vec::new()`.
+
 ## Dev commands
 - Build: `cargo build --release` (binary at `target/release/aoe`)
 - Web dashboard dev: see `web/` package.json
