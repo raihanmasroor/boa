@@ -1850,12 +1850,21 @@ async fn http_request_span(
 ///   runtime (terminal font-size updates) and Tailwind v4 emits inline
 ///   `<style>` blocks in dev. Blocking inline styles breaks xterm.js's
 ///   rendered viewport.
-/// - `img-src 'self' data: https://github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com`:
+/// - `img-src 'self' data: blob: https://github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com`:
 ///   repo-owner avatars are loaded from `github.com/{user}.png` which 302s
 ///   to `avatars.githubusercontent.com`; CSP checks both URLs across the
 ///   redirect, so both hosts must be allowed. `data:` covers inline icons.
 ///   `raw.githubusercontent.com` serves plugin screenshots resolved by the
-///   plugin detail endpoint (#2484).
+///   plugin detail endpoint (#2484). `blob:` is required for every authed
+///   image render: the dashboard fetches image bytes through the patched
+///   `fetch` (a bare `<img src>` cannot carry the Authorization header) and
+///   points `<img>` at `URL.createObjectURL(...)` — `'self'` does NOT match
+///   blob: URLs, so without it ArtifactImage and the file viewer show broken
+///   images.
+/// - `media-src 'self' blob: data:`: approval sounds play a fetched blob via
+///   `Audio` (useApprovalSound), and audio tool-result blocks render
+///   `<audio src="data:...">` (ToolCards); with no media-src these fell back
+///   to `default-src 'self'`, which blocks both schemes.
 /// - `font-src 'self'`: Geist fonts are bundled under /fonts/.
 /// - `connect-src 'self' ws: wss:`: REST + PTY WebSocket to same origin.
 /// - `frame-ancestors 'none'`: CSP-native equivalent of X-Frame-Options.
@@ -1869,7 +1878,8 @@ async fn http_request_span(
 const CSP: &str = "default-src 'self'; \
     script-src 'self' 'wasm-unsafe-eval'; \
     style-src 'self' 'unsafe-inline'; \
-    img-src 'self' data: https://github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com; \
+    img-src 'self' data: blob: https://github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com; \
+    media-src 'self' blob: data:; \
     font-src 'self'; \
     connect-src 'self' ws: wss:; \
     frame-src 'self' blob:; \
