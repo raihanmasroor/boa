@@ -255,6 +255,10 @@ export function SessionWizard({ onClose, onCreated, prefill }: Props) {
       sandbox: d.sandboxEnabled,
       sandbox_image: d.sandboxEnabled ? d.sandboxImage : undefined,
       extra_env: d.sandboxEnabled && d.extraEnv.length > 0 ? d.extraEnv.filter(Boolean) : undefined,
+      // BOA divergence: the chosen agent account's config-dir env (e.g.
+      // CLAUDE_CONFIG_DIR). Empty for the default account / single-account
+      // agents. Server re-validates it against real profile discovery.
+      agent_env: d.agentEnv && d.agentEnv.length > 0 ? d.agentEnv : undefined,
       extra_repo_paths: !d.scratch && d.extraRepoPaths.length > 0 ? d.extraRepoPaths : undefined,
       extra_args: d.extraArgs || undefined,
       command_override: d.commandOverride || undefined,

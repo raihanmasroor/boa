@@ -393,6 +393,27 @@ export interface AgentInfo {
   /** Registry args appended to `acp_command` (e.g. `["acp"]` for
    *  opencode, `["--acp"]` for gemini). Absent or empty when none. */
   acp_args?: string[];
+  /** BOA divergence: distinct logged-in accounts ("profiles") discovered on
+   *  the host for this agent. When 2+ are present the wizard renders one card
+   *  per profile (e.g. `claude · personal`, `claude · ydo`) and submits the
+   *  chosen profile's `env` as `agent_env`. Absent/empty for agents without
+   *  account discovery and for single-account hosts (one plain card kept). */
+  profiles?: AgentProfile[];
+}
+
+/** A distinct logged-in agent account discovered on the host, as returned in
+ *  `AgentInfo.profiles`. See `crate::agent_profiles::AgentProfile`. */
+export interface AgentProfile {
+  /** Agent this profile belongs to (e.g. "claude"). */
+  agent: string;
+  /** Short label distinguishing the account (e.g. "default", "personal", "ydo"). */
+  label: string;
+  /** Absolute config directory this account launches from. */
+  config_dir: string;
+  /** Host env entries to inject at launch to select this account
+   *  (e.g. `["CLAUDE_CONFIG_DIR=/Users/x/.claude-ydo"]`). Empty for the
+   *  default account, which launches with no config-dir override. */
+  env: string[];
 }
 
 /** Profile info returned by /api/profiles */
@@ -481,6 +502,11 @@ export interface CreateSessionRequest {
   extra_args?: string;
   sandbox_image?: string;
   extra_env?: string[];
+  /** BOA divergence: host env entries selecting the agent account this session
+   *  launches on (e.g. `["CLAUDE_CONFIG_DIR=/…/.claude-ydo"]`), taken verbatim
+   *  from a chosen profile card's `env`. Re-validated server-side against real
+   *  profile discovery. Omit/empty = default account. */
+  agent_env?: string[];
   extra_repo_paths?: string[];
   command_override?: string;
   custom_instruction?: string;

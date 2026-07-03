@@ -26,6 +26,13 @@ export interface WizardData {
   baseBranch: string;
   group: string;
   tool: string;
+  /** BOA divergence: host env entries selecting the chosen agent account
+   *  (e.g. `["CLAUDE_CONFIG_DIR=/…/.claude-ydo"]`), taken from a discovered
+   *  profile card's `env`. Empty for the default account / single-account
+   *  agents. Submitted as `agent_env`; the server re-validates it against real
+   *  profile discovery. Reset to `[]` whenever `tool` changes so a stale
+   *  account can never ride along onto a different agent. */
+  agentEnv: string[];
   profile: string;
   yoloMode: boolean;
   sandboxEnabled: boolean;
@@ -120,6 +127,7 @@ export const initialData: WizardData = {
   baseBranch: "",
   group: "",
   tool: "claude",
+  agentEnv: [],
   profile: "",
   yoloMode: false,
   sandboxEnabled: false,
@@ -145,6 +153,13 @@ export function reducer(state: WizardState, action: Action): WizardState {
       const newData = { ...state.data, [action.field]: action.value };
       if (action.field === "title" && !state.data.worktreeBranchDirty) {
         newData.worktreeBranch = slugifyBranch(String(action.value));
+      }
+      // Switching agent clears any previously-selected account env so a
+      // ".claude-ydo" selection can never ride along onto codex/gemini. The
+      // profile-card path sets `agentEnv` in a follow-up SET_FIELD, which lands
+      // after this reset. See AgentPickerEssentials.
+      if (action.field === "tool") {
+        newData.agentEnv = [];
       }
       if (action.field === "worktreeBranch") {
         const override = applyBranchOverride(String(newData.title), String(action.value));
@@ -184,9 +199,16 @@ export function reducer(state: WizardState, action: Action): WizardState {
       // path's window.confirm() also benefits: picking a profile after
       // unprofiled edits now prompts before overwriting.
       if (
-        ["yoloMode", "sandboxEnabled", "useWorktree", "tool", "extraEnv", "agentModel", "agentEffort"].includes(
-          action.field,
-        )
+        [
+          "yoloMode",
+          "sandboxEnabled",
+          "useWorktree",
+          "tool",
+          "agentEnv",
+          "extraEnv",
+          "agentModel",
+          "agentEffort",
+        ].includes(action.field)
       ) {
         newData.profileDirty = true;
       }
@@ -226,6 +248,9 @@ export function reducer(state: WizardState, action: Action): WizardState {
           // default flip it back on. Mirrors the SET_FIELD scratch arm.
           useWorktree: state.data.scratch ? false : action.worktreeEnabled,
           tool: action.tool || state.data.tool,
+          // A profile default is a plain agent selection, so reset any chosen
+          // account env back to the default account.
+          agentEnv: [],
           extraEnv: action.extraEnv,
           agentModel: action.agentModel ?? "",
           agentEffort: action.agentEffort ?? "",
