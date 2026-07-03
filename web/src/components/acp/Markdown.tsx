@@ -23,6 +23,7 @@ import remarkGfm from "remark-gfm";
 import { ensureThemeLoaded, getHighlighter, langKeyForExt, loadLanguage } from "../../lib/highlighter";
 import { useShikiTheme } from "../../hooks/useShikiTheme";
 import { parseFileRef, resolveArtifactUrl, resolveToRepoRelative } from "../../lib/fileRef";
+import { remarkFilePaths } from "../../lib/remarkFilePaths";
 import { useAcpFileRef } from "./AcpFileRefContext";
 import { openArtifactInNewTab } from "../../lib/artifacts";
 import { ArtifactImage } from "./artifactMedia";
@@ -53,7 +54,11 @@ interface Props {
  *  {@link Markdown}. Exported so the regression tests exercise the exact
  *  chain the component mounts. */
 export function remarkPluginsFor(breaks: boolean) {
-  return breaks ? [remarkGfm, remarkBreaks] : [remarkGfm];
+  // `remarkFilePaths` runs after gfm/breaks so bare absolute paths left in text
+  // nodes (not already linkified as autolinks) become link nodes that
+  // TranscriptLink can intercept and open in the in-app file viewer. See #1718.
+  const base = breaks ? [remarkGfm, remarkBreaks] : [remarkGfm];
+  return [...base, remarkFilePaths];
 }
 
 /**

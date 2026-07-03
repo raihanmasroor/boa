@@ -1507,6 +1507,10 @@ fn build_router(state: Arc<AppState>) -> Router {
             "/api/sessions/{id}/artifacts/{*path}",
             get(api::serve_session_artifact),
         )
+        // BOA divergence: preview any file inside the session's working dir
+        // (produced markdown/code/images/PDFs) without dropping to a shell.
+        // Sandboxed to `project_path`; see `session_file`.
+        .route("/api/sessions/{id}/file", get(api::session_file))
         .route("/api/sessions/{id}/ensure", post(api::ensure_session))
         .route("/api/sessions/{id}/send", post(api::send_message))
         .route("/api/sessions/{id}/output", get(api::read_output))
@@ -1855,6 +1859,11 @@ async fn http_request_span(
 /// - `font-src 'self'`: Geist fonts are bundled under /fonts/.
 /// - `connect-src 'self' ws: wss:`: REST + PTY WebSocket to same origin.
 /// - `frame-ancestors 'none'`: CSP-native equivalent of X-Frame-Options.
+/// - `frame-src 'self' blob:`: the file viewer renders produced PDFs in an
+///   `<iframe>` whose src is a `blob:` URL minted from an authed fetch of the
+///   session-file route. `object-src 'none'` still blocks `<embed>`/`<object>`,
+///   and `frame-ancestors 'none'` still forbids anyone framing the dashboard —
+///   this only permits framing same-origin/blob content the app created itself.
 /// - `base-uri 'self'`, `form-action 'self'`, `object-src 'none'`: tighten
 ///   the usual attack surfaces on injection bugs.
 const CSP: &str = "default-src 'self'; \
@@ -1863,6 +1872,7 @@ const CSP: &str = "default-src 'self'; \
     img-src 'self' data: https://github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com; \
     font-src 'self'; \
     connect-src 'self' ws: wss:; \
+    frame-src 'self' blob:; \
     frame-ancestors 'none'; \
     base-uri 'self'; \
     form-action 'self'; \

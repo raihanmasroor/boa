@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -6079,9 +6079,222 @@ pub async fn serve_session_artifact(Path((id, path)): Path<(String, String)>) ->
     (StatusCode::OK, headers, bytes).into_response()
 }
 
+/// Query for `GET /api/sessions/{id}/file`. `path` is either an absolute host
+/// path that resolves inside the session's working directory, or a path
+/// relative to it. `download=true` forces an attachment disposition even for
+/// otherwise-inline types (e.g. a "Download" button on an image or PDF).
+#[derive(Deserialize)]
+pub struct SessionFileQuery {
+    pub path: String,
+    #[serde(default)]
+    pub download: bool,
+}
+
+/// Resolve a caller-supplied path against a session's working directory,
+/// returning the canonical file path iff it is a regular file that stays
+/// inside that root. Mirrors [`crate::session::artifacts::resolve_artifact_path`]'s
+/// canonicalize-both-ends + `starts_with` confinement, but roots at the
+/// session's `project_path` instead of the managed artifact dir. Accepts both
+/// absolute paths (which must already live inside the root) and root-relative
+/// paths. Returns `None` for traversal attempts, symlink escapes, non-existent
+/// paths, and non-file targets — so `..` or an in-dir symlink pointing outside
+/// the root cannot escape: the resolved target simply fails `starts_with(root)`.
+fn resolve_session_file_path(project_root: &str, requested: &str) -> Option<std::path::PathBuf> {
+    let root = std::path::Path::new(project_root).canonicalize().ok()?;
+    let req = std::path::Path::new(requested);
+    let candidate = if req.is_absolute() {
+        req.to_path_buf()
+    } else {
+        root.join(requested.trim_start_matches('/'))
+    };
+    let resolved = candidate.canonicalize().ok()?;
+    if resolved.starts_with(&root) && resolved.is_file() {
+        Some(resolved)
+    } else {
+        None
+    }
+}
+
+/// Serve any regular file from inside a session's working directory
+/// (`GET /api/sessions/{id}/file?path=…`). This lets the dashboard preview the
+/// files an agent produced (markdown, code, images, PDFs) without the user
+/// dropping to a shell. Auth is enforced by the global middleware;
+/// `resolve_session_file_path` canonicalizes and confines the request to the
+/// session's `project_path`, so neither `..` nor a symlink can escape it and
+/// arbitrary host paths outside the working dir are never served. Active types
+/// (HTML/XHTML/SVG/XML) are sent as attachments with an octet-stream type,
+/// never inline, so a generated page cannot execute script in the dashboard's
+/// authenticated origin (mirrors `serve_session_artifact`; see #2587).
+pub async fn session_file(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Query(q): Query<SessionFileQuery>,
+) -> impl IntoResponse {
+    let project_path = {
+        let instances = state.instances.read().await;
+        match instances.iter().find(|i| i.id == id) {
+            Some(inst) => inst.project_path.clone(),
+            None => return (StatusCode::NOT_FOUND, "session not found").into_response(),
+        }
+    };
+
+    let requested = q.path.clone();
+    let resolved =
+        tokio::task::spawn_blocking(move || resolve_session_file_path(&project_path, &requested))
+            .await;
+
+    let file_path = match resolved {
+        Ok(Some(p)) => p,
+        Ok(None) => return StatusCode::NOT_FOUND.into_response(),
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
+
+    match tokio::fs::metadata(&file_path).await {
+        Ok(m) if m.len() > MAX_ARTIFACT_BYTES => {
+            return StatusCode::PAYLOAD_TOO_LARGE.into_response()
+        }
+        Ok(_) => {}
+        Err(_) => return StatusCode::NOT_FOUND.into_response(),
+    }
+
+    let bytes = match tokio::fs::read(&file_path).await {
+        Ok(b) => b,
+        Err(_) => return StatusCode::NOT_FOUND.into_response(),
+    };
+
+    use axum::http::{header, HeaderMap, HeaderValue};
+    let mime = mime_guess::from_path(&file_path).first_or_octet_stream();
+    let essence = mime.essence_str();
+    // Types that execute script as a top-level/framed document are ALWAYS sent
+    // as an attachment with an octet-stream type, never inline — a blob URL
+    // minted from this response inherits the dashboard's authenticated origin.
+    // See #2587 / `serve_session_artifact`.
+    let active = matches!(
+        essence,
+        "text/html" | "application/xhtml+xml" | "image/svg+xml" | "application/xml" | "text/xml"
+    );
+    let force_download = active || q.download;
+    let content_type = if active {
+        "application/octet-stream"
+    } else {
+        essence
+    };
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_str(content_type)
+            .unwrap_or(HeaderValue::from_static("application/octet-stream")),
+    );
+    headers.insert(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("private, max-age=60"),
+    );
+    if force_download {
+        // Sanitize the basename for the Content-Disposition filename to a safe
+        // subset so the header cannot be broken or injected.
+        let name: String = file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("download")
+            .chars()
+            .map(|c| {
+                if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | ' ') {
+                    c
+                } else {
+                    '_'
+                }
+            })
+            .collect();
+        let disp = format!("attachment; filename=\"{name}\"");
+        headers.insert(
+            header::CONTENT_DISPOSITION,
+            HeaderValue::from_str(&disp).unwrap_or(HeaderValue::from_static("attachment")),
+        );
+    }
+
+    (StatusCode::OK, headers, bytes).into_response()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // The session-file route sandboxes reads to the session's working dir.
+    // These assert the canonicalize-both-ends + `starts_with` confinement in
+    // `resolve_session_file_path` — the load-bearing guard against traversal
+    // and symlink escapes on an endpoint that reads the whole project_path.
+    mod session_file_sandbox {
+        use super::*;
+
+        #[test]
+        fn resolves_a_file_inside_the_root() {
+            let root = tempfile::tempdir().expect("temp root");
+            std::fs::write(root.path().join("out.md"), b"# hi").unwrap();
+            let root_str = root.path().to_str().unwrap();
+            // relative
+            assert!(resolve_session_file_path(root_str, "out.md").is_some());
+            // absolute, inside the root
+            let abs = root.path().join("out.md");
+            assert!(resolve_session_file_path(root_str, abs.to_str().unwrap()).is_some());
+        }
+
+        #[test]
+        fn resolves_a_nested_file() {
+            let root = tempfile::tempdir().expect("temp root");
+            std::fs::create_dir_all(root.path().join("sub/dir")).unwrap();
+            std::fs::write(root.path().join("sub/dir/a.txt"), b"x").unwrap();
+            let root_str = root.path().to_str().unwrap();
+            assert!(resolve_session_file_path(root_str, "sub/dir/a.txt").is_some());
+        }
+
+        #[test]
+        fn rejects_dotdot_traversal() {
+            let root = tempfile::tempdir().expect("temp root");
+            let root_str = root.path().to_str().unwrap();
+            // A relative path climbing out of the root must not resolve.
+            assert!(resolve_session_file_path(root_str, "../../../../etc/hosts").is_none());
+        }
+
+        #[test]
+        fn rejects_absolute_path_outside_root() {
+            let root = tempfile::tempdir().expect("temp root");
+            let outside = tempfile::tempdir().expect("temp outside");
+            std::fs::write(outside.path().join("secret.txt"), b"nope").unwrap();
+            let root_str = root.path().to_str().unwrap();
+            let abs = outside.path().join("secret.txt");
+            assert!(resolve_session_file_path(root_str, abs.to_str().unwrap()).is_none());
+        }
+
+        #[test]
+        fn rejects_directories_and_missing_files() {
+            let root = tempfile::tempdir().expect("temp root");
+            std::fs::create_dir_all(root.path().join("adir")).unwrap();
+            let root_str = root.path().to_str().unwrap();
+            assert!(resolve_session_file_path(root_str, "adir").is_none());
+            assert!(resolve_session_file_path(root_str, "missing.png").is_none());
+        }
+
+        #[test]
+        fn rejects_symlink_escape() {
+            let root = tempfile::tempdir().expect("temp root");
+            let outside = tempfile::tempdir().expect("temp outside");
+            std::fs::write(outside.path().join("target.txt"), b"escape").unwrap();
+            let link = root.path().join("link.txt");
+            #[cfg(unix)]
+            {
+                std::os::unix::fs::symlink(outside.path().join("target.txt"), &link).unwrap();
+                let root_str = root.path().to_str().unwrap();
+                // The symlink lives inside the root but resolves outside it;
+                // canonicalization makes `starts_with(root)` fail.
+                assert!(resolve_session_file_path(root_str, "link.txt").is_none());
+            }
+        }
+    }
 
     // #2587: the artifact route serves only canonicalized files confined to
     // the session's artifact dir, sets nosniff, and never serves HTML inline.

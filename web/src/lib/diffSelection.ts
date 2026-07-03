@@ -7,15 +7,18 @@ import type { RichDiffFile } from "./types";
  * transcript link) whose path is no longer present in the current diff files.
  * Cited files (opened from a `path:line` transcript link) are exempt: they may
  * have no diff against the base and stay viewable via the full-file fallback
- * (#1810). Path and repo are matched together so a same-path file in another
- * workspace repo can't keep a selection alive.
+ * (#1810). Produced-file views (opened from the Files pane or an image/PDF
+ * chat link, `view: true`) are likewise exempt: they render the file itself,
+ * not a diff, so they are expected to be absent from the diff list. Path and
+ * repo are matched together so a same-path file in another workspace repo
+ * can't keep a selection alive.
  */
 export function diffSelectionStale(
-  selectedFile: { path: string; repoName?: string; cited?: boolean } | null,
+  selectedFile: { path: string; repoName?: string; cited?: boolean; view?: boolean } | null,
   diffFilesLoading: boolean,
   diffFiles: RichDiffFile[],
 ): boolean {
-  if (!selectedFile || selectedFile.cited || diffFilesLoading) return false;
+  if (!selectedFile || selectedFile.cited || selectedFile.view || diffFilesLoading) return false;
   return !diffFiles.some(
     (f) => f.path === selectedFile.path && (f.repo_name ?? undefined) === (selectedFile.repoName ?? undefined),
   );

@@ -4,6 +4,8 @@ import { TerminalSessionStack } from "./TerminalSessionStack";
 import { PairedShellPane } from "./PairedTerminal";
 import { DiffFileList } from "./diff/DiffFileList";
 import { DiffFileViewer } from "./diff/DiffFileViewer";
+import { FileViewer } from "./files/FileViewer";
+import { FilesPane } from "./files/FilesPane";
 import { CommentsBanner } from "./diff/comments/CommentsBanner";
 import { SendCommentsDialog } from "./diff/comments/SendCommentsDialog";
 import { PluginPaneBody } from "./plugin/PluginSlots";
@@ -27,6 +29,11 @@ interface Props {
   selectedFilePath: string | null;
   selectedRepoName: string | undefined;
   selectedFileLine: number | undefined;
+  /** Render the selected file as a produced file (FileViewer) rather than a
+   *  diff. Mirrors the desktop branch. */
+  selectedFileView: boolean;
+  /** Path handed to the `/file` endpoint when `selectedFileView` is set. */
+  selectedFileRawPath: string | undefined;
   revision: number;
   diffFiles: RichDiffFile[];
   perRepoBases: RepoBase[];
@@ -34,6 +41,8 @@ interface Props {
   diffFilesLoading: boolean;
   onSelectFile: (path: string, repoName?: string) => void;
   onOpenFileRef: (ref: FileRef) => void;
+  /** Open a produced file (path relative to project_path) in the Files view. */
+  onOpenFile: (path: string) => void;
   onCloseFile: () => void;
   onDiffRefresh: () => void;
   commentsEnabled: boolean;
@@ -69,6 +78,8 @@ export function MobileMainPane({
   selectedFilePath,
   selectedRepoName,
   selectedFileLine,
+  selectedFileView,
+  selectedFileRawPath,
   revision,
   diffFiles,
   perRepoBases,
@@ -76,6 +87,7 @@ export function MobileMainPane({
   diffFilesLoading,
   onSelectFile,
   onOpenFileRef,
+  onOpenFile,
   onCloseFile,
   onDiffRefresh,
   commentsEnabled,
@@ -90,7 +102,13 @@ export function MobileMainPane({
 }: Props) {
   const activePluginPane = isPluginPaneId(view) ? (pluginPanes.find((p) => p.id === view) ?? null) : null;
   const viewLabel =
-    view === "diff" ? "Diff" : view === "paired" ? "Paired terminal" : (activePluginPane?.title ?? "Plugin");
+    view === "diff"
+      ? "Diff"
+      : view === "files"
+        ? "Files"
+        : view === "paired"
+          ? "Paired terminal"
+          : (activePluginPane?.title ?? "Plugin");
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -140,7 +158,14 @@ export function MobileMainPane({
 
         {view === "diff" && (
           <div className="absolute inset-0 z-10 flex flex-col min-h-0 overflow-hidden bg-surface-900">
-            {selectedFilePath && activeSessionId ? (
+            {selectedFilePath && activeSessionId && selectedFileView && selectedFileRawPath ? (
+              <FileViewer
+                sessionId={activeSessionId}
+                path={selectedFileRawPath}
+                displayPath={selectedFilePath}
+                onClose={onCloseFile}
+              />
+            ) : selectedFilePath && activeSessionId ? (
               <DiffFileViewer
                 sessionId={activeSessionId}
                 filePath={selectedFilePath}
@@ -177,6 +202,21 @@ export function MobileMainPane({
                 />
               </div>
             )}
+          </div>
+        )}
+
+        {view === "files" && (
+          <div className="absolute inset-0 z-10 flex flex-col min-h-0 overflow-hidden bg-surface-900">
+            {selectedFilePath && activeSessionId && selectedFileView && selectedFileRawPath ? (
+              <FileViewer
+                sessionId={activeSessionId}
+                path={selectedFileRawPath}
+                displayPath={selectedFilePath}
+                onClose={onCloseFile}
+              />
+            ) : activeSessionId ? (
+              <FilesPane sessionId={activeSessionId} onOpenFile={onOpenFile} />
+            ) : null}
           </div>
         )}
 

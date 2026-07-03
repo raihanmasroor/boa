@@ -93,6 +93,8 @@ function setup(overrides: Partial<Parameters<typeof MobileMainPane>[0]> = {}) {
     webSettings: { persistentTerminals: false, maxPersistentTerminals: 3 },
     selectedFilePath: null,
     selectedRepoName: undefined,
+    selectedFileView: false,
+    selectedFileRawPath: undefined,
     revision: 0,
     diffFiles: [],
     perRepoBases: [],

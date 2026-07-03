@@ -61,7 +61,7 @@ import { reclassifyBash } from "../../lib/toolReclassify";
 import { useAgentProfile } from "../../lib/agentProfileContext";
 import { useAcpFileRef } from "./AcpFileRefContext";
 import { useBackgroundAgentFor, useOpenBackgroundAgentsPane } from "./backgroundAgentsContext";
-import { relativeDisplayPath } from "../../lib/fileRef";
+import { parseFileRef, relativeDisplayPath, resolveToRepoRelative } from "../../lib/fileRef";
 import { useToolDisplayMode, type ToolDensity } from "./ToolDisplayMode";
 import type { AgentProfile, CardKind } from "../../lib/agentProfiles";
 
@@ -792,6 +792,44 @@ function ExecuteToolCard({ tool, result }: Props) {
   );
 }
 
+/**
+ * Wrap a tool-card file path so clicking it opens the file in the in-app viewer
+ * via the shared file-ref handler (`onOpenFileRef`). Falls back to inert text
+ * when there is no open handler or the path resolves to no known repo root, so
+ * a path is never a link that lies about being openable. Rendered as a
+ * `role="button"` span (not a `<button>`) so it stays valid inside CardChrome's
+ * header, which is itself a `<button>` when the card is expandable. The click
+ * stops propagation so it never also toggles the card's expansion.
+ */
+function ClickablePath({ rawPath, children }: { rawPath: string; children: ReactNode }) {
+  const { onOpenFileRef, fileRefSession } = useAcpFileRef();
+  const ref = parseFileRef(rawPath);
+  const canOpen =
+    !!onOpenFileRef && !!ref && (!fileRefSession || resolveToRepoRelative(ref.path, fileRefSession) !== null);
+  if (!canOpen || !ref) {
+    return <span title={rawPath}>{children}</span>;
+  }
+  const open = (e: { stopPropagation: () => void; preventDefault: () => void }) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onOpenFileRef!(ref);
+  };
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      title={rawPath}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") open(e);
+      }}
+      className="cursor-pointer hover:text-accent-600 hover:underline focus:underline focus:outline-none"
+    >
+      {children}
+    </span>
+  );
+}
+
 /* ── read ───────────────────────────────────────────────────────── */
 
 function ReadToolCard({ tool, result }: Props) {
@@ -818,7 +856,7 @@ function ReadToolCard({ tool, result }: Props) {
       endedAt={result?.at}
       icon={<FileText className="h-3.5 w-3.5" />}
       label="read"
-      primary={<span title={rawPath}>{path}</span>}
+      primary={<ClickablePath rawPath={rawPath}>{path}</ClickablePath>}
       meta={
         <>
           {range && <span className="text-[11px] text-text-dim">{range}</span>}
@@ -901,7 +939,11 @@ function EditToolCard({ tool, result }: Props) {
       endedAt={result?.at}
       icon={<Pencil className="h-3.5 w-3.5" />}
       label={verb}
-      primary={<span title={rawPath}>{multiFile ? `${path} +${structuredDiffs.length - 1} more` : path}</span>}
+      primary={
+        <ClickablePath rawPath={rawPath}>
+          {multiFile ? `${path} +${structuredDiffs.length - 1} more` : path}
+        </ClickablePath>
+      }
       meta={errorChip ? undefined : meta}
       expanded={open}
       onToggle={status === "err" || hasDiff ? () => setOpen((v) => !v) : undefined}
@@ -951,7 +993,7 @@ function DeleteToolCard({ tool, result }: Props) {
       endedAt={result?.at}
       icon={<Trash2 className="h-3.5 w-3.5 text-rose-400" />}
       label="delete"
-      primary={<span title={rawPath}>{path}</span>}
+      primary={<ClickablePath rawPath={rawPath}>{path}</ClickablePath>}
       expanded={open}
       onToggle={status === "err" ? () => setOpen((v) => !v) : undefined}
       body={

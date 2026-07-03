@@ -108,6 +108,9 @@ import { BUILTIN_PANES, isTerminalTabId, terminalIndexOf, terminalTabId, type Do
 import { MobileRightPanelPicker } from "./components/MobileRightPanelPicker";
 import { MobileMainPane } from "./components/MobileMainPane";
 import { DiffFileViewer } from "./components/diff/DiffFileViewer";
+import { FileViewer } from "./components/files/FileViewer";
+import { FilesPane } from "./components/files/FilesPane";
+import { isInlinePreviewMedia } from "./lib/fileKind";
 import { SettingsView } from "./components/SettingsView";
 import { ProjectFormModal } from "./components/ProjectFormModal";
 import { HelpOverlay } from "./components/HelpOverlay";
@@ -421,10 +424,21 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
      *  file may have no diff against the base (full-file fallback, #1810), so
      *  it must not be auto-cleared for being absent from the diff list. */
     cited?: boolean;
+    /** Render the produced file itself (FileViewer: markdown/image/pdf/text)
+     *  rather than a diff. Set by the Files pane and by image/PDF chat/tool
+     *  paths. Like `cited`, exempt from diff-list staleness. */
+    view?: boolean;
+    /** Path handed to the `/file` endpoint when `view` is set: an absolute host
+     *  path (chat/tool-card clicks) or a project-relative path (Files pane).
+     *  Kept alongside the display `path` because the endpoint resolves against
+     *  project_path, not a per-repo root. */
+    rawPath?: string;
   } | null>(null);
   const selectedFilePath = selectedFile?.path ?? null;
   const selectedRepoName = selectedFile?.repoName;
   const selectedFileLine = selectedFile?.line;
+  const selectedFileView = selectedFile?.view ?? false;
+  const selectedFileRawPath = selectedFile?.rawPath;
   // Dock panes render as tabbed groups (#2437): each dock holds an ordered set
   // of tabs (diff, one-or-more terminals, plugin panes) with one active body.
   // The tab membership + active tab + terminal count are persisted per session;
@@ -515,7 +529,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
       const defaultDock: DockLocation =
         pluginPaneById.get(kind)?.defaultDock ?? BUILTIN_PANES.find((p) => p.id === kind)?.defaultDock ?? "right";
       if (isPluginPaneId(kind)) togglePlugin(kind, defaultDock);
-      else toggleKind(kind as "diff" | "terminal" | "agents", defaultDock);
+      else toggleKind(kind as "diff" | "terminal" | "agents" | "files", defaultDock);
     },
     [toggleKind, togglePlugin, pluginPaneById],
   );
@@ -615,6 +629,8 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
   const activeSession = activeWorkspace?.sessions.find((s) => s.id === activeSessionId);
   const allPaneIds: string[] = [
     "diff",
+    // Produced-file browser: list + view files under the session's working dir.
+    "files",
     "terminal",
     // The background-agents panel only applies to structured-view (ACP)
     // sessions; a plain terminal session never launches sub-agents.
@@ -1105,6 +1121,23 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
         toastBus.handler?.error(`Could not open ${ref.path}: not inside this session's repo`);
         return;
       }
+      // Images and PDFs render inline in the produced-file viewer (the diff
+      // viewer only shows "Binary file" for them). Route those to view mode
+      // using the original absolute path, which the `/file` endpoint resolves
+      // against project_path. Everything else keeps the diff/full-file path.
+      if (isInlinePreviewMedia(ref.path)) {
+        setSelectedFile({
+          path: resolved.relativePath,
+          repoName: resolved.repoName,
+          view: true,
+          rawPath: ref.path,
+        });
+        // On mobile a single view fills the screen; surface the produced-file
+        // viewer by switching to the Files view. Desktop ignores this (it
+        // renders the side-by-side split), so it's a no-op there.
+        setRightPanelView("files");
+        return;
+      }
       setSelectedFile({
         path: resolved.relativePath,
         repoName: resolved.repoName,
@@ -1114,6 +1147,15 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
     },
     [activeSession],
   );
+
+  // Open a produced file from the Files pane. The index yields paths relative
+  // to the session's project_path, which the `/file` endpoint resolves
+  // directly, so the display path and the fetch path are the same here.
+  const handleOpenFile = useCallback((path: string) => {
+    setSelectedFile({ path, view: true, rawPath: path });
+    // Ensure the mobile main pane shows the viewer (no-op on desktop).
+    setRightPanelView("files");
+  }, []);
 
   const handleCloseFile = useCallback(() => {
     setSelectedFile(null);
@@ -1486,6 +1528,8 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
           selectedFilePath={selectedFilePath}
           selectedRepoName={selectedRepoName}
           selectedFileLine={selectedFileLine}
+          selectedFileView={selectedFileView}
+          selectedFileRawPath={selectedFileRawPath}
           revision={revision}
           diffFiles={diffFiles}
           perRepoBases={perRepoBases}
@@ -1493,6 +1537,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
           diffFilesLoading={diffFilesLoading}
           onSelectFile={handleSelectFile}
           onOpenFileRef={handleOpenFileRef}
+          onOpenFile={handleOpenFile}
           onCloseFile={handleCloseFile}
           onDiffRefresh={refreshDiffFiles}
           commentsEnabled={commentsEnabled}
@@ -1516,6 +1561,11 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
       if (plugin) return <PluginPaneBody entry={plugin.entry} />;
       if (id === "agents") {
         return <BackgroundAgentsPanel sessionId={activeSessionId} />;
+      }
+      if (id === "files") {
+        return activeSessionId ? (
+          <FilesPane sessionId={activeSessionId} onOpenFile={handleOpenFile} />
+        ) : null;
       }
       if (id === "diff") {
         return (
@@ -1586,18 +1636,27 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
                   )}
                 </div>
 
-                {selectedFilePath && activeSessionId && (
-                  <DiffFileViewer
-                    sessionId={activeSessionId}
-                    filePath={selectedFilePath}
-                    repoName={selectedRepoName}
-                    targetLine={selectedFileLine}
-                    revision={revision}
-                    onClose={handleCloseFile}
-                    commentsEnabled={commentsEnabled}
-                    commentsStore={diffComments}
-                  />
-                )}
+                {selectedFilePath &&
+                  activeSessionId &&
+                  (selectedFileView && selectedFileRawPath ? (
+                    <FileViewer
+                      sessionId={activeSessionId}
+                      path={selectedFileRawPath}
+                      displayPath={selectedFilePath}
+                      onClose={handleCloseFile}
+                    />
+                  ) : (
+                    <DiffFileViewer
+                      sessionId={activeSessionId}
+                      filePath={selectedFilePath}
+                      repoName={selectedRepoName}
+                      targetLine={selectedFileLine}
+                      revision={revision}
+                      onClose={handleCloseFile}
+                      commentsEnabled={commentsEnabled}
+                      commentsStore={diffComments}
+                    />
+                  ))}
               </div>
             }
             right={

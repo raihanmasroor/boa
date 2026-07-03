@@ -11,6 +11,7 @@ interface Entry {
 const ENTRIES: Entry[] = [
   { view: "agent", label: "Agent terminal", hint: "The session's main view" },
   { view: "diff", label: "Diff", hint: "Changed files and review" },
+  { view: "files", label: "Files", hint: "Files this session produced" },
   { view: "paired", label: "Paired terminal", hint: "Host or container shell" },
 ];
 

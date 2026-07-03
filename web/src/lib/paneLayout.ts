@@ -249,12 +249,12 @@ export function syncPluginTabs(layout: DockLayout, available: { id: TabId; defau
 
 // --- persistence + migration ---
 
-// Built-in panes that open by default / on a v1 migration. The Sub agents
-// pane is intentionally excluded: it is opt-in, opened on demand via its
-// ActivityBar toggle or by clicking an inline sub-agent card, so it never
-// auto-opens as an empty tab. A v1 layout predates it, so it can never
+// Built-in panes that open by default / on a v1 migration. The Sub agents and
+// Files panes are intentionally excluded: they are opt-in, opened on demand via
+// their ActivityBar toggle (Files) or an inline card (Sub agents), so they
+// never auto-open as an empty tab. A v1 layout predates both, so neither can
 // have been "open" there either.
-const AUTO_OPEN_PANES = BUILTIN_PANES.filter((p) => p.id !== "agents");
+const AUTO_OPEN_PANES = BUILTIN_PANES.filter((p) => p.id !== "agents" && p.id !== "files");
 
 function defaultTemplate(): DockLayout {
   // Desktop opens diff + terminal in the right dock (matches the historical
@@ -387,8 +387,8 @@ export interface PaneLayoutApi {
   moveTab: (tabId: TabId, toDock: DockLocation) => void;
   /** Reorder, move across docks/groups, or split into a new group. */
   placeTab: (tabId: TabId, target: PlaceTarget) => void;
-  /** Activity-bar toggle for a built-in kind ("diff" or "terminal"). */
-  toggleKind: (kind: "diff" | "terminal" | "agents", defaultDock: DockLocation) => void;
+  /** Activity-bar toggle for a built-in kind ("diff", "files", or "terminal"). */
+  toggleKind: (kind: "diff" | "terminal" | "agents" | "files", defaultDock: DockLocation) => void;
   /** Add/remove a plugin pane tab (activity-bar toggle). */
   togglePlugin: (id: TabId, defaultDock: DockLocation) => void;
   syncPlugins: (available: { id: TabId; defaultDock: DockLocation }[]) => void;
@@ -436,11 +436,11 @@ export function usePaneLayout(sessionId: string | null): PaneLayoutApi {
     [mutate],
   );
   const toggleKind = useCallback(
-    (kind: "diff" | "terminal" | "agents", defaultDock: DockLocation) =>
+    (kind: "diff" | "terminal" | "agents" | "files", defaultDock: DockLocation) =>
       mutate((l) => {
-        // Single-instance panes (diff, agents) toggle their one tab; the
+        // Single-instance panes (diff, files, agents) toggle their one tab; the
         // terminal kind is multi-instance and toggles the whole group.
-        if (kind === "diff" || kind === "agents") {
+        if (kind === "diff" || kind === "agents" || kind === "files") {
           return dockOf(l, kind) ? removeTab(l, kind) : addTab(l, defaultDock, kind);
         }
         const hasTerminal = DOCKS.some((d) => dockTabs(l, d).some(isTerminalTabId));
