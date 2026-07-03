@@ -652,6 +652,19 @@ mod tests {
     }
 
     #[test]
+    fn oneshot_claude_has_no_remote_control() {
+        // Print/oneshot mode (`claude -p`, used for smart-rename and status
+        // probes) must NOT carry `--remote-control`; that flag is scoped to
+        // interactive terminal launches only. Guards the print-mode side of the
+        // BOA remote-control divergence.
+        let argv = build_oneshot_argv(claude(), "Say hi").expect("claude has one-shot");
+        assert!(
+            !argv.iter().any(|a| a == "--remote-control"),
+            "print-mode claude argv must not carry --remote-control: {argv:?}"
+        );
+    }
+
+    #[test]
     fn check_eligible_reasons() {
         let c = Some(claude());
         // Happy path.

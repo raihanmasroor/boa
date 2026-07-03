@@ -87,6 +87,43 @@ Provision list: `["claude-agent-acp", "codex-acp", "gemini"]`. Reuses
 `--fix` and the web install action), so there is one source of truth for which
 adapters are npm-installable. Disable with `acp.auto_install_adapters = false`.
 
+### `--remote-control` on interactive Claude sessions
+**Why:** upstream launches plain `claude` for terminal sessions, so a
+BOA-spawned Claude Code session never registers with Claude Desktop /
+claude.ai remote control and is invisible there. We want every interactive
+Claude session BOA starts — `add --cmd claude`, the TUI new-session flow, the
+web wizard, and resume/fork/restart relaunches — to appear in remote control.
+
+**What:** claude's `AgentDef` carries a new `remote_control_flag:
+Some("--remote-control")`; every other agent is `None`. A small helper
+(`apply_remote_control_flag`) appends it in the same three interactive command
+builders where the yolo flag is applied (sandboxed, host default, host
+override), immediately before the resume/fork flags so it survives `--resume
+<id>` reconstruction. It is scoped to interactive terminal launches by
+construction: print/oneshot mode (`claude -p`, smart-rename / status probes)
+builds its argv in a separate function (`smart_rename::build_oneshot_argv`) and
+the ACP adapter path spawns separately, so neither receives the flag. Gated on
+`session.claude_remote_control` (default **true**; same `SettingsSection`
+pattern as `auto_resume_on_restart`); set it false to launch plain `claude`.
+
+**Touched (small + surgical):**
+- `src/agents.rs` — new `AgentDef::remote_control_flag` field (`Some` only for
+  claude) + a surface-lock test (`test_only_claude_has_remote_control_flag`).
+- `src/session/config.rs` — new `session.claude_remote_control` toggle (default
+  **true**).
+- `src/session/instance.rs` — `apply_remote_control_flag` helper +
+  `remote_control_enabled()` resolver, applied at the three interactive builder
+  sites; builder tests (fresh / resume-survives / other-agent / toggle-off).
+- `src/session/smart_rename.rs` — regression test that print-mode argv omits the
+  flag.
+
+**Blast radius:** low. One additive optional field on `AgentDef` (all existing
+literals set `None`, claude `Some`), one additive config toggle, and three
+one-line helper calls next to the existing yolo application. No change to
+resume/fork token insertion, the ACP path, or print-mode argv. Merge risk is a
+literal-init conflict if upstream adds an agent or reorders `AgentDef` fields —
+resolved by adding `remote_control_flag: None` to the new/edited literal.
+
 ## Dev commands
 - Build: `cargo build --release` (binary at `target/release/aoe`)
 - Web dashboard dev: see `web/` package.json

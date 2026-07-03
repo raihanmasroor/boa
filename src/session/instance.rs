@@ -745,6 +745,29 @@ fn apply_yolo_mode(cmd: &mut String, yolo: &crate::agents::YoloMode, is_sandboxe
     }
 }
 
+/// BOA divergence from upstream: append the agent's remote-control flag
+/// (`--remote-control`, declared today only by claude via
+/// `AgentDef::remote_control_flag`) to interactive terminal launches. Runs from
+/// the same interactive command builders as `apply_yolo_mode` (sandboxed and
+/// both `build_host_command` branches) and never from print/oneshot mode, so
+/// smart-rename and status probes stay plain. Gated on the resolved
+/// `SessionConfig::claude_remote_control` toggle, which the caller passes in as
+/// `enabled` (production reads it via `Instance::remote_control_enabled`; tests
+/// inject it deterministically). A no-op when disabled or when the agent
+/// declares no flag.
+fn apply_remote_control_flag(
+    cmd: &mut String,
+    agent: Option<&crate::agents::AgentDef>,
+    enabled: bool,
+) {
+    if !enabled {
+        return;
+    }
+    if let Some(flag) = agent.and_then(|a| a.remote_control_flag) {
+        *cmd = format!("{} {}", cmd, flag);
+    }
+}
+
 fn build_resume_flags(tool: &str, session_id: &str, is_existing_session: bool) -> String {
     use crate::agents::{get_agent, ResumeStrategy};
 
@@ -1639,6 +1662,17 @@ impl Instance {
         super::profile_config::resolve_config_or_warn(&profile).environment
     }
 
+    /// Resolve whether interactive launches should carry the remote-control
+    /// flag, reading the `claude_remote_control` toggle from this session's
+    /// effective profile config. Production callers feed the result into
+    /// `apply_remote_control_flag`; the command builders take the bool as a
+    /// parameter so tests can inject it without touching disk config.
+    fn remote_control_enabled(&self) -> bool {
+        super::profile_config::resolve_config_or_warn(&self.effective_profile())
+            .session
+            .claude_remote_control
+    }
+
     pub fn is_sub_session(&self) -> bool {
         self.parent_session_id.is_some()
     }
@@ -2400,6 +2434,11 @@ impl Instance {
             .or_else(|| crate::agents::get_agent(&self.detect_as));
         self.install_agent_status_hooks(agent);
 
+        // BOA divergence: resolve the remote-control toggle once from disk here
+        // and thread it through the interactive builders as a plain bool, so
+        // `build_host_command` (and its tests) never re-read config.
+        let remote_control = self.remote_control_enabled();
+
         let (cmd, is_existing) = if self.is_sandboxed() {
             let container = self.get_container_for_instance()?;
             if let Some(ref hook_cmds) = on_launch_hooks {
@@ -2457,6 +2496,7 @@ impl Instance {
                 }
             }
 
+            apply_remote_control_flag(&mut tool_cmd, agent, remote_control);
             let is_existing = self.apply_session_flags(&mut tool_cmd, "sandboxed");
             apply_agent_launch_env(&mut tool_cmd, agent);
 
@@ -2478,7 +2518,7 @@ impl Instance {
                 is_existing,
             )
         } else {
-            self.build_host_command(agent, &on_launch_hooks)?
+            self.build_host_command(agent, &on_launch_hooks, remote_control)?
         };
 
         Ok((cmd, is_existing))
@@ -2661,6 +2701,7 @@ impl Instance {
         &mut self,
         agent: Option<&'static crate::agents::AgentDef>,
         on_launch_hooks: &Option<Vec<String>>,
+        remote_control: bool,
     ) -> Result<(Option<String>, bool)> {
         if let Some(ref hook_cmds) = on_launch_hooks {
             let hook_env = super::repo_config::lifecycle_env_vars(self);
@@ -2707,6 +2748,7 @@ impl Instance {
                             apply_yolo_mode(&mut cmd, yolo, false);
                         }
                     }
+                    apply_remote_control_flag(&mut cmd, Some(a), remote_control);
                     let is_existing = self.apply_session_flags(&mut cmd, "host agent");
                     apply_agent_launch_env(&mut cmd, agent);
                     Ok((
@@ -2729,6 +2771,7 @@ impl Instance {
                     apply_yolo_mode(&mut cmd, yolo, false);
                 }
             }
+            apply_remote_control_flag(&mut cmd, agent, remote_control);
             let is_existing = self.apply_session_flags(&mut cmd, "host custom");
             apply_agent_launch_env(&mut cmd, agent);
             Ok((
@@ -6651,7 +6694,7 @@ mod tests {
         let mut inst = Instance::new("test", "/tmp/test");
         inst.tool = "codex".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("codex"), &None)
+            .build_host_command(crate::agents::get_agent("codex"), &None, false)
             .unwrap();
         assert!(cmd.is_some());
         assert!(cmd.as_ref().unwrap().contains("codex"));
@@ -6663,7 +6706,7 @@ mod tests {
         inst.tool = "codex".to_string();
         inst.yolo_mode = true;
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("codex"), &None)
+            .build_host_command(crate::agents::get_agent("codex"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
         let agent = crate::agents::get_agent("codex").unwrap();
@@ -6680,11 +6723,116 @@ mod tests {
         inst.tool = "claude".to_string();
         inst.agent_session_id = Some("ses_abc123def456".to_string());
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("claude"), &None)
+            .build_host_command(crate::agents::get_agent("claude"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
         assert!(cmd_str.contains("ses_abc123def456"));
         assert!(cmd_str.contains("--session-id") || cmd_str.contains("--resume"));
+    }
+
+    // --- BOA remote-control divergence: hermetic tests ------------------------
+    //
+    // These build the launch command through the *real* `build_host_command`
+    // builder but inject the `remote_control` toggle explicitly (last arg),
+    // so they never read the toggle from on-disk/global profile config. That
+    // is the fix for the earlier flake where `remote_control_enabled()`
+    // resolved a stray on-disk profile with the toggle off and the assertions
+    // saw enabled=false. Production still resolves the toggle from disk via
+    // `Instance::remote_control_enabled`; only the test harness injects it.
+
+    #[test]
+    fn apply_remote_control_flag_appends_only_when_enabled() {
+        let claude = crate::agents::get_agent("claude");
+        let opencode = crate::agents::get_agent("opencode");
+
+        // Enabled + agent declares the flag -> appended once.
+        let mut cmd = "claude".to_string();
+        apply_remote_control_flag(&mut cmd, claude, true);
+        assert_eq!(cmd, "claude --remote-control");
+
+        // Disabled -> untouched even though the agent declares the flag.
+        let mut cmd = "claude".to_string();
+        apply_remote_control_flag(&mut cmd, claude, false);
+        assert_eq!(cmd, "claude");
+
+        // Enabled but the agent declares no flag -> untouched.
+        let mut cmd = "opencode".to_string();
+        apply_remote_control_flag(&mut cmd, opencode, true);
+        assert_eq!(cmd, "opencode");
+
+        // Enabled but no agent at all -> untouched.
+        let mut cmd = "whatever".to_string();
+        apply_remote_control_flag(&mut cmd, None, true);
+        assert_eq!(cmd, "whatever");
+    }
+
+    #[test]
+    fn build_host_command_fresh_claude_with_toggle_on_has_remote_control() {
+        let mut inst = Instance::new("test", "/tmp/test");
+        inst.tool = "claude".to_string();
+        // Cleared -> deterministic fresh launch (fresh session-id, no probing).
+        inst.resume_intent = ResumeIntent::Cleared;
+        let (cmd, _) = inst
+            .build_host_command(crate::agents::get_agent("claude"), &None, true)
+            .unwrap();
+        let cmd_str = cmd.unwrap();
+        // Sample line proving the flag lands on a fresh interactive claude launch.
+        eprintln!("SAMPLE fresh-claude cmd: {cmd_str}");
+        assert!(
+            cmd_str.contains("--remote-control"),
+            "fresh claude with toggle on must carry --remote-control: {cmd_str}"
+        );
+    }
+
+    #[test]
+    fn build_host_command_resume_claude_with_toggle_on_has_both_flags() {
+        let mut inst = Instance::new("test", "/tmp/test");
+        inst.tool = "claude".to_string();
+        // Use pins an existing session id -> apply_session_flags emits --resume.
+        inst.resume_intent = ResumeIntent::Use("11111111-2222-3333-4444-555555555555".to_string());
+        let (cmd, _) = inst
+            .build_host_command(crate::agents::get_agent("claude"), &None, true)
+            .unwrap();
+        let cmd_str = cmd.unwrap();
+        assert!(
+            cmd_str.contains("--resume 11111111-2222-3333-4444-555555555555"),
+            "resume must emit --resume <id>: {cmd_str}"
+        );
+        assert!(
+            cmd_str.contains("--remote-control"),
+            "resume with toggle on must also carry --remote-control: {cmd_str}"
+        );
+    }
+
+    #[test]
+    fn build_host_command_claude_with_toggle_off_has_no_remote_control() {
+        let mut inst = Instance::new("test", "/tmp/test");
+        inst.tool = "claude".to_string();
+        inst.resume_intent = ResumeIntent::Cleared;
+        let (cmd, _) = inst
+            .build_host_command(crate::agents::get_agent("claude"), &None, false)
+            .unwrap();
+        let cmd_str = cmd.unwrap();
+        assert!(
+            !cmd_str.contains("--remote-control"),
+            "toggle off must not carry --remote-control: {cmd_str}"
+        );
+    }
+
+    #[test]
+    fn build_host_command_opencode_with_toggle_on_has_no_remote_control() {
+        let mut inst = Instance::new("test", "/tmp/test");
+        inst.tool = "opencode".to_string();
+        inst.resume_intent = ResumeIntent::Cleared;
+        // opencode declares no remote_control_flag, so even toggle-on is a no-op.
+        let (cmd, _) = inst
+            .build_host_command(crate::agents::get_agent("opencode"), &None, true)
+            .unwrap();
+        let cmd_str = cmd.unwrap();
+        assert!(
+            !cmd_str.contains("--remote-control"),
+            "opencode must never carry --remote-control: {cmd_str}"
+        );
     }
 
     #[test]
@@ -6692,7 +6840,7 @@ mod tests {
         let mut inst = Instance::new("test", "/tmp/test");
         inst.tool = "antigravity".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("antigravity"), &None)
+            .build_host_command(crate::agents::get_agent("antigravity"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
 
@@ -6709,7 +6857,7 @@ mod tests {
         let mut inst = Instance::new("test", "/tmp/test");
         inst.tool = "kiro".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("kiro"), &None)
+            .build_host_command(crate::agents::get_agent("kiro"), &None, false)
             .unwrap();
         assert!(cmd.unwrap().contains("kiro-cli chat"));
     }
@@ -6721,7 +6869,7 @@ mod tests {
         inst.tool = "kiro".to_string();
         inst.yolo_mode = true;
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("kiro"), &None)
+            .build_host_command(crate::agents::get_agent("kiro"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
         let chat_pos = cmd_str
@@ -6744,7 +6892,7 @@ mod tests {
         inst.tool = "kiro".to_string();
         inst.command = "kiro-cli chat --trust-all-tools".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("kiro"), &None)
+            .build_host_command(crate::agents::get_agent("kiro"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
         // Exactly one "chat" token (no doubled `chat chat`).
@@ -6792,7 +6940,7 @@ mod tests {
         inst.tool = "antigravity".to_string();
         inst.command = "agy --some-flag".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("antigravity"), &None)
+            .build_host_command(crate::agents::get_agent("antigravity"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
 
@@ -6807,7 +6955,7 @@ mod tests {
         let mut inst = Instance::new("test", "/tmp/test");
         inst.tool = "codex".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("codex"), &None)
+            .build_host_command(crate::agents::get_agent("codex"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
 
@@ -6822,7 +6970,7 @@ mod tests {
         let mut inst = Instance::new("test", "/tmp/test");
         inst.tool = "cursor".to_string();
         let (cmd, _) = inst
-            .build_host_command(crate::agents::get_agent("cursor"), &None)
+            .build_host_command(crate::agents::get_agent("cursor"), &None, false)
             .unwrap();
         let cmd_str = cmd.unwrap();
 
