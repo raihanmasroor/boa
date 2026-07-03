@@ -69,6 +69,7 @@ import {
   setSessionSnooze,
   trashSession,
   restoreSession,
+  switchSessionView,
 } from "./lib/api";
 import type { DeleteSessionOptions, ServerAbout } from "./lib/api";
 import { normalizeProjectPathKey } from "./lib/registeredProjects";
@@ -283,6 +284,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
     injectSession,
     setSessionStatus,
     applySession,
+    refresh: refreshSessions,
   } = useSessions();
   const workspaces = useWorkspaces(sessions);
   // Trash is a whole-workspace concern, so it is derived here from the
@@ -1149,6 +1151,33 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
     setShowAbout(true);
   }, []);
 
+  // Switch the active session between the structured (ACP) view and the tmux
+  // terminal view. Backed by the pre-existing `/acp/{enable,disable}` endpoints
+  // (previously only reachable from the TUI). The agent restarts in a fresh
+  // pane; the worktree/files/commits are preserved but the in-memory
+  // conversation for this session resets, so we confirm first. The 3s session
+  // poll would eventually pick up the new view; refreshSessions pulls it now.
+  const handleSwitchView = useCallback(
+    async (session: SessionResponse) => {
+      if (serverAbout?.read_only) return;
+      const target = session.view === "structured" ? "terminal" : "structured";
+      const label = target === "structured" ? "structured view" : "terminal view";
+      const ok = window.confirm(
+        `Switch this session to the ${label}?\n\n` +
+          "The agent restarts in a fresh pane. The worktree, open files, and " +
+          "commits are preserved, but the conversation history in this session resets.",
+      );
+      if (!ok) return;
+      const next = await switchSessionView(session.id, target);
+      if (next === null) {
+        window.alert("Could not switch the view. Please try again.");
+        return;
+      }
+      await refreshSessions();
+    },
+    [serverAbout?.read_only, refreshSessions],
+  );
+
   const handleToggleSidebar = useCallback(() => {
     setSidebarOpen((o) => !o);
   }, []);
@@ -1774,6 +1803,8 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
         <TopBar
           activeWorkspace={activeWorkspace}
           activeSession={activeSession ?? null}
+          onSwitchView={serverAbout?.read_only ? undefined : handleSwitchView}
+          appVersion={serverAbout?.version ?? null}
           onToggleSidebar={handleToggleSidebar}
           onOpenPalette={() => setShowPalette(true)}
           onToggleDiff={toggleDiff}

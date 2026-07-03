@@ -69,11 +69,15 @@ const uninstalledBuiltin: AgentInfo = {
   acp_capable: false,
 };
 
-function renderAgentStep(overrides: { tool?: string; agents?: AgentInfo[] }) {
+function renderAgentStep(overrides: { tool?: string; agents?: AgentInfo[]; useStructuredView?: boolean }) {
   const onChange = vi.fn();
   const utils = render(
     <AgentStep
-      data={{ ...initialData, tool: overrides.tool ?? "claude" }}
+      data={{
+        ...initialData,
+        tool: overrides.tool ?? "claude",
+        useStructuredView: overrides.useStructuredView ?? initialData.useStructuredView,
+      }}
       onChange={onChange}
       agents={overrides.agents ?? [builtin, custom]}
       profiles={[] as ProfileInfo[]}
@@ -120,9 +124,12 @@ describe("AgentStep custom-agent selection (#1252)", () => {
   it("renders the structured view card for a custom agent that is acp_capable", () => {
     // A custom agent with agent_acp_cmd (acp_capable=true) must offer
     // structured view, not the terminal fallback.
+    // Opt into the structured view (off by default — BOA divergence) so the
+    // card shows its checked description, not the terminal-fallback copy.
     const { getByRole, getByText, queryByText } = renderAgentStep({
       tool: "oc-superpowers",
       agents: [builtin, acpCustom],
+      useStructuredView: true,
     });
     expect(getByRole("switch", { name: "Use structured view" })).toBeTruthy();
     expect(getByText(/Renders the agent's plan, tool calls, and diffs/)).toBeTruthy();
@@ -133,9 +140,11 @@ describe("AgentStep custom-agent selection (#1252)", () => {
     const { getByRole, getByText } = renderAgentStep({
       tool: "claude",
       agents: [builtin, custom],
+      useStructuredView: true,
     });
-    // The ACP-capable case now renders ViewPickerCard (an
-    // interactive switch defaulting on) rather than a read-only notice.
+    // The ACP-capable case renders ViewPickerCard (an interactive switch,
+    // default off — BOA divergence) rather than a read-only notice; opt in to
+    // assert the checked description.
     expect(getByRole("switch", { name: "Use structured view" })).toBeTruthy();
     expect(getByText(/Renders the agent's plan/)).toBeTruthy();
   });

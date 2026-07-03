@@ -2090,6 +2090,30 @@ export async function startSession(id: string): Promise<SessionResponse | null> 
   }
 }
 
+/** Switch an existing session between the structured (ACP) view and the tmux
+ *  terminal view. Backed by `POST /api/sessions/:id/acp/{enable,disable}`. The
+ *  agent restarts in a fresh pane; the worktree, open files, and commits are
+ *  preserved, but the in-memory conversation for this session resets. Returns
+ *  the session's new view, or null on failure. Both endpoints are idempotent,
+ *  so re-issuing the current view is a harmless no-op. */
+export async function switchSessionView(
+  id: string,
+  target: "structured" | "terminal",
+): Promise<"structured" | "terminal" | null> {
+  const endpoint = target === "structured" ? "enable" : "disable";
+  try {
+    const res = await fetch(`/api/sessions/${encodeURIComponent(id)}/acp/${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    const payload = (await res.json()) as { view?: "structured" | "terminal" };
+    return payload.view ?? target;
+  } catch {
+    return null;
+  }
+}
+
 /** Snooze or unsnooze a session. Pass `null` to unsnooze, or a positive
  *  number of minutes between 1 and 43200 (30 days) to snooze. The server
  *  validates against the shared `validate_snooze_duration` so the bounds

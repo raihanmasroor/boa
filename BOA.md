@@ -124,6 +124,59 @@ resume/fork token insertion, the ACP path, or print-mode argv. Merge risk is a
 literal-init conflict if upstream adds an agent or reorders `AgentDef` fields —
 resolved by adding `remote_control_flag: None` to the new/edited literal.
 
+### Terminal view is the default for new web-wizard sessions
+**Why:** upstream defaults new web-wizard sessions to the structured (ACP) view.
+But ACP/structured sessions do **not** get `--remote-control` (see above), so a
+structured-by-default web session never registers with Claude Desktop. To keep
+new sessions Claude-Desktop-reachable by default, BOA defaults the wizard to the
+terminal view, matching the CLI/TUI default. The structured view stays one click
+away via the wizard's **Use structured view** toggle, and an existing session
+can be switched at any time from the session header (see the view-switch control
+below).
+
+**What:** the session wizard's `useStructuredView` field defaults to `false`
+instead of `true`. The field is deliberately client-only (not persisted, not
+seeded from `/api/settings`, not tracked in `profileDirty`), so a server config
+knob would be disproportionate — this is a one-line default flip with the
+divergence called out in an inline comment. The submit path is unchanged
+(`view: acpCapable && useStructuredView ? "structured" : "terminal"`), and the
+Claude Code import path still forces the structured view on explicitly.
+
+**Touched:**
+- `web/src/components/session-wizard/wizardReducer.ts` — `initialData.useStructuredView`
+  flipped `true → false` with a BOA-divergence comment.
+- `web/src/components/session-wizard/steps/AgentOptions.tsx` — doc comments updated
+  (the switch now reads default-off).
+- Tests updated to assert the new default:
+  `wizardReducer.test.ts` and `__tests__/structuredViewToggle.test.tsx`.
+
+**Blast radius:** minimal. One default value in a client reducer plus test
+expectations; no server, schema, or wire-format change.
+
+### Discoverable structured↔terminal view switch in the web session header
+**Why:** the per-session view switch (`POST /api/sessions/:id/acp/{enable,disable}`,
+which restarts the agent in a fresh pane, preserving the worktree/files/commits
+but resetting the in-memory conversation) already existed server-side but was
+only reachable from the TUI. With terminal now the web default, users need an
+obvious way to opt a live session into the structured view (and back).
+
+**What:** a labeled control in the TopBar session header (shown when a session
+is active) that switches the active session to the other view. It offers
+**Terminal view** for a structured session, and **Structured view** for a
+terminal session only when the agent is `acp_capable` (so it never surfaces a
+switch the server would reject). Clicking confirms first (carrying the
+restart/history-reset warning), calls the existing endpoint, then refreshes the
+session list so the pane re-renders. Hidden in read-only mode.
+
+**Touched:**
+- `web/src/lib/api.ts` — `switchSessionView(id, target)` wrapping the existing
+  enable/disable endpoints.
+- `web/src/App.tsx` — `handleSwitchView` (confirm + call + refresh) passed to TopBar.
+- `web/src/components/TopBar.tsx` — the inline switch control.
+
+**Blast radius:** low and web-only. No new endpoints (reuses the existing
+server switch) and no Rust changes.
+
 ## Dev commands
 - Build: `cargo build --release` (binary at `target/release/aoe`)
 - Web dashboard dev: see `web/` package.json

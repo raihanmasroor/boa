@@ -219,17 +219,17 @@ describe("SessionWizard reducer / APPLY_PROFILE_DEFAULTS (#1142)", () => {
 });
 
 describe("SessionWizard reducer / useStructuredView (#1580)", () => {
-  it("defaults useStructuredView to true so ACP-capable tools use the structured view by default", () => {
-    expect(initialData.useStructuredView).toBe(true);
+  it("defaults useStructuredView to false so new web sessions launch in the terminal view (BOA divergence)", () => {
+    expect(initialData.useStructuredView).toBe(false);
   });
 
   it("SET_FIELD useStructuredView updates the flag", () => {
     const next = reducer(makeState(), {
       type: "SET_FIELD",
       field: "useStructuredView",
-      value: false,
+      value: true,
     });
-    expect(next.data.useStructuredView).toBe(false);
+    expect(next.data.useStructuredView).toBe(true);
   });
 
   it("toggling useStructuredView does NOT mark profileDirty", () => {
@@ -258,18 +258,18 @@ describe("SessionWizard reducer / useStructuredView (#1580)", () => {
   });
 
   it("switching tool preserves the user's useStructuredView choice", () => {
-    const optedOut = reducer(makeState(), {
+    const optedIn = reducer(makeState(), {
       type: "SET_FIELD",
       field: "useStructuredView",
-      value: false,
+      value: true,
     });
-    const next = reducer(optedOut, {
+    const next = reducer(optedIn, {
       type: "SET_FIELD",
       field: "tool",
       value: "opencode",
     });
     expect(next.data.tool).toBe("opencode");
-    expect(next.data.useStructuredView).toBe(false);
+    expect(next.data.useStructuredView).toBe(true);
   });
 });
 

@@ -1450,6 +1450,10 @@ function UsageHint({ usage }: { usage: AcpState["sessionUsage"] }) {
   if (!usage || usage.size <= 0) return null;
   const pct = Math.min(100, Math.round((usage.used / usage.size) * 100));
   const tone = pct >= 90 ? "text-rose-400" : pct >= 75 ? "text-amber-400" : "text-text-dim";
+  // Mobile keeps the same elevated tones but floors the baseline at
+  // text-text-muted (#605E58) instead of the dimmer text-text-dim, so the
+  // compact readout stays AA-legible on a small screen.
+  const mobileTone = pct >= 90 ? "text-rose-400" : pct >= 75 ? "text-amber-400" : "text-text-muted";
   const usedLabel = formatTokens(usage.used);
   const sizeLabel = formatTokens(usage.size);
   const cost = usage.cost ? formatCost(usage.cost.amount, usage.cost.currency) : null;
@@ -1458,15 +1462,23 @@ function UsageHint({ usage }: { usage: AcpState["sessionUsage"] }) {
     (cost ? ` · session cost ${cost}` : "");
   return (
     <span
-      className={`hidden sm:inline-flex items-center gap-1 text-[11px] tabular-nums ${tone}`}
+      className="inline-flex items-center gap-1 text-[11px] tabular-nums"
       title={title}
       aria-label={title}
     >
-      <span>
-        {usedLabel}/{sizeLabel}
+      {/* Compact form on mobile (<sm): "11% · 109k" so the usage stays visible
+          in the composer footer where the full readout would be too wide. */}
+      <span className={`sm:hidden whitespace-nowrap ${mobileTone}`}>
+        {pct}% · {usedLabel}
       </span>
-      <span className="opacity-70">({pct}%)</span>
-      {cost ? <span className="opacity-70">· {cost}</span> : null}
+      {/* Full form on sm+ */}
+      <span className={`hidden sm:inline-flex items-center gap-1 ${tone}`}>
+        <span>
+          {usedLabel}/{sizeLabel}
+        </span>
+        <span className="opacity-70">({pct}%)</span>
+        {cost ? <span className="opacity-70">· {cost}</span> : null}
+      </span>
     </span>
   );
 }

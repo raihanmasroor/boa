@@ -10,6 +10,12 @@ import type { PaneDisplay } from "./Dock";
 interface Props {
   activeWorkspace: Workspace | undefined;
   activeSession: SessionResponse | null;
+  /** Switch the active session between the structured (ACP) and terminal
+   *  views. Omitted (control hidden) in read-only mode. */
+  onSwitchView?: (session: SessionResponse) => void;
+  /** Server-reported app version (`ServerAbout.version`), rendered next to the
+   *  wordmark. Null until `/api/about` resolves. */
+  appVersion?: string | null;
   onToggleSidebar: () => void;
   onOpenPalette: () => void;
   /** Mobile (below md): opens the view picker. The desktop activity bar uses
@@ -51,6 +57,8 @@ interface Props {
 export function TopBar({
   activeWorkspace,
   activeSession,
+  onSwitchView,
+  appVersion,
   onToggleSidebar,
   onOpenPalette,
   onToggleDiff,
@@ -80,6 +88,20 @@ export function TopBar({
     if (loginRequired) items.push({ label: "Sign out", onClick: onLogout });
     return items;
   }, [onOpenHelp, onStartTutorial, onOpenTips, onOpenAbout, onLogout, loginRequired]);
+
+  // The structured↔terminal view switch for the active session. Offered for
+  // every structured session (→ terminal), and for terminal sessions only when
+  // the agent can actually run in the structured view (`acp_capable`), so we
+  // never surface a control the server would 400. The label names the target
+  // view. Hidden entirely in read-only mode (`onSwitchView` omitted).
+  const viewSwitch =
+    onSwitchView && activeSession
+      ? activeSession.view === "structured"
+        ? { target: "terminal" as const, label: "Terminal view" }
+        : activeSession.acp_capable
+          ? { target: "structured" as const, label: "Structured view" }
+          : null
+      : null;
 
   return (
     <header {...tourAnchor(TOUR_ANCHORS.topbar)} className="h-12 bg-surface-850 flex items-stretch shrink-0">
@@ -138,6 +160,19 @@ export function TopBar({
             />
           </span>
         </button>
+
+        {/* App version next to the wordmark. Muted mono; hidden on very narrow
+            screens so it never wraps or pushes the header layout. Sourced from
+            the server (`ServerAbout.version`), never hardcoded. */}
+        {appVersion && (
+          <span
+            className="hidden sm:inline font-mono text-[11px] leading-none text-text-muted shrink-0 whitespace-nowrap select-none"
+            title={`BOA version ${appVersion}`}
+            aria-label={`Version ${appVersion}`}
+          >
+            v{appVersion}
+          </span>
+        )}
       </div>
 
       {/* CENTER ZONE — palette trigger; carries the bottom border across the
@@ -178,6 +213,38 @@ export function TopBar({
 
         {activeWorkspace && activeSession && (
           <>
+            {/* Structured↔terminal view switch. Discoverable inline control
+                (previously the switch was reachable only from the TUI); the
+                title carries the restart/history-reset warning and App confirms
+                before calling. Icon-only below lg to stay off the layout on
+                narrow screens; the label names the target view. */}
+            {viewSwitch && (
+              <button
+                onClick={() => onSwitchView?.(activeSession)}
+                className="h-8 flex items-center gap-1.5 px-2 rounded-md cursor-pointer text-text-muted hover:text-text-primary hover:bg-surface-700/50 transition-colors"
+                title={`Switch to the ${viewSwitch.label.toLowerCase()}. The agent restarts in a fresh pane; the worktree, open files, and commits are preserved, but this session's conversation history resets.`}
+                aria-label={`Switch to ${viewSwitch.label.toLowerCase()}`}
+                data-testid="topbar-switch-view"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                <span className="hidden lg:inline text-xs font-medium whitespace-nowrap">{viewSwitch.label}</span>
+              </button>
+            )}
             {/* Desktop: per-pane toggles. Mobile: one button that opens the
                 full-viewport view picker (#1452); there is no side dock to
                 toggle pane-by-pane below md. */}

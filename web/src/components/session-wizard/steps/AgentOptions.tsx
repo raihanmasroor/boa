@@ -74,8 +74,9 @@ function ViewNotice({ tool, customAgent }: { tool: string; customAgent: boolean 
 }
 
 /** Interactive view picker shown when the selected tool is ACP-capable.
- *  Defaults on (the structured view is the default); turning it off launches a
- *  terminal-view session instead (see #1580). */
+ *  Defaults off (BOA divergence: new web sessions launch in the terminal view
+ *  so claude sessions register with Claude Desktop via --remote-control);
+ *  turning it on launches a structured-view session instead (see #1580). */
 function ViewPickerCard({
   checked,
   onChange,
@@ -300,8 +301,8 @@ export function AgentOptions({
   return (
     <div>
       {/* View picker. ACP-capable tools get a per-session structured-view
-          toggle (default on, see #1580); other tools show a read-only
-          terminal fallback notice. Lives under More options (#2210). */}
+          toggle (default off — BOA divergence, see #1580); other tools show a
+          read-only terminal fallback notice. Lives under More options (#2210). */}
       {acpCapable ? (
         <ViewPickerCard
           checked={data.useStructuredView}

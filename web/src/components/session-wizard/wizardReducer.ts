@@ -48,9 +48,11 @@ export interface WizardData {
    *  of those back to a non-empty value clears `scratch`. */
   scratch: boolean;
   /** Per-session opt-in to structured view rendering for ACP-capable tools.
-   *  Defaults true so ACP-capable tools render in the structured view by
-   *  default ("ACP tools run in structured view" behavior); the user
-   *  can turn it off in AgentStep to launch a tmux/terminal session. The
+   *  BOA divergence: defaults FALSE so new web sessions launch in the terminal
+   *  view, matching the CLI/TUI default. This keeps interactive `claude`
+   *  launches on the `--remote-control` path so they register with Claude
+   *  Desktop (structured/ACP sessions do not). The user can turn it on in
+   *  AgentStep to render an ACP-capable tool in the structured view. The
    *  submit path sends `view: "structured"` only when the tool is
    *  ACP-capable and this flag is set; the server re-validates
    *  capability (src/server/api/sessions.rs). Intentionally not
@@ -130,7 +132,8 @@ export const initialData: WizardData = {
   extraArgs: "",
   commandOverride: "",
   scratch: false,
-  useStructuredView: true,
+  // BOA divergence: terminal view default so claude sessions register with Claude Desktop (--remote-control)
+  useStructuredView: false,
   agentModel: "",
   agentEffort: "",
   importAcpSessionId: "",

@@ -1,14 +1,15 @@
 // @vitest-environment jsdom
 //
-// Covers the per-session structured-view opt-out: the wizard lets the user
-// create a terminal-view session for an ACP-capable tool instead of the
-// default structured view. Two surfaces:
+// Covers the per-session structured-view opt-in: BOA defaults new web sessions
+// to the terminal view, and the wizard lets the user opt an ACP-capable tool
+// into the structured view instead. Two surfaces:
 //
 //   - AgentStep renders an interactive ViewPickerCard (a switch,
-//     default on) for ACP-capable tools (built-in or custom); non-ACP
-//     tools keep the read-only fallback notice and show no switch.
+//     default OFF — BOA divergence) for ACP-capable tools (built-in or
+//     custom); non-ACP tools keep the read-only fallback notice and show
+//     no switch.
 //   - SessionWizard's submit payload sets `structured_view` from
-//     `acpCapable && useStructuredView`, so toggling the switch off sends
+//     `acpCapable && useStructuredView`, so toggling the switch on sends
 //     the server then creates a terminal-view session.
 //
 // The payload assertions are the request-permutation coverage the
@@ -89,7 +90,7 @@ function renderAgentStep(overrides: {
       data={{
         ...initialData,
         tool: overrides.tool ?? "claude",
-        useStructuredView: overrides.useStructuredView ?? true,
+        useStructuredView: overrides.useStructuredView ?? false,
         sandboxEnabled: overrides.sandboxEnabled ?? false,
       }}
       onChange={onChange}
@@ -107,29 +108,37 @@ describe("AgentStep structured-view view card", () => {
     vi.clearAllMocks();
   });
 
-  it("renders an interactive switch (default on) for an ACP-capable built-in", () => {
+  it("renders an unchecked switch by default (terminal-view default — BOA divergence)", () => {
     const { getByRole } = renderAgentStep({ tool: "claude" });
+    const toggle = getByRole("switch", { name: "Use structured view" });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("reflects useStructuredView=true as a checked switch for an ACP-capable built-in", () => {
+    const { getByRole } = renderAgentStep({ tool: "claude", useStructuredView: true });
     const toggle = getByRole("switch", { name: "Use structured view" });
     expect(toggle.getAttribute("aria-checked")).toBe("true");
   });
 
-  it("toggling the switch off calls onChange('useStructuredView', false)", () => {
+  it("toggling the switch on calls onChange('useStructuredView', true)", () => {
     const { onChange, getByRole } = renderAgentStep({ tool: "claude" });
     fireEvent.click(getByRole("switch", { name: "Use structured view" }));
-    expect(onChange).toHaveBeenCalledWith("useStructuredView", false);
+    expect(onChange).toHaveBeenCalledWith("useStructuredView", true);
   });
 
   it("toggling via the card row (not just the switch) flips useStructuredView", () => {
     // The card is a full-row clickable label (#2101), so clicking the
-    // heading must drive the same onChange the switch does.
+    // heading must drive the same onChange the switch does. Off by default,
+    // so the first click turns it on.
     const { onChange, getByText } = renderAgentStep({ tool: "claude" });
     fireEvent.click(getByText("Structured view"));
-    expect(onChange).toHaveBeenCalledWith("useStructuredView", false);
+    expect(onChange).toHaveBeenCalledWith("useStructuredView", true);
   });
 
   it("shows the sandboxed-structured-view copy when both are on", () => {
     // Structured view + container takes a distinct description branch (#2101).
-    const { getByText } = renderAgentStep({ tool: "claude", sandboxEnabled: true });
+    // Structured view is off by default now (BOA divergence), so opt in here.
+    const { getByText } = renderAgentStep({ tool: "claude", useStructuredView: true, sandboxEnabled: true });
     expect(getByText(/the agent runs inside the sandbox container/)).toBeTruthy();
   });
 
@@ -172,22 +181,22 @@ describe("SessionWizard structured_view payload", () => {
     return render(<SessionWizard onClose={() => {}} onCreated={() => {}} prefill={{ path: "/tmp/proj" }} />);
   }
 
-  it("sends the structured view for an ACP tool when the toggle is left on (default)", async () => {
+  it("sends the terminal view for an ACP tool when the toggle is left off (BOA default)", async () => {
     const { getByText } = renderWizard();
     fireEvent.click(getByText(/Launch session/));
     await waitFor(() => expect(createSession).toHaveBeenCalled());
-    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({ tool: "claude", view: "structured" }));
+    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({ tool: "claude", view: "terminal" }));
   });
 
-  it("sends the terminal view when the user opts out via the toggle", async () => {
+  it("sends the structured view when the user opts in via the toggle", async () => {
     const { getByText, getByRole } = renderWizard();
     // The structured-view switch lives under More options (#2210): expand,
-    // flip it off, then launch.
+    // flip it on, then launch.
     fireEvent.click(getByText("More options"));
     fireEvent.click(getByRole("switch", { name: "Use structured view" }));
     fireEvent.click(getByText(/Launch session/));
     await waitFor(() => expect(createSession).toHaveBeenCalled());
-    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({ tool: "claude", view: "terminal" }));
+    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({ tool: "claude", view: "structured" }));
   });
 
   it("sends profile-resolved agent model and effort defaults", async () => {
@@ -200,13 +209,16 @@ describe("SessionWizard structured_view payload", () => {
       },
       sandbox: {},
     } as never);
-    const { getAllByText, getByText } = renderWizardWithoutToolPrefill();
+    const { getAllByText, getByText, getByRole } = renderWizardWithoutToolPrefill();
     // The resolved launch command (#1911) lives in the agent options under
     // the More options fold; expand it, then wait for the profile-resolved
     // "opencode" command to confirm APPLY_PROFILE_DEFAULTS landed before we
     // launch.
     fireEvent.click(getByText("More options"));
     await waitFor(() => expect(getAllByText(/opencode/).length).toBeGreaterThan(0));
+    // Structured view is off by default (BOA divergence); opt in so the payload
+    // carries the structured view plus its agent model/effort defaults.
+    fireEvent.click(getByRole("switch", { name: "Use structured view" }));
     fireEvent.click(getByText(/Launch session/));
     await waitFor(() => expect(createSession).toHaveBeenCalled());
     expect(createSession).toHaveBeenCalledWith(
