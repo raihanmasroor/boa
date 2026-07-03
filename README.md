@@ -105,7 +105,3 @@ boa logs                                  # View the log with the best viewer av
 See [`docs/development.md`](docs/development.md) for the full reference.
 
 Debug builds use a parallel namespace so they don't collide with an installed release build: app data lives in `~/.agent-of-empires-dev`, tmux sessions are prefixed `aoe_dev_`, and `boa serve` defaults to port `8081`. Release builds are unchanged.
-
-## License
-
-MIT License — see [LICENSE](LICENSE) for details.
