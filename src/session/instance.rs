@@ -615,6 +615,18 @@ pub struct Instance {
     #[serde(default, skip_serializing)]
     pub source_profile: String,
 
+    /// BOA divergence: host environment entries selecting this session's agent
+    /// account, injected at launch (e.g. `["CLAUDE_CONFIG_DIR=/…/.claude-ydo"]`
+    /// or `["CODEX_HOME=/…/.codex-work"]`). Chosen from a profile card in the
+    /// new-session picker (see `crate::agent_profiles`) and validated
+    /// server-side against real discovery. Empty for the default account and
+    /// for agents without account discovery. Persisted so resume/restart
+    /// relaunches keep the same account, and merged onto the profile-config
+    /// `environment` list by `profile_host_environment` so it flows to BOTH the
+    /// launch prefix and the status-hook install path.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub agent_env: Vec<String>,
+
     // Push-notification per-session overrides. None means "inherit the
     // server-wide default for this event type" (WebConfig.notify_on_*).
     // Some(true)/Some(false) is an explicit user toggle and takes
@@ -1065,6 +1077,7 @@ impl Instance {
             resume_intent: ResumeIntent::Default,
             force_fresh_next_launch: false,
             source_profile: String::new(),
+            agent_env: Vec::new(),
             notify_on_waiting: None,
             notify_on_idle: None,
             notify_on_error: None,
@@ -1657,9 +1670,19 @@ impl Instance {
 
     /// Resolve the effective `environment` list for this session's profile,
     /// falling back to the global list when the profile has no override.
+    ///
+    /// BOA divergence: the per-session `agent_env` (the selected agent account's
+    /// config-dir env, e.g. `CLAUDE_CONFIG_DIR=…`) is appended AFTER the
+    /// profile-config entries so it wins on a key collision and flows to both
+    /// the launch prefix (`host_environment_prefix`) and the status-hook path
+    /// resolution (`agent_settings_path_for_host_environment` /
+    /// `codex_hooks_json_path_for_host_environment`), keeping hooks installed
+    /// into the chosen account's config dir.
     fn profile_host_environment(&self) -> Vec<String> {
         let profile = self.effective_profile();
-        super::profile_config::resolve_config_or_warn(&profile).environment
+        let mut env = super::profile_config::resolve_config_or_warn(&profile).environment;
+        env.extend(self.agent_env.iter().cloned());
+        env
     }
 
     /// Resolve whether interactive launches should carry the remote-control

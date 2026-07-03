@@ -37,6 +37,12 @@ pub struct InstanceParams {
     /// Additional environment entries for the container.
     /// `KEY` = pass through from host, `KEY=VALUE` = set explicitly.
     pub extra_env: Vec<String>,
+    /// BOA divergence: host environment entries selecting the agent account for
+    /// a host session (e.g. `["CLAUDE_CONFIG_DIR=/…/.claude-ydo"]`). Stored on
+    /// the built instance's `agent_env` and injected at launch. Empty for the
+    /// default account and for non-web callers (TUI/CLI) that do not pick an
+    /// account. Already validated against real profile discovery by the caller.
+    pub agent_env: Vec<String>,
     /// Extra arguments to append after the agent binary
     pub extra_args: String,
     /// Command override for the agent binary (replaces the default binary)
@@ -664,6 +670,9 @@ pub fn build_instance(
     instance.worktree_info = worktree_info;
     instance.workspace_info = workspace_info;
     instance.yolo_mode = params.yolo_mode;
+    // BOA divergence: carry the selected agent account's config-dir env onto
+    // the instance so it launches (and resumes) on that account.
+    instance.agent_env = params.agent_env.clone();
 
     // Apply command overrides and custom agent commands from resolved config.
     // Priority: per-session params > agent_command_override > custom_agents > AgentDef default.
@@ -1662,6 +1671,7 @@ mod tests {
             sandbox_image: "ubuntu:latest".to_string(),
             yolo_mode: false,
             extra_env: Vec::new(),
+            agent_env: Vec::new(),
             extra_args: String::new(),
             command_override: String::new(),
             extra_repo_paths: Vec::new(),
@@ -1841,6 +1851,7 @@ mod tests {
             sandbox_image: String::new(),
             yolo_mode: false,
             extra_env: vec![],
+            agent_env: vec![],
             extra_args: String::new(),
             command_override: String::new(),
             extra_repo_paths: vec![],
@@ -1883,6 +1894,7 @@ mod tests {
             sandbox_image: String::new(),
             yolo_mode: false,
             extra_env: vec![],
+            agent_env: vec![],
             extra_args: String::new(),
             command_override: String::new(),
             extra_repo_paths: vec![],

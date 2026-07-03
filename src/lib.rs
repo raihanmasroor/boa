@@ -2,6 +2,7 @@
 
 #[cfg(feature = "serve")]
 pub mod acp;
+pub mod agent_profiles;
 pub mod agents;
 pub mod build_info;
 pub mod claude_settings;

@@ -3632,6 +3632,14 @@ pub struct CreateSessionBody {
     pub sandbox_image: Option<String>,
     #[serde(default)]
     pub extra_env: Vec<String>,
+    /// BOA divergence: host env entries selecting the agent account this
+    /// session launches on (e.g. `["CLAUDE_CONFIG_DIR=/…/.claude-ydo"]` or
+    /// `["CODEX_HOME=/…/.codex-work"]`), taken verbatim from a discovered
+    /// profile card's `env`. Re-validated server-side against
+    /// `agent_profiles::discover_profiles` before use, so an unrecognized entry
+    /// is dropped rather than injected. Empty = default account.
+    #[serde(default)]
+    pub agent_env: Vec<String>,
     #[serde(default)]
     pub extra_repo_paths: Vec<String>,
     #[serde(default)]
@@ -4307,6 +4315,12 @@ pub async fn create_session(
         )?;
 
         let title = body.title.unwrap_or_default();
+        // BOA divergence: the selected agent account's config-dir env (e.g.
+        // CLAUDE_CONFIG_DIR=…). Re-validate against real profile discovery so a
+        // tampered request cannot inject arbitrary host environment into the
+        // launch prefix; anything not offered by discovery is dropped and the
+        // session falls back to the default account.
+        let agent_env = crate::agent_profiles::validate_agent_env(&body.tool, &body.agent_env);
         let worktree_enabled = body.worktree_branch.is_some();
         let worktree_branch = body
             .worktree_branch
@@ -4333,6 +4347,7 @@ pub async fn create_session(
             sandbox_image,
             yolo_mode: body.yolo_mode,
             extra_env: body.extra_env,
+            agent_env,
             extra_args: body.extra_args,
             command_override: body.command_override,
             extra_repo_paths,

@@ -55,6 +55,15 @@ pub struct AgentInfo {
     /// or for custom agents.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub acp_args: Vec<String>,
+    /// BOA divergence: distinct logged-in accounts ("profiles") discovered on
+    /// the host for this agent (e.g. `claude · personal`, `claude · ydo`). The
+    /// wizard shows one card per profile when there are 2+, launching the
+    /// chosen one by injecting `profile.env` (`CLAUDE_CONFIG_DIR` / `CODEX_HOME`)
+    /// at the create call. Empty for agents without account discovery
+    /// (everything except claude/codex/gemini) and for single-account hosts,
+    /// where the plain single card is kept. See `crate::agent_profiles`.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub profiles: Vec<crate::agent_profiles::AgentProfile>,
 }
 
 /// Resolve the acp launch command + args for a built-in agent from
@@ -111,6 +120,8 @@ fn build_custom_agent_infos(
             // serialized here; they can hold hostnames or secrets.
             acp_command: None,
             acp_args: Vec::new(),
+            // Account discovery is builtin-only; custom agents keep one card.
+            profiles: Vec::new(),
         })
         .collect();
     entries.sort_by(|left, right| left.name.cmp(&right.name));
@@ -146,6 +157,9 @@ pub async fn list_agents(State(state): State<Arc<AppState>>) -> Json<Vec<AgentIn
                         .is_some_and(crate::cli::acp::command_present),
                     acp_command,
                     acp_args,
+                    // BOA divergence: distinct logged-in accounts for this
+                    // agent, scanned read-only from the host filesystem.
+                    profiles: crate::agent_profiles::discover_profiles(a.name),
                 }
             })
             .collect::<Vec<_>>();
