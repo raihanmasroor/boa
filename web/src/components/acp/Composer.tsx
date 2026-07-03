@@ -1456,10 +1456,9 @@ function UsageHint({ usage }: { usage: AcpState["sessionUsage"] }) {
   const mobileTone = pct >= 90 ? "text-rose-400" : pct >= 75 ? "text-amber-400" : "text-text-muted";
   const usedLabel = formatTokens(usage.used);
   const sizeLabel = formatTokens(usage.size);
-  const cost = usage.cost ? formatCost(usage.cost.amount, usage.cost.currency) : null;
-  const title =
-    `Context: ${usage.used.toLocaleString()} / ${usage.size.toLocaleString()} tokens (${pct}%)` +
-    (cost ? ` · session cost ${cost}` : "");
+  // BOA: context-window usage only — the session cost figure is deliberately
+  // omitted from both the readout and the tooltip.
+  const title = `Context: ${usage.used.toLocaleString()} / ${usage.size.toLocaleString()} tokens (${pct}%)`;
   return (
     <span
       className="inline-flex items-center gap-1 text-[11px] tabular-nums"
@@ -1477,7 +1476,6 @@ function UsageHint({ usage }: { usage: AcpState["sessionUsage"] }) {
           {usedLabel}/{sizeLabel}
         </span>
         <span className="opacity-70">({pct}%)</span>
-        {cost ? <span className="opacity-70">· {cost}</span> : null}
       </span>
     </span>
   );
@@ -1487,18 +1485,6 @@ function formatTokens(n: number): string {
   if (n < 1_000) return String(n);
   if (n < 1_000_000) return `${(n / 1_000).toFixed(n < 10_000 ? 1 : 0)}k`;
   return `${(n / 1_000_000).toFixed(n < 10_000_000 ? 2 : 1)}M`;
-}
-
-function formatCost(amount: number, currency: string): string {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: amount < 1 ? 4 : 2,
-    }).format(amount);
-  } catch {
-    return `${amount.toFixed(amount < 1 ? 4 : 2)} ${currency}`;
-  }
 }
 
 /* ── Send / Stop ─────────────────────────────────────────────────── */
