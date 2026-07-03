@@ -24,6 +24,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource/hanken-grotesk": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/source-serif-4": "^5.2.9",
     "@pierre/diffs": "^1.2.11",
     "@tailwindcss/vite": "^4.3.1",
     "clsx": "^2.1.1",

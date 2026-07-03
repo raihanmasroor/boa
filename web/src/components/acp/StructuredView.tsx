@@ -774,7 +774,14 @@ function AssistantText({ text }: { text: string }) {
   // again. See #1132.
   const isRunning = useMessage((m) => m.status?.type === "running");
   if (!text) return null;
-  return <Markdown text={text} smooth={isRunning} />;
+  // Wrapper carries the serif scope: only the assistant reply's markdown body
+  // reads in Source Serif 4 (see .acp-assistant-prose in index.css). Kept off
+  // the shared AssistantMessage wrapper so sibling tool-call cards stay sans.
+  return (
+    <div className="acp-assistant-prose">
+      <Markdown text={text} smooth={isRunning} />
+    </div>
+  );
 }
 
 // assistant-ui's tool-call props are typed as JSON-only; in our app the
