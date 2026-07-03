@@ -85,7 +85,9 @@ describe("resolveModeChannel", () => {
   it("uses the claude hardcoded taxonomy only when the profile opts in", () => {
     const channel = resolveModeChannel({ ...BASE, allowLegacyFallback: true });
     expect(channel!.kind).toBe("legacy");
-    expect(channel!.modes.map((m) => m.id)).toEqual(["default", "plan", "accept_edits", "bypass_permissions"]);
+    // camelCase: claude-agent-acp's exact set_mode ids — snake_case variants
+    // are rejected with "Invalid Mode" by the adapter (strict match).
+    expect(channel!.modes.map((m) => m.id)).toEqual(["default", "plan", "acceptEdits", "bypassPermissions"]);
     expect(channel!.activeId).toBe("default");
   });
 

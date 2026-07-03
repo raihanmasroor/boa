@@ -45,13 +45,18 @@ export const LEGACY_MODES: ReadonlyArray<{
     description: "Plan first, no edits applied",
   },
   {
-    id: "accept_edits",
+    // Claude-agent-acp's exact set_mode ids (camelCase). The adapter matches
+    // strictly and throws "Invalid Mode" for e.g. `accept_edits`, so the
+    // fallback must speak its spelling; the Rust client also re-resolves ids
+    // against the advertised list when it has one (`resolve_set_mode_id`),
+    // but this fallback path exists precisely for sessions with no list.
+    id: "acceptEdits",
     legacyId: "AcceptEdits",
     name: "Accept edits",
     description: "Auto-approve safe file edits",
   },
   {
-    id: "bypass_permissions",
+    id: "bypassPermissions",
     legacyId: "BypassPermissions",
     name: "Yolo",
     description: "Skip all approvals (destructive)",

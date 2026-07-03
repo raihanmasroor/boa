@@ -4649,18 +4649,42 @@ fn truncate_for_log(s: &str, max_bytes: usize) -> String {
 ///
 /// Returns `true` (allow) only when there is no mode information at all
 /// (e.g. the test shim, which handles all set_mode requests).
+/// Test-only membership view of [`resolve_set_mode_id`] — production call
+/// sites use the resolver directly so the wire id is the advertised spelling.
+#[cfg(test)]
 fn is_mode_advertised(
     mode_id: &str,
     available_mode_ids: &Option<Vec<String>>,
     has_config_option_mode: bool,
 ) -> bool {
+    resolve_set_mode_id(mode_id, available_mode_ids, has_config_option_mode).is_some()
+}
+
+/// Resolve the id to actually send in `session/set_mode`, or `None` when the
+/// mode is not advertised (same skip semantics as `is_mode_advertised`).
+///
+/// The membership check is case/underscore-insensitive, so a UI id like
+/// `bypass_permissions` (the web legacy fallback) passes even when the
+/// adapter advertised `bypassPermissions` — but adapters match set_mode ids
+/// STRICTLY (claude-agent-acp throws `Invalid Mode` for anything but its
+/// exact spelling). Sending the raw requested id therefore fails exactly on
+/// the ids the fuzzy guard let through. Return the adapter's own advertised
+/// spelling instead, so the wire id always matches what the agent declared.
+/// With no advertised list (`None`), pass the requested id through unchanged.
+/// See #1233.
+fn resolve_set_mode_id(
+    mode_id: &str,
+    available_mode_ids: &Option<Vec<String>>,
+    has_config_option_mode: bool,
+) -> Option<String> {
     match available_mode_ids {
         Some(ids) => {
             let normalized = mode_id.replace('_', "").to_lowercase();
             ids.iter()
-                .any(|id| id.replace('_', "").to_lowercase() == normalized)
+                .find(|id| id.replace('_', "").to_lowercase() == normalized)
+                .cloned()
         }
-        None => !has_config_option_mode,
+        None => (!has_config_option_mode).then(|| mode_id.to_string()),
     }
 }
 
@@ -6264,19 +6288,21 @@ async fn run_connection_task<W, R>(
                                         }
                                         Some(ClientCmd::SetMode(mode_id)) => {
                                             // Skip when the agent has not
-                                            // advertised this mode (see the
-                                            // mode-tracking comments above).
-                                            if !is_mode_advertised(
+                                            // advertised this mode; otherwise
+                                            // send the adapter's advertised
+                                            // spelling (strict-match ids, see
+                                            // `resolve_set_mode_id`).
+                                            let Some(mode_id) = resolve_set_mode_id(
                                                 &mode_id,
                                                 &available_mode_ids,
                                                 has_config_option_mode,
-                                            ) {
+                                            ) else {
                                                 debug!(
                                                     target: "acp.protocol",
                                                     "skipping session/set_mode mode={mode_id}: not advertised (mid-turn)"
                                                 );
                                                 continue;
-                                            }
+                                            };
                                             info!(
                                                 target: "acp.protocol",
                                                 "sending session/set_mode mode={mode_id} during in-flight prompt"
@@ -6553,19 +6579,21 @@ async fn run_connection_task<W, R>(
                             .send_notification(CancelNotification::new(acp_session_id.clone()));
                     }
                     Some(ClientCmd::SetMode(mode_id)) => {
-                        // Skip when the agent has not advertised this mode
-                        // (see the mode-tracking comments above).
-                        if !is_mode_advertised(
+                        // Skip when the agent has not advertised this mode;
+                        // otherwise send the adapter's own advertised spelling
+                        // (adapters match set_mode ids strictly — see
+                        // `resolve_set_mode_id`).
+                        let Some(mode_id) = resolve_set_mode_id(
                             &mode_id,
                             &available_mode_ids,
                             has_config_option_mode,
-                        ) {
+                        ) else {
                             debug!(
                                 target: "acp.protocol",
                                 "skipping session/set_mode mode={mode_id}: not advertised"
                             );
                             continue;
-                        }
+                        };
                         info!(target: "acp.protocol", "sending session/set_mode mode={mode_id}");
                         // Detached, same shape as the mid-turn path: don't
                         // freeze the cmd_rx loop on the round-trip.
@@ -10047,6 +10075,53 @@ mod tests {
         // mode either, fall back to allowing the legacy set_mode (true).
         assert!(!is_mode_advertised("plan", &None, true));
         assert!(is_mode_advertised("plan", &None, false));
+    }
+
+    #[test]
+    fn resolve_set_mode_id_returns_the_advertised_spelling() {
+        // The regression that produced `Invalid Mode` banners: the fuzzy
+        // guard let `bypass_permissions` (web legacy-fallback id) through,
+        // but the raw snake_case id was then sent to claude-agent-acp, whose
+        // set_mode matches strictly and threw. The resolver must translate
+        // to the adapter's own advertised spelling.
+        let ids = Some(vec![
+            "default".to_string(),
+            "plan".to_string(),
+            "acceptEdits".to_string(),
+            "bypassPermissions".to_string(),
+        ]);
+        assert_eq!(
+            resolve_set_mode_id("bypass_permissions", &ids, false).as_deref(),
+            Some("bypassPermissions")
+        );
+        assert_eq!(
+            resolve_set_mode_id("accept_edits", &ids, false).as_deref(),
+            Some("acceptEdits")
+        );
+        // Exact matches pass through unchanged.
+        assert_eq!(
+            resolve_set_mode_id("bypassPermissions", &ids, false).as_deref(),
+            Some("bypassPermissions")
+        );
+        assert_eq!(
+            resolve_set_mode_id("plan", &ids, false).as_deref(),
+            Some("plan")
+        );
+        // Not advertised at all -> None (skip).
+        assert_eq!(resolve_set_mode_id("yolo", &ids, false), None);
+        // Codex ids with hyphens are untouched (no folding of `-`).
+        let codex = Some(vec!["agent-full-access".to_string()]);
+        assert_eq!(
+            resolve_set_mode_id("agent-full-access", &codex, false).as_deref(),
+            Some("agent-full-access")
+        );
+        // No advertised list: pass the requested id through unchanged
+        // (config-option-mode still suppresses, mirroring the guard).
+        assert_eq!(
+            resolve_set_mode_id("bypass_permissions", &None, false).as_deref(),
+            Some("bypass_permissions")
+        );
+        assert_eq!(resolve_set_mode_id("plan", &None, true), None);
     }
 
     #[test]
