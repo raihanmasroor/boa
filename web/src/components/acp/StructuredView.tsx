@@ -1626,8 +1626,8 @@ export function WorkerRestartingBanner({
       ? "Agent stopped responding to cancel. Restarting worker; your transcript will be preserved."
       : "Restarting structured view worker… the daemon will respawn the agent with your existing transcript shortly.";
   return (
-    <div className="flex items-center gap-2 border-b border-sky-900/60 bg-sky-950/40 px-4 py-2 text-xs text-sky-200">
-      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-sky-400" aria-hidden />
+    <div className="flex items-center gap-2 border-b border-sky-300 bg-sky-100 px-4 py-2 text-xs text-sky-900">
+      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-sky-700" aria-hidden />
       <span>{message}</span>
     </div>
   );
@@ -1723,13 +1723,13 @@ export function ScheduledWakeupBanner({ wakeAt, reason }: { wakeAt: string; reas
     label = `Asleep until ${clock} (in ${h}h ${m}m)`;
   }
   return (
-    <div className="flex items-center gap-2 border-b border-sky-900/60 bg-sky-950/40 px-4 py-2 text-xs text-sky-200">
+    <div className="flex items-center gap-2 border-b border-sky-300 bg-sky-100 px-4 py-2 text-xs text-sky-900">
       <span aria-hidden className="text-base leading-none">
         ⏰
       </span>
       <span className="truncate">
         {label}
-        {reason ? <span className="text-sky-300/70">: {reason}</span> : null}
+        {reason ? <span className="text-sky-800">: {reason}</span> : null}
       </span>
     </div>
   );
@@ -1743,13 +1743,13 @@ export function ScheduledWakeupBanner({ wakeAt, reason }: { wakeAt: string; reas
  *  user prompt via `state.monitorArmed`. */
 function MonitoringBanner({ description }: { description: string | null }) {
   return (
-    <div className="flex items-center gap-2 border-b border-violet-900/60 bg-violet-950/40 px-4 py-2 text-xs text-violet-200">
+    <div className="flex items-center gap-2 border-b border-violet-300 bg-violet-100 px-4 py-2 text-xs text-violet-900">
       <span aria-hidden className="text-base leading-none">
         👁
       </span>
       <span className="truncate">
         Monitoring a background job
-        {description ? <span className="text-violet-300/70">: {description}</span> : null}
+        {description ? <span className="text-violet-800">: {description}</span> : null}
       </span>
     </div>
   );
@@ -2150,15 +2150,15 @@ function ModeSwitchFailedNotice({ failure, onDismiss }: ModeSwitchFailedNoticePr
     <div className="border-t border-amber-900/40 bg-amber-950/20 px-4 py-2">
       <div className="mx-auto max-w-3xl xl:max-w-4xl 2xl:max-w-5xl">
         <div className="flex items-start gap-2 rounded-lg border border-amber-700/30 bg-amber-950/15 px-2.5 py-1.5">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-900" />
           <div className="min-w-0 flex-1">
             <p className="text-xs leading-5 text-amber-100">{friendly}</p>
-            <p className="mt-0.5 font-mono text-[10px] text-amber-400/70">{failure.reason}</p>
+            <p className="mt-0.5 font-mono text-[10px] text-amber-900">{failure.reason}</p>
           </div>
           <button
             type="button"
             onClick={onDismiss}
-            className="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-700/40 bg-amber-900/20 p-1 text-amber-200 hover:bg-amber-900/60"
+            className="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-300 bg-amber-200 p-1 text-amber-900 hover:bg-amber-300"
             aria-label="Dismiss mode-switch notice"
           >
             <X className="h-3 w-3" />
@@ -2217,7 +2217,7 @@ function RejectedPromptsStrip({
   return (
     <div className="border-t border-amber-900/40 bg-amber-950/20 px-4 py-2">
       <div className="mx-auto max-w-3xl xl:max-w-4xl 2xl:max-w-5xl">
-        <div className="pb-1.5 text-[11px] uppercase tracking-wider text-amber-300">
+        <div className="pb-1.5 text-[11px] uppercase tracking-wider text-amber-900">
           <span className="inline-flex items-center gap-1">
             <AlertTriangle className="h-3 w-3" />
             Rejected ({rejected.length})
@@ -2229,7 +2229,7 @@ function RejectedPromptsStrip({
               key={r.id}
               className="group flex items-start gap-2 rounded-lg border border-amber-700/30 bg-amber-950/15 px-2.5 py-1.5"
             >
-              <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-[10px] font-semibold text-amber-300">
+              <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-200 text-[10px] font-semibold text-amber-900">
                 !
               </span>
               <div className="min-w-0 flex-1">
@@ -2239,13 +2239,13 @@ function RejectedPromptsStrip({
                 <p className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-xs text-amber-100">
                   {r.text}
                 </p>
-                <p className="mt-0.5 text-[10px] text-amber-400/80">Agent was busy; prompt was not sent.</p>
+                <p className="mt-0.5 text-[10px] text-amber-900">Agent was busy; prompt was not sent.</p>
               </div>
               <button
                 type="button"
                 onClick={() => onRetry(r.text)}
                 disabled={disabled}
-                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-700/60 bg-amber-900/30 px-2 py-1 text-[10px] font-mono uppercase tracking-wide text-amber-100 hover:bg-amber-900/60 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber-900/30"
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-amber-200 px-2 py-1 text-[10px] font-mono uppercase tracking-wide text-amber-900 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber-200"
                 aria-label="Retry rejected prompt"
               >
                 <RotateCcw className="h-3 w-3" />
@@ -2254,7 +2254,7 @@ function RejectedPromptsStrip({
               <button
                 type="button"
                 onClick={() => onDismiss(r.id)}
-                className="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-700/40 bg-amber-900/20 p-1 text-amber-200 hover:bg-amber-900/60"
+                className="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-300 bg-amber-200 p-1 text-amber-900 hover:bg-amber-300"
                 aria-label="Dismiss rejected prompt"
               >
                 <X className="h-3 w-3" />
@@ -2321,7 +2321,7 @@ export function QueuedPromptsStrip({ queued, onRemove, onEdit, onClear, pendingR
                   <li
                     aria-hidden="true"
                     data-testid="queued-clear-boundary"
-                    className="flex items-center gap-2 px-1 text-[10px] uppercase tracking-wider text-amber-300/60"
+                    className="flex items-center gap-2 px-1 text-[10px] uppercase tracking-wider text-amber-800"
                   >
                     <span className="h-px flex-1 bg-amber-500/20" />
                     fires separately
@@ -2337,7 +2337,7 @@ export function QueuedPromptsStrip({ queued, onRemove, onEdit, onClear, pendingR
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1.5 w-full rounded-md border border-sky-700/20 bg-sky-950/10 px-2 py-1 text-[11px] font-medium uppercase tracking-wider text-sky-300 hover:bg-sky-950/30"
+            className="mt-1.5 w-full rounded-md border border-sky-700/20 bg-sky-950/10 px-2 py-1 text-[11px] font-medium uppercase tracking-wider text-sky-900 hover:bg-sky-950/30"
           >
             {layout.toggleLabel}
           </button>
@@ -2371,7 +2371,7 @@ function QueuedPromptRow({
 
   return (
     <li className="group flex items-start gap-2 rounded-lg border border-sky-700/30 bg-sky-950/15 px-2.5 py-1.5">
-      <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[10px] font-semibold text-sky-300">
+      <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[10px] font-semibold text-sky-900">
         ⏱
       </span>
       {editing ? (
@@ -2419,7 +2419,7 @@ function QueuedPromptRow({
                 e.stopPropagation();
                 setRowExpanded((v) => !v);
               }}
-              className="mt-0.5 text-[11px] font-medium text-sky-300 hover:text-sky-200"
+              className="mt-0.5 text-[11px] font-medium text-sky-900 hover:text-sky-700"
               aria-label={rowExpanded ? "Collapse queued prompt" : "Show full queued prompt"}
             >
               {rowExpanded ? "Show less" : "…"}
@@ -2430,7 +2430,7 @@ function QueuedPromptRow({
               {prompt.attachments.map((att, i) => (
                 <span
                   key={`${att.name ?? att.kind}-${i}`}
-                  className="flex items-center gap-1 rounded border border-sky-700/40 bg-sky-950/30 py-0.5 pl-0.5 pr-1.5 text-[10px] text-sky-200"
+                  className="flex items-center gap-1 rounded border border-sky-300 bg-sky-200 py-0.5 pl-0.5 pr-1.5 text-[10px] text-sky-900"
                   title={att.name ?? att.kind}
                 >
                   {att.kind === "image" ? (

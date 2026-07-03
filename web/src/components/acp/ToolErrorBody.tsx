@@ -35,16 +35,16 @@ export function ToolErrorBody({ status, errorText, children }: Props) {
   const label = describeToolErrorTag(tag);
   return (
     <>
-      <div className="border-t border-rose-900/40 bg-rose-950/30 px-3 py-2 text-xs text-rose-200">
-        <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider text-rose-300/80">
+      <div className="border-t border-rose-300 bg-rose-100 px-3 py-2 text-xs text-rose-900">
+        <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider text-rose-800">
           <span>tool failed</span>
           {label && (
-            <span className="rounded border border-rose-800/60 bg-rose-900/40 px-1 py-px font-mono normal-case tracking-normal text-[10px] text-rose-200/90">
+            <span className="rounded border border-rose-300 bg-rose-200 px-1 py-px font-mono normal-case tracking-normal text-[10px] text-rose-900">
               {label}
             </span>
           )}
         </div>
-        <pre className="whitespace-pre-wrap break-words font-mono text-[11px] text-rose-100/90">
+        <pre className="whitespace-pre-wrap break-words font-mono text-[11px] text-rose-900">
           {body || "(no error detail provided)"}
         </pre>
       </div>

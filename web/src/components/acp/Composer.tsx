@@ -982,7 +982,9 @@ export function Composer({
               className={[
                 "min-h-[56px] max-h-[200px] resize-none bg-transparent",
                 "px-4 pt-3 pb-1 text-sm leading-6 text-text-primary",
-                "placeholder:text-text-dim focus:outline-none",
+                // placeholder was text-text-dim (~4.4:1 on the bone composer
+                // surface); text-text-muted (#605E58) clears AA at ~6:1.
+                "placeholder:text-text-muted focus:outline-none",
               ].join(" ")}
             />
 
@@ -1436,9 +1438,9 @@ function ModePicker({
 }
 
 function toneForId(id: string): string {
-  if (/bypass|yolo/i.test(id)) return "border-rose-700/50 bg-rose-950/30 text-rose-300 hover:border-rose-700";
-  if (/accept/i.test(id)) return "border-amber-700/50 bg-amber-950/30 text-amber-300 hover:border-amber-700";
-  if (/plan/i.test(id)) return "border-cyan-800/50 bg-cyan-950/30 text-cyan-300 hover:border-cyan-700";
+  if (/bypass|yolo/i.test(id)) return "border-rose-300 bg-rose-100 text-rose-900 hover:border-rose-400";
+  if (/accept/i.test(id)) return "border-amber-300 bg-amber-100 text-amber-900 hover:border-amber-400";
+  if (/plan/i.test(id)) return "border-cyan-300 bg-cyan-100 text-cyan-900 hover:border-cyan-400";
   return "border-surface-700 bg-surface-800 text-text-secondary hover:border-surface-600";
 }
 
@@ -1529,7 +1531,7 @@ function StopButton() {
         "inline-flex items-center justify-center gap-1.5",
         "rounded-lg border border-surface-600 bg-surface-800",
         "px-2.5 py-1.5 text-[12px] font-medium text-text-secondary",
-        "hover:border-rose-700/60 hover:bg-rose-950/30 hover:text-rose-300",
+        "hover:border-rose-300 hover:bg-rose-100 hover:text-rose-900",
         "active:scale-[0.98] transition-all duration-100",
       ].join(" ")}
     >

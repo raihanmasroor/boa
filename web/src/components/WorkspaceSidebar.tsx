@@ -1463,7 +1463,7 @@ export const SessionRow = memo(function SessionRow({
             {subtitle && (
               <span className="block text-[11px] font-mono text-text-dim truncate" title={subtitleTitle ?? subtitle}>
                 {subtitle}
-                {baseBranch && <span className="ml-1 text-text-dim/70">← {baseBranch}</span>}
+                {baseBranch && <span className="ml-1 text-text-muted">← {baseBranch}</span>}
               </span>
             )}
             {firstSession?.plan_summary &&

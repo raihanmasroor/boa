@@ -192,7 +192,7 @@ function EffortSegmented({ option, pending, onSelect }: SubProps) {
       role="radiogroup"
       aria-label={option.name}
       data-testid={`config-option-${option.id}`}
-      className="inline-flex items-center gap-0.5 rounded-md border border-surface-700 bg-surface-800/60 p-0.5"
+      className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-surface-700 bg-surface-800/60 p-0.5"
     >
       {option.options.map((opt) => {
         const isCurrent = opt.value === option.current_value;

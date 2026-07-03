@@ -69,17 +69,17 @@ export function ContextPrimerBanner({ sessionId, available, onInsertPrimer, onDi
   return (
     <div
       role="status"
-      className="bg-amber-900/30 border-y border-amber-700/40 px-4 py-2 flex items-center gap-3 text-xs font-mono text-amber-200"
+      className="bg-amber-100 border-y border-amber-300 px-4 py-2 flex items-center gap-3 text-xs font-mono text-amber-900"
     >
-      <span className="shrink-0 text-amber-400" aria-hidden="true">
+      <span className="shrink-0 text-amber-800" aria-hidden="true">
         ⚠
       </span>
       <span className="flex-1 leading-snug">
         Agent lost its prior model context.{" "}
-        <span className="text-amber-100/70">You can pre-fill the composer with a recap of the recent turns.</span>
+        <span className="text-amber-800">You can pre-fill the composer with a recap of the recent turns.</span>
       </span>
       {error && (
-        <span className="text-status-error text-[11px] shrink-0" role="alert">
+        <span className="text-rose-800 text-[11px] shrink-0" role="alert">
           {error}
         </span>
       )}
@@ -87,7 +87,7 @@ export function ContextPrimerBanner({ sessionId, available, onInsertPrimer, onDi
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="shrink-0 px-2 py-1 rounded bg-amber-800/40 hover:bg-amber-700/50 border border-amber-700/60 text-amber-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        className="shrink-0 px-2 py-1 rounded bg-amber-200 hover:bg-amber-300 border border-amber-400 text-amber-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
       >
         {loading ? "Loading..." : "Resume with prior context"}
       </button>
@@ -95,7 +95,7 @@ export function ContextPrimerBanner({ sessionId, available, onInsertPrimer, onDi
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss context-reset banner"
-        className="shrink-0 px-1 text-amber-300/70 hover:text-amber-100 cursor-pointer"
+        className="shrink-0 px-1 text-amber-800 hover:text-amber-900 cursor-pointer"
       >
         &times;
       </button>

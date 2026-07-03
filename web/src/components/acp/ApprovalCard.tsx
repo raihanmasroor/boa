@@ -113,14 +113,14 @@ export function ApprovalCard({ approval, onResolve }: Props) {
         ].join(" ")}
       >
         {approval.destructive ? (
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-400" />
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-900" />
         ) : (
           <Shield className="h-3.5 w-3.5 shrink-0 text-brand-500" />
         )}
         <span
           className={[
             "shrink-0 text-[11px] uppercase tracking-wider",
-            approval.destructive ? "text-rose-400" : "text-brand-500",
+            approval.destructive ? "text-rose-900" : "text-brand-500",
           ].join(" ")}
         >
           {approval.destructive ? "Destructive action" : "Approval needed"}
@@ -142,7 +142,7 @@ export function ApprovalCard({ approval, onResolve }: Props) {
       {(expanded || showEmptyArgsState) && <ArgsView raw={raw} />}
 
       {phase === "rolled-back" && (
-        <p className="px-3 pt-2 text-rose-400 text-xs">Could not reach the server. Tap to retry.</p>
+        <p className="px-3 pt-2 text-rose-900 text-xs">Could not reach the server. Tap to retry.</p>
       )}
       {offline && <p className="px-3 pt-2 text-status-error text-xs">{OFFLINE_TITLE}</p>}
 
@@ -212,7 +212,7 @@ export function ApprovalCard({ approval, onResolve }: Props) {
             "flex items-center justify-center gap-1.5",
             "rounded-md border border-surface-700 bg-surface-800",
             "text-xs font-medium text-text-secondary py-2 px-3",
-            "hover:border-rose-700/60 hover:bg-rose-950/30 hover:text-rose-300",
+            "hover:border-rose-300 hover:bg-rose-100 hover:text-rose-900",
             phase === "submitting" && "opacity-60 cursor-wait",
           ]
             .filter(Boolean)
@@ -278,7 +278,7 @@ function ArgValue({ value }: { value: unknown }) {
     return <>{value}</>;
   }
   if (typeof value === "number" || typeof value === "boolean") {
-    return <span className="text-amber-300">{String(value)}</span>;
+    return <span className="text-amber-900">{String(value)}</span>;
   }
   return (
     <pre className="font-mono text-[11px] text-text-muted whitespace-pre-wrap break-all m-0">
