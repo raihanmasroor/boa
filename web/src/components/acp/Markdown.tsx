@@ -68,7 +68,7 @@ export function Markdown({ text, smooth = false, breaks = false }: Props) {
       preprocess={() => text}
       smooth={smooth}
       remarkPlugins={remarkPlugins}
-      className="acp-markdown text-sm leading-relaxed"
+      className="acp-markdown text-[16.5px] leading-[1.6]"
       components={{
         SyntaxHighlighter: ShikiSyntaxHighlighter,
         CodeHeader,
