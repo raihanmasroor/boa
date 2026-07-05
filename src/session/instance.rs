@@ -6126,6 +6126,36 @@ mod tests {
         assert!(!json.contains("last_error"));
     }
 
+    #[test]
+    fn cleared_resume_intent_mints_fresh_sid_ignoring_latched_id() {
+        // Regression: structured -> terminal must not resume the Claude
+        // conversation the structured-view (ACP) worker latched into
+        // agent_session_id — acp_disable just session/delete'd it, so
+        // `claude --resume <id>` would crash the pane with "No conversation
+        // found". acp_disable forces this via `force_fresh_next_launch`, which
+        // routes the launch through `ResumeIntent::Cleared`. Guard the Cleared
+        // contract `acquire_session_id` relies on: mint a fresh sid, never the
+        // stale one, and don't flag it as a resume.
+        let mut inst = Instance::new("Test", "/tmp/test");
+        inst.tool = "claude".to_string();
+        inst.agent_session_id = Some("b0946bea-d896-4ed1-b145-e672abef7544".to_string());
+        inst.resume_intent = ResumeIntent::Cleared;
+
+        let (sid, is_existing) = inst.acquire_session_id();
+
+        assert!(!is_existing, "Cleared must start fresh, not resume");
+        let sid = sid.expect("claude gets a freshly generated session id");
+        assert_ne!(
+            sid, "b0946bea-d896-4ed1-b145-e672abef7544",
+            "must not reuse the latched/deleted ACP conversation id"
+        );
+        assert_eq!(
+            inst.agent_session_id.as_deref(),
+            Some(sid.as_str()),
+            "the freshly minted sid becomes the instance's session id"
+        );
+    }
+
     #[cfg(feature = "serve")]
     #[test]
     fn test_instance_acp_acp_session_id_roundtrip() {

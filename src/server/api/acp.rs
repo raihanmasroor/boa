@@ -1816,6 +1816,15 @@ pub async fn acp_disable(
         instance.import_pending = None;
     }
 
+    // The structured-view worker wrote its own Claude conversation into the
+    // same on-disk history, so `acquire_session_id`'s freshest-wins rule would
+    // otherwise latch that id as the terminal's resume target. We just
+    // session/delete'd it above, so `claude --resume <id>` crashes the pane
+    // with "No conversation found". Force this single relaunch through the
+    // fresh (Cleared) path so the terminal starts a clean session instead.
+    // Runtime-only one-shot; carried across start()'s reconcile_from_disk.
+    instance.force_fresh_next_launch = true;
+
     // Persist + start tmux. start() now no longer short-circuits for
     // structured_view, so it will create a fresh tmux session and run
     // the agent CLI in the pane.
