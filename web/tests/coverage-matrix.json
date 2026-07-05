@@ -154,6 +154,16 @@
       "components": ["web/src/components/LiveTerminalView.tsx", "web/src/hooks/useLiveTerminal.ts"]
     },
     {
+      "id": "files.panel",
+      "kind": "vitest",
+      "risk": "medium",
+      "specs": [
+        "src/components/files/__tests__/FilesPane.test.tsx",
+        "src/components/files/__tests__/FileViewer.test.tsx"
+      ],
+      "components": ["web/src/components/files/FilesPane.tsx", "web/src/components/files/FileViewer.tsx"]
+    },
+    {
       "id": "terminal.mobile-live-wheel-forward",
       "kind": "vitest",
       "risk": "high",

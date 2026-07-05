@@ -31,13 +31,7 @@ vi.mock("../../../lib/artifacts", () => ({
 import { FileViewer } from "../FileViewer";
 
 /** Build a minimal Response-like object for the mocked fetch. */
-function mockResponse(opts: {
-  ok?: boolean;
-  status?: number;
-  mime?: string;
-  text?: string;
-  blob?: Blob;
-}): Response {
+function mockResponse(opts: { ok?: boolean; status?: number; mime?: string; text?: string; blob?: Blob }): Response {
   const { ok = true, status = 200, mime, text = "", blob } = opts;
   return {
     ok,

@@ -134,15 +134,17 @@ export function TopBar({
           </svg>
         </button>
 
-        <button
-          onClick={onGoDashboard}
-          className="flex items-center cursor-pointer"
-          aria-label="Go to dashboard"
-        >
+        <button onClick={onGoDashboard} className="flex items-center cursor-pointer" aria-label="Go to dashboard">
           {/* 2a brand wordmark — small boa + blinking cursor */}
           <span
             className="font-mono"
-            style={{ fontWeight: 600, color: "var(--color-text-primary)", fontSize: "0.95rem", lineHeight: 1, letterSpacing: "-0.02em" }}
+            style={{
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+              fontSize: "0.95rem",
+              lineHeight: 1,
+              letterSpacing: "-0.02em",
+            }}
             aria-label="boa"
           >
             boa

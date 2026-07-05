@@ -69,7 +69,13 @@ export function TokenEntryPage({ onSuccess }: Props) {
           <div className="mb-6 text-center">
             <span
               className="font-mono"
-              style={{ fontWeight: 600, color: "var(--color-text-primary)", fontSize: "2rem", lineHeight: 1, letterSpacing: "-0.03em" }}
+              style={{
+                fontWeight: 600,
+                color: "var(--color-text-primary)",
+                fontSize: "2rem",
+                lineHeight: 1,
+                letterSpacing: "-0.03em",
+              }}
               aria-label="boa"
             >
               boa

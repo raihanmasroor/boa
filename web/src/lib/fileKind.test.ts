@@ -96,9 +96,7 @@ describe("isInlinePreviewMedia", () => {
 
 describe("sessionFileUrl", () => {
   it("encodes the session id and path", () => {
-    expect(sessionFileUrl("sess 1", "src/a b.ts")).toBe(
-      "/api/sessions/sess%201/file?path=src%2Fa+b.ts",
-    );
+    expect(sessionFileUrl("sess 1", "src/a b.ts")).toBe("/api/sessions/sess%201/file?path=src%2Fa+b.ts");
   });
 
   it("adds download=true when requested", () => {

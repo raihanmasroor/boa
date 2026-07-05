@@ -158,12 +158,7 @@ export function FileViewer({ sessionId, path, displayPath, onClose }: Props) {
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <FileBody
-          state={state}
-          title={title}
-          onOpenInNewTab={openInNewTab}
-          onDownload={download}
-        />
+        <FileBody state={state} title={title} onOpenInNewTab={openInNewTab} onDownload={download} />
       </div>
     </div>
   );
@@ -220,13 +215,7 @@ function FileBody({
     );
   }
   if (state.status === "pdf") {
-    return (
-      <iframe
-        src={state.objectUrl}
-        title={title}
-        className="flex-1 min-h-0 w-full border-0 bg-surface-950"
-      />
-    );
+    return <iframe src={state.objectUrl} title={title} className="flex-1 min-h-0 w-full border-0 bg-surface-950" />;
   }
   // download
   return (

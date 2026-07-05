@@ -1563,9 +1563,7 @@ function AppContent({ loginRequired, onLogout }: { loginRequired: boolean; onLog
         return <BackgroundAgentsPanel sessionId={activeSessionId} />;
       }
       if (id === "files") {
-        return activeSessionId ? (
-          <FilesPane sessionId={activeSessionId} onOpenFile={handleOpenFile} />
-        ) : null;
+        return activeSessionId ? <FilesPane sessionId={activeSessionId} onOpenFile={handleOpenFile} /> : null;
       }
       if (id === "diff") {
         return (
