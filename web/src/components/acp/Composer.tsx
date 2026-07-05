@@ -42,6 +42,13 @@ import { useFocusTerminalTarget } from "../../hooks/useFocusTerminalTarget";
 import { useDictationBurstGuard } from "./useDictationBurstGuard";
 import { nextRecallTarget, recallBannerInfo, type RecallCursor, type RecallNav } from "./recallNav";
 
+/** Composer textarea auto-grow ceiling in px: ~7 text lines (leading-6 =
+ *  24px/line + 16px vertical padding) before it scrolls internally. The
+ *  input starts minimized at one line (rows={1} / min-h-[40px]) and grows to
+ *  here, so the transcript stays visible on small screens instead of the
+ *  composer eating the viewport. Mirrors the max-h-[184px] class on the input. */
+const COMPOSER_MAX_HEIGHT_PX = 184;
+
 export {
   DICTATION_BURST_TIMEOUT_MS,
   decideDictationAction,
@@ -503,7 +510,7 @@ export function Composer({
           // ignore: setSelectionRange can throw on detached nodes
         }
         el.style.height = "auto";
-        el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+        el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
       });
     },
     [composerRuntime],
@@ -644,15 +651,15 @@ export function Composer({
         // ignore: non-text inputs can throw here
       }
       el.style.height = "auto";
-      el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+      el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
     });
   }, [composerRuntime, primerId]);
 
-  // Auto-grow the textarea up to ~6 visible lines.
+  // Auto-grow the textarea up to ~7 visible lines, then scroll internally.
   const onInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const el = e.currentTarget;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
   };
 
   // Per-session draft persistence: keep an unsent prompt across
@@ -672,7 +679,7 @@ export function Composer({
         const el = taRef.current;
         if (el) {
           el.style.height = "auto";
-          el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+          el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
         }
       });
     }
@@ -812,10 +819,10 @@ export function Composer({
               <PopoverItems trigger="/" />
             </ComposerPrimitive.Unstable_TriggerPopover>
 
-            {/* Input area — tall by default, grows up to 200px */}
+            {/* Input area: starts minimized at one line, grows to ~7 lines */}
             <ComposerPrimitive.Input
               ref={taRef}
-              rows={2}
+              rows={1}
               // On touch-primary devices (phone / tablet without a
               // hardware keyboard) plain Enter inserts a newline
               // instead of dispatching; messages send only via the
@@ -980,7 +987,7 @@ export function Composer({
               }}
               autoFocus={!isMobile}
               className={[
-                "min-h-[56px] max-h-[200px] resize-none bg-transparent",
+                "min-h-[40px] max-h-[184px] resize-none overflow-y-auto bg-transparent",
                 "px-4 pt-3 pb-1 text-sm leading-6 text-text-primary",
                 // placeholder was text-text-dim (~4.4:1 on the bone composer
                 // surface); text-text-muted (#605E58) clears AA at ~6:1.
@@ -1121,7 +1128,7 @@ export function Composer({
               // ignore: non-text inputs can throw here
             }
             el.style.height = "auto";
-            el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+            el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
           });
         }}
         trigger="manual"
@@ -1460,11 +1467,7 @@ function UsageHint({ usage }: { usage: AcpState["sessionUsage"] }) {
   // omitted from both the readout and the tooltip.
   const title = `Context: ${usage.used.toLocaleString()} / ${usage.size.toLocaleString()} tokens (${pct}%)`;
   return (
-    <span
-      className="inline-flex items-center gap-1 text-[11px] tabular-nums"
-      title={title}
-      aria-label={title}
-    >
+    <span className="inline-flex items-center gap-1 text-[11px] tabular-nums" title={title} aria-label={title}>
       {/* Compact form on mobile (<sm): "11% · 109k" so the usage stays visible
           in the composer footer where the full readout would be too wide. */}
       <span className={`sm:hidden whitespace-nowrap ${mobileTone}`}>
