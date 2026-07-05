@@ -147,6 +147,13 @@
       "components": ["web/src/components/LiveTerminalView.tsx", "web/src/hooks/useLiveTerminal.ts"]
     },
     {
+      "id": "terminal.live-reconnect-pty-dead",
+      "kind": "vitest",
+      "risk": "high",
+      "specs": ["src/hooks/useLiveTerminal.ptyDead.test.ts"],
+      "components": ["web/src/components/LiveTerminalView.tsx", "web/src/hooks/useLiveTerminal.ts"]
+    },
+    {
       "id": "terminal.mobile-live-wheel-forward",
       "kind": "vitest",
       "risk": "high",

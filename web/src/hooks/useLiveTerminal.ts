@@ -15,6 +15,16 @@ import { reportTelemetrySeen } from "../lib/api";
 /** Mirrors CLOSE_CODE_PTY_DEAD in src/server/pane.rs. */
 const CLOSE_CODE_PTY_DEAD = 4001;
 
+/** How many consecutive PTY_DEAD (4001) closes to retry before giving up.
+ *  A 4001 usually means the agent exited for good, but it is ALSO transient
+ *  right after a Structured->Terminal view switch: that destroys and
+ *  recreates the agent's tmux pane, and a live-ws connecting during the
+ *  recreate window sees the pane momentarily dead. Without a retry the
+ *  terminal latches blank forever (worst over Tailscale latency, where the
+ *  socket reliably lands inside that window). A pane still dead past this
+ *  budget falls through to the normal give-up. */
+const MAX_PTY_DEAD_RETRIES = 5;
+
 export interface LiveCursor {
   x: number;
   y: number;
@@ -80,6 +90,10 @@ export function useLiveTerminal(sessionId: string | null, wsPath: string = "live
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryCountRef = useRef(0);
+  // Consecutive PTY_DEAD (4001) closes since the last successful frame.
+  // Bounds how long we keep re-attaching to a pane the server reports dead
+  // so a transient view-switch recreate recovers without latching blank.
+  const ptyDeadRetriesRef = useRef(0);
   const connectRef = useRef<(() => void) | null>(null);
   // Latest resize/window/cadence the component asked for, re-sent on
   // (re)connect so a fresh server-side handler picks up where the old
@@ -137,6 +151,7 @@ export function useLiveTerminal(sessionId: string | null, wsPath: string = "live
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
     retryCountRef.current = 0;
+    ptyDeadRetriesRef.current = 0;
     setState(() => INITIAL_STATE);
 
     let disposed = false;
@@ -214,6 +229,7 @@ export function useLiveTerminal(sessionId: string | null, wsPath: string = "live
           // only now reset the retry budget (mirrors useTerminal).
           hasReceivedData = true;
           retryCountRef.current = 0;
+          ptyDeadRetriesRef.current = 0;
         }
         const incoming: LiveFrame = {
           content: msg.content ?? "",
@@ -249,7 +265,13 @@ export function useLiveTerminal(sessionId: string | null, wsPath: string = "live
         if (disposed) return;
         setState((prev) => ({ ...prev, connected: false }));
         if (event.code === CLOSE_CODE_PTY_DEAD) {
-          retryCountRef.current = MAX_RETRIES;
+          // Don't latch off retries on the first dead-pane close: a view
+          // switch legitimately leaves the pane mid-recreate. Retry a bounded
+          // number of times, then give up if it stays dead (genuine exit).
+          ptyDeadRetriesRef.current += 1;
+          if (ptyDeadRetriesRef.current > MAX_PTY_DEAD_RETRIES) {
+            retryCountRef.current = MAX_RETRIES;
+          }
         }
         if (retryCountRef.current < MAX_RETRIES) {
           retryCountRef.current += 1;
@@ -423,6 +445,7 @@ export function useLiveTerminal(sessionId: string | null, wsPath: string = "live
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
     retryCountRef.current = 0;
+    ptyDeadRetriesRef.current = 0;
     setState((prev) => ({
       ...prev,
       connected: false,
