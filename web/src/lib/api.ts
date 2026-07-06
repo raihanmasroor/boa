@@ -1318,10 +1318,14 @@ export async function switchAcpAgent(
   target: string,
   model?: string | null,
   reason?: string | null,
+  agentEnv?: string[],
 ): Promise<SwitchAgentResponse | null> {
-  const body: { target: string; model?: string; reason?: string } = { target };
+  const body: { target: string; model?: string; reason?: string; agent_env?: string[] } = { target };
   if (model) body.model = model;
   if (reason) body.reason = reason;
+  // The chosen account's config-dir env (from a discovered profile card), so
+  // the switch lands on that account. Omitted when empty = default account.
+  if (agentEnv && agentEnv.length > 0) body.agent_env = agentEnv;
   return fetchJson<SwitchAgentResponse>(`/api/sessions/${encodeURIComponent(sessionId)}/acp/switch-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

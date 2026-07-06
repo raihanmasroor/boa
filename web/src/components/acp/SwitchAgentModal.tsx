@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchAcpAgents, fetchContextPrimer, switchAcpAgent, type AcpAgentInfo } from "../../lib/api";
+import { fetchAgents, fetchContextPrimer, switchAcpAgent } from "../../lib/api";
+import type { AgentInfo, AgentProfile } from "../../lib/types";
 
 /**
- * Agent-switch dialog. Lists the structured view ACP registry, preselects a
- * sensible target, and hands the session off via
+ * Agent-switch dialog. Lists the installed structured view (ACP) agents as one
+ * row per account, preselects a sensible target, and hands the session off via
  * `POST /api/sessions/:id/acp/switch-agent`.
+ *
+ * BOA divergence: an agent with 2+ discovered logged-in accounts (e.g. claude
+ * `personal` / `ydo`) renders one row per account, and switching carries that
+ * account's config-dir env so the new worker launches on the right account
+ * (separate token pools). Agents with a single account render one plain row.
+ * The list is sourced from `/api/agents` (installed + ACP-capable + discovered
+ * accounts), so agents the host never set up are not offered.
  *
  * Two triggers drive it, distinguished by `trigger`:
  *   - "rate_limit": surfaced from the rate-limit banner's "Continue in
@@ -12,7 +20,7 @@ import { fetchAcpAgents, fetchContextPrimer, switchAcpAgent, type AcpAgentInfo }
  *     rate-limit handoff.
  *   - "manual": surfaced from the composer toolbar at any time (e.g. to
  *     return to claude after a rate-limit handoff). Preselects the first
- *     available agent and frames the recap as a plain switch.
+ *     available account and frames the recap as a plain switch.
  *
  * After a successful switch:
  *   1. Fetch the context primer using `before_seq` so the recap
@@ -40,9 +48,19 @@ interface Props {
 
 const PREFERRED_FALLBACK = "codex";
 
+/** A selectable switch target: an agent, plus one of its accounts when it has
+ *  2+ discovered. `profile` absent means the agent's default account. */
+interface AgentCard {
+  agent: AgentInfo;
+  profile?: AgentProfile;
+}
+
+const cardKey = (c: AgentCard): string => (c.profile ? `${c.agent.name}::${c.profile.label}` : c.agent.name);
+const cardLabel = (c: AgentCard): string => (c.profile ? `${c.agent.name} · ${c.profile.label}` : c.agent.name);
+
 export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPrefill, trigger = "manual" }: Props) {
-  const [agents, setAgents] = useState<AcpAgentInfo[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [cards, setCards] = useState<AgentCard[]>([]);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,16 +86,28 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    fetchAcpAgents()
-      .then((list) => {
+    // Source the switch list from /api/agents (installed + ACP-capable +
+    // discovered accounts), not the flag-less ACP registry: keep only installed
+    // built-ins and configured custom agents that can run ACP, then expand an
+    // agent with 2+ accounts into one card per account (claude personal / ydo).
+    fetchAgents()
+      .then((all) => {
         if (cancelled) return;
-        const filtered = list.filter((a) => a.name !== currentAgent);
-        setAgents(filtered);
-        // On the rate-limit path, prefer codex when installed. On a
-        // manual switch we have no preferred direction, so just pick the
-        // first remaining entry. The user can change the pick either way.
-        const preferred = rateLimited ? filtered.find((a) => a.name === PREFERRED_FALLBACK) : undefined;
-        setSelected(preferred?.name ?? filtered[0]?.name ?? null);
+        const switchable = all.filter((a) => a.acp_capable && (a.installed || a.kind === "custom"));
+        const built: AgentCard[] = switchable.flatMap((agent) => {
+          const profiles = agent.profiles ?? [];
+          if (profiles.length >= 2) return profiles.map((profile) => ({ agent, profile }));
+          return [{ agent }];
+        });
+        // Hide the current agent only when it has a single account: switching to
+        // the same single-account agent is a no-op. A multi-account current
+        // agent keeps all its account cards so you can move to a different
+        // account (claude personal -> claude ydo is a different token pool); the
+        // server rejects a switch to the exact same account.
+        const visible = built.filter((c) => !(c.agent.name === currentAgent && (c.agent.profiles?.length ?? 0) < 2));
+        setCards(visible);
+        const preferred = rateLimited ? visible.find((c) => c.agent.name === PREFERRED_FALLBACK) : undefined;
+        setSelectedKey(preferred ? cardKey(preferred) : visible[0] ? cardKey(visible[0]) : null);
       })
       .catch((e) => {
         if (cancelled) return;
@@ -86,11 +116,6 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    // Only flag this load as stale. abortRef belongs to the primer
-    // fetch in handleConfirm; aborting it here would cancel an in-flight
-    // handoff when an unrelated dep (currentAgent, rateLimited) changes.
-    // The agents fetch itself takes no signal, so there is nothing else
-    // to cancel.
     return () => {
       cancelled = true;
     };
@@ -121,12 +146,20 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
 
   if (!open) return null;
 
+  const selectedCard = cards.find((c) => cardKey(c) === selectedKey) ?? null;
+
   const handleConfirm = async () => {
-    if (!selected) return;
+    if (!selectedCard) return;
     setSubmitting(true);
     setError(null);
     try {
-      const result = await switchAcpAgent(sessionId, selected, null, rateLimited ? "rate_limited" : "manual");
+      const result = await switchAcpAgent(
+        sessionId,
+        selectedCard.agent.name,
+        null,
+        rateLimited ? "rate_limited" : "manual",
+        selectedCard.profile?.env ?? [],
+      );
       if (!result) {
         setError("Switch failed: server returned no response.");
         return;
@@ -139,7 +172,7 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
       const unprocessed = primer?.unprocessed_prompt?.trim() ?? "";
       const prefill = buildHandoffPrefill({
         from: currentAgent ?? "previous agent",
-        to: selected,
+        to: cardLabel(selectedCard),
         recap,
         unprocessed,
         rateLimited,
@@ -154,6 +187,7 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
   };
 
   const title = rateLimited ? "Continue in another agent?" : "Switch agent?";
+  const confirmLabel = selectedCard ? cardLabel(selectedCard) : "";
 
   return (
     <div
@@ -173,50 +207,55 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
           {rateLimited ? (
             <>
               The current agent ({currentAgent ?? "unknown"}) is rate-limited. Hand the session off to a different
-              installed ACP backend; we will pre-fill the composer with a recap of the recent turns for you to review
-              before sending.
+              installed ACP backend or account; we will pre-fill the composer with a recap of the recent turns for you
+              to review before sending.
             </>
           ) : (
             <>
-              Hand this session off from {currentAgent ?? "the current agent"} to a different installed ACP backend,
-              keeping the transcript. We will pre-fill the composer with a recap of the recent turns for you to review
-              before sending.
+              Hand this session off from {currentAgent ?? "the current agent"} to a different installed ACP backend or
+              account, keeping the transcript. We will pre-fill the composer with a recap of the recent turns for you to
+              review before sending.
             </>
           )}
         </p>
 
         {loading ? (
           <div className="mt-4 text-xs text-text-muted">Loading agents...</div>
-        ) : agents.length === 0 ? (
+        ) : cards.length === 0 ? (
           <div className="mt-4 text-xs text-status-error">
-            No alternative structured view agents are registered. Install one (e.g. `npm i -g
+            No other installed structured view agents or accounts are available. Install one (e.g. `npm i -g
             @agentclientprotocol/codex-acp@latest`) and try again.
           </div>
         ) : (
           <ul className="mt-4 max-h-64 space-y-1 overflow-y-auto">
-            {agents.map((a) => (
-              <li key={a.name}>
-                <label
-                  className={`flex cursor-pointer items-start gap-3 rounded border px-3 py-2 transition-colors ${
-                    selected === a.name ? "border-brand-500 bg-brand-900/30" : "border-surface-700 hover:bg-surface-800"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="acp-agent-target"
-                    value={a.name}
-                    checked={selected === a.name}
-                    onChange={() => setSelected(a.name)}
-                    className="mt-0.5"
-                    disabled={submitting}
-                  />
-                  <span className="flex-1">
-                    <span className="block text-sm font-mono">{a.name}</span>
-                    <span className="block text-xs text-text-muted">{a.description}</span>
-                  </span>
-                </label>
-              </li>
-            ))}
+            {cards.map((c) => {
+              const key = cardKey(c);
+              return (
+                <li key={key}>
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded border px-3 py-2 transition-colors ${
+                      selectedKey === key
+                        ? "border-brand-500 bg-brand-900/30"
+                        : "border-surface-700 hover:bg-surface-800"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="acp-agent-target"
+                      value={key}
+                      checked={selectedKey === key}
+                      onChange={() => setSelectedKey(key)}
+                      className="mt-0.5"
+                      disabled={submitting}
+                    />
+                    <span className="flex-1">
+                      <span className="block text-sm font-mono">{c.agent.name}</span>
+                      {c.profile && <span className="block text-xs text-text-muted">account: {c.profile.label}</span>}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
           </ul>
         )}
 
@@ -241,10 +280,10 @@ export function SwitchAgentModal({ open, sessionId, currentAgent, onClose, onPre
             ref={confirmRef}
             type="button"
             onClick={handleConfirm}
-            disabled={!selected || submitting || agents.length === 0}
+            disabled={!selectedCard || submitting || cards.length === 0}
             className="rounded border border-brand-700 bg-brand-900/40 px-3 py-1 text-xs font-medium text-brand-100 hover:bg-brand-900/60 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Switching..." : `${rateLimited ? "Continue in" : "Switch to"} ${selected ?? ""}`}
+            {submitting ? "Switching..." : `${rateLimited ? "Continue in" : "Switch to"} ${confirmLabel}`}
           </button>
         </div>
       </div>

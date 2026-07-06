@@ -13,13 +13,15 @@ import { RateLimitRecoverySection } from "./StructuredView";
 
 vi.mock("../../lib/api", () => ({
   fetchAcpAgents: vi.fn(),
+  fetchAgents: vi.fn(),
   switchAcpAgent: vi.fn(),
   fetchContextPrimer: vi.fn(),
 }));
 
-import { fetchAcpAgents, switchAcpAgent, fetchContextPrimer } from "../../lib/api";
+import { fetchAcpAgents, fetchAgents, switchAcpAgent, fetchContextPrimer } from "../../lib/api";
 
 const mockFetchAgents = vi.mocked(fetchAcpAgents);
+const mockAllAgents = vi.mocked(fetchAgents);
 const mockSwitch = vi.mocked(switchAcpAgent);
 const mockPrimer = vi.mocked(fetchContextPrimer);
 
@@ -28,6 +30,33 @@ beforeEach(() => {
   mockFetchAgents.mockResolvedValue([
     { name: "claude", description: "Claude", command: "claude-agent-acp" },
     { name: "codex", description: "OpenAI Codex", command: "codex-acp" },
+  ]);
+  // The modal sources its switch list from /api/agents; provide claude + codex
+  // as installed so the rate-limit path preselects codex. (Per-account
+  // filtering is covered in SwitchAgentModal.test.tsx.)
+  mockAllAgents.mockResolvedValue([
+    {
+      name: "claude",
+      kind: "builtin",
+      binary: "claude",
+      host_only: false,
+      installed: true,
+      install_hint: "",
+      acp_capable: true,
+      acp_installed: true,
+      profiles: [],
+    },
+    {
+      name: "codex",
+      kind: "builtin",
+      binary: "codex",
+      host_only: false,
+      installed: true,
+      install_hint: "",
+      acp_capable: true,
+      acp_installed: true,
+      profiles: [],
+    },
   ]);
   mockSwitch.mockResolvedValue({
     session_id: "s-1",
