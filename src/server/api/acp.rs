@@ -747,6 +747,10 @@ pub async fn switch_acp_agent(
             .into_response();
     }
 
+    // Re-validate the requested account env against real profile discovery so a
+    // client can't inject arbitrary host env; empty = the default account.
+    let agent_env = crate::agent_profiles::validate_agent_env(&target, &req.agent_env);
+
     let instance = {
         let instances = state.instances.read().await;
         match instances.iter().find(|i| i.id == id).cloned() {
@@ -763,7 +767,10 @@ pub async fn switch_acp_agent(
             std::path::Path::new(&instance.project_path),
         )
         .await;
-    if from_agent == target {
+    // A no-op only when BOTH the agent AND the account match. Switching the
+    // same agent to a different account (e.g. claude default -> claude ydo) is
+    // a real switch and must be allowed through.
+    if from_agent == target && instance.agent_env == agent_env {
         return (
             StatusCode::BAD_REQUEST,
             format!("session is already using {target}"),
@@ -816,7 +823,7 @@ pub async fn switch_acp_agent(
             agent: target.clone(),
             cwd,
             additional_dirs: vec![],
-            provider_env: vec![],
+            provider_env: crate::agent_profiles::agent_env_pairs(&agent_env),
             model: model.clone(),
             effort: None,
             // Different ACP backend; the cached Claude session id would
@@ -874,10 +881,13 @@ pub async fn switch_acp_agent(
     let profile_for_save = instance.source_profile.clone();
     let id_for_save = id.clone();
     let target_for_save = target.clone();
+    let agent_env_for_save = agent_env.clone();
     {
         let mut instances = state.instances.write().await;
         if let Some(inst) = instances.iter_mut().find(|i| i.id == id) {
             inst.agent_name = Some(target_for_save.clone());
+            // Remember the chosen account so a reconnect/respawn keeps it.
+            inst.agent_env = agent_env_for_save.clone();
             inst.acp_session_id = None;
             // Switching backend abandons any pending import (#2276), else a
             // later spawn/reconciler pass treats this as an import and clears
@@ -892,6 +902,7 @@ pub async fn switch_acp_agent(
         if let Err(e) = storage.update(|instances, _groups| {
             if let Some(inst) = instances.iter_mut().find(|i| i.id == id_for_save) {
                 inst.agent_name = Some(target_for_save.clone());
+                inst.agent_env = agent_env_for_save.clone();
                 inst.acp_session_id = None;
                 inst.import_pending = None;
             }

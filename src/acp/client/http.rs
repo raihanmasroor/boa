@@ -247,6 +247,8 @@ impl HttpClient {
             target: target.to_string(),
             model: model.map(str::to_string),
             reason: reason.map(str::to_string),
+            // The CLI switch does not select an account; empty = default account.
+            agent_env: vec![],
         };
         let res = self.auth(self.http.post(&url)).json(&body).send().await?;
         let res = check_status(res, session_id).await?;

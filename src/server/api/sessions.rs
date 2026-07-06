@@ -4576,6 +4576,7 @@ pub async fn create_session(
                     instance.command.clone(),
                     instance.import_pending == Some(true),
                     instance.fork_pending.clone(),
+                    instance.agent_env.clone(),
                 ))
             } else {
                 None
@@ -4604,6 +4605,7 @@ pub async fn create_session(
                 command,
                 seed_history_replay,
                 fork_from,
+                agent_env,
             )) = acp_spawn_target
             {
                 let agent = state
@@ -4649,7 +4651,7 @@ pub async fn create_session(
                             agent: agent.clone(),
                             cwd,
                             additional_dirs: vec![],
-                            provider_env: vec![],
+                            provider_env: crate::agent_profiles::agent_env_pairs(&agent_env),
                             model,
                             effort,
                             stored_acp_session_id,

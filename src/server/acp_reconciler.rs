@@ -1169,7 +1169,7 @@ async fn build_spawn_request(
     // structured fork's first connect captured the child id, the handshake
     // must still send session/fork. It is cleared once the forked id lands
     // (Task 11), so a later reattach reads None and resumes normally.
-    let (cwd, seed_history_replay, fork_from) = {
+    let (cwd, seed_history_replay, fork_from, agent_env) = {
         let _guard = inst_lock.lock().await;
         let instances = state.instances.read().await;
         let Some(inst) = instances.iter().find(|i| i.id == target.id) else {
@@ -1179,6 +1179,9 @@ async fn build_spawn_request(
             PathBuf::from(&inst.project_path),
             inst.import_pending == Some(true),
             inst.fork_pending.clone(),
+            // Keep the session's chosen agent account across respawn/reconnect;
+            // already validated when it was persisted, so inject it as-is.
+            inst.agent_env.clone(),
         )
     };
     let agent = supervisor
@@ -1219,7 +1222,7 @@ async fn build_spawn_request(
         agent,
         cwd,
         additional_dirs: vec![],
-        provider_env: vec![],
+        provider_env: crate::agent_profiles::agent_env_pairs(&agent_env),
         model: target.model.clone(),
         effort: None,
         stored_acp_session_id: target.stored_acp_session_id.clone(),

@@ -88,6 +88,20 @@ pub fn validate_agent_env(tool: &str, submitted: &[String]) -> Vec<String> {
     kept
 }
 
+/// Split validated `agent_env` entries (`"KEY=value"`) into `(key, value)`
+/// pairs for injection as an ACP worker's `provider_env`. Entries without an
+/// `=` are skipped. Call this on the output of [`validate_agent_env`], never on
+/// raw client input.
+pub fn agent_env_pairs(agent_env: &[String]) -> Vec<(String, String)> {
+    agent_env
+        .iter()
+        .filter_map(|e| {
+            e.split_once('=')
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+        })
+        .collect()
+}
+
 /// Directory names directly under `home` whose name starts with `prefix`.
 /// Plain files (e.g. `~/.claude.json`, `~/.claude.json.backup`) are dropped —
 /// only directories (or symlinks to directories) are returned, matching

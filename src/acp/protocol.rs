@@ -273,6 +273,15 @@ pub struct SwitchAgentRequest {
     /// `"manual"`. Defaults to `"manual"` when omitted.
     #[serde(default)]
     pub reason: Option<String>,
+    /// BOA divergence: host env entries selecting the target agent ACCOUNT to
+    /// switch to (e.g. `["CLAUDE_CONFIG_DIR=/home/you/.claude-ydo"]`), taken
+    /// verbatim from a discovered profile card's `env`. Re-validated
+    /// server-side via `agent_profiles::validate_agent_env`, so a client can't
+    /// inject arbitrary host env. Empty means the default account.
+    /// `#[serde(default)]` so older clients that send a bare `{target}` still
+    /// deserialize.
+    #[serde(default)]
+    pub agent_env: Vec<String>,
 }
 
 /// `POST /api/sessions/{id}/acp/switch-agent` response.
@@ -354,13 +363,30 @@ mod tests {
 
     #[test]
     fn switch_agent_request_optional_fields_default_to_none() {
-        // A bare body (the rate-limit recovery modal's original shape)
-        // still deserializes; model and reason are optional.
+        // A bare body (the rate-limit recovery modal's original shape, and any
+        // pre-account client) still deserializes; model, reason, and the newer
+        // agent_env are all optional.
         let body = serde_json::json!({ "target": "codex" });
         let parsed: SwitchAgentRequest = serde_json::from_value(body).unwrap();
         assert_eq!(parsed.target, "codex");
         assert!(parsed.model.is_none());
         assert!(parsed.reason.is_none());
+        assert!(parsed.agent_env.is_empty());
+    }
+
+    #[test]
+    fn switch_agent_request_parses_account_env() {
+        // The account-aware modal sends the chosen profile's env so the switch
+        // lands on that account (e.g. claude "ydo").
+        let body = serde_json::json!({
+            "target": "claude",
+            "agent_env": ["CLAUDE_CONFIG_DIR=/home/you/.claude-ydo"],
+        });
+        let parsed: SwitchAgentRequest = serde_json::from_value(body).unwrap();
+        assert_eq!(
+            parsed.agent_env,
+            vec!["CLAUDE_CONFIG_DIR=/home/you/.claude-ydo"]
+        );
     }
 
     #[test]
