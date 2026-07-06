@@ -33,13 +33,20 @@ function addEntryScript(src: string) {
   document.head.appendChild(script);
 }
 
+const reloadMock = vi.fn();
+
 beforeEach(() => {
+  reloadMock.mockClear();
+  // jsdom's location.reload throws "not implemented"; stub it so the
+  // auto-reload timer is observable and harmless.
+  vi.stubGlobal("location", { ...window.location, reload: reloadMock });
   addEntryScript("/assets/index-PageBuild.js");
 });
 
 afterEach(() => {
   document.head.querySelectorAll("script").forEach((s) => s.remove());
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("DashboardUpdateBanner", () => {
@@ -80,5 +87,22 @@ describe("DashboardUpdateBanner", () => {
     });
     expect(await screen.findByRole("status", { name: "Dashboard update available" })).toBeDefined();
     expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it("auto-reloads shortly after an update is detected", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.spyOn(api, "fetchAbout").mockResolvedValue(aboutWith("index-NewerBuild.js"));
+      render(<DashboardUpdateBanner />);
+      expect(await screen.findByRole("status", { name: "Dashboard update available" })).toBeDefined();
+      expect(reloadMock).not.toHaveBeenCalled();
+      // Past the auto-reload grace delay.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3_100);
+      });
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

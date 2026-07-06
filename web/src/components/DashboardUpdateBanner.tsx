@@ -6,6 +6,11 @@ import { currentWebBuildId, isWebUpdateAvailable } from "../lib/webBuildId";
 // fires several when a PWA resumes); one /api/about per window is plenty.
 const CHECK_THROTTLE_MS = 30_000;
 
+// After a new build is detected, reload automatically so the running deploy
+// pulls itself into the browser without a click. Short grace so the user sees
+// the notice; composer drafts are persisted, so the reload is non-destructive.
+const AUTO_RELOAD_DELAY_MS = 3_000;
+
 /**
  * "Dashboard updated, reload" banner. The aoe binary embeds the web
  * bundle, so updating the binary swaps the assets under every connected
@@ -47,16 +52,31 @@ export function DashboardUpdateBanner() {
     const onPreloadError = () => void check(true);
 
     void check(true);
+    // Poll while the tab sits open so a new deploy (auto-built on each main
+    // commit) is picked up without needing a visibility flip or a lazy-chunk
+    // miss.
+    const poll = window.setInterval(() => {
+      if (document.visibilityState === "visible") void check(false);
+    }, CHECK_THROTTLE_MS);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("online", onOnline);
     window.addEventListener("vite:preloadError", onPreloadError);
     return () => {
       cancelled = true;
+      window.clearInterval(poll);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onOnline);
       window.removeEventListener("vite:preloadError", onPreloadError);
     };
   }, []);
+
+  // Auto-reload shortly after an update is detected so the new deploy pulls
+  // itself into the browser. The button below still lets the user reload now.
+  useEffect(() => {
+    if (!updateAvailable) return;
+    const t = window.setTimeout(() => window.location.reload(), AUTO_RELOAD_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [updateAvailable]);
 
   if (!updateAvailable) return null;
 
@@ -67,7 +87,7 @@ export function DashboardUpdateBanner() {
       className="bg-brand-600/10 border-b border-brand-600/30 px-4 py-2 flex items-center justify-center gap-3 text-xs font-mono text-brand-300 animate-fade-in"
     >
       <span className="w-1.5 h-1.5 rounded-full bg-brand-400 shrink-0" />
-      <span>Dashboard updated.</span>
+      <span>Dashboard updated, reloading…</span>
       <button
         type="button"
         onClick={() => window.location.reload()}
