@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#
+# Auto-deploy on every commit to main. Rebuilds + reinstalls + restarts the
+# local `boa serve` daemon so the running dashboard picks up the latest code;
+# the browser then auto-reloads via DashboardUpdateBanner. Runs in the
+# background so `git commit` returns immediately (the build is detached).
+#
+# Only fires on `main`; feature-branch commits are ignored. Logs to
+# /tmp/boa-deploy.log.
+#
+# Tracked source of the git hook. git does not version-control .git/hooks/, so
+# install (or reinstall after a fresh clone) with: scripts/install-hooks.sh
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+[ "$branch" = "main" ] || exit 0
+
+repo="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -x "$repo/scripts/boa-deploy.sh" ] || exit 0
+
+nohup "$repo/scripts/boa-deploy.sh" >/dev/null 2>&1 &
+exit 0
